@@ -1,73 +1,215 @@
 # HASLAB
 
-**Open silicon for edge intelligence.**
+> **Open silicon for edge intelligence.**
 
-HASLAB is an open-source physical-AI inference-engine project for computer vision, robotics, and edge AI. The project aims to develop a programmable, inspectable path from exported neural-network models to open hardware: software reference model → RTL simulation → FPGA → open ASIC flow → fabricated silicon.
+HASLAB is an open-source physical-AI inference-engine project for computer vision, robotics, and edge AI. Its aim is to create a programmable, inspectable path from a trained neural network to hardware that researchers can simulate, study, modify, place on an FPGA, and eventually fabricate as silicon.
 
-Physical-AI systems need perception results in a form that can feed a controller or policy with predictable, measured behavior. HASLAB focuses on the inference portion of that path: moving sensor or host data through explicit memory, running quantized neural-network operations, and returning outputs to a host or future action pipeline. It is not a complete robot-control stack, an ISP, or a training system.
+```text
+PyTorch or another framework
+          ↓ export
+         ONNX
+          ↓ compile and lower
+  HASLAB model package
+          ↓ execute
+Reference model → simulator → FPGA → open ASIC flow → silicon
+```
 
-## Status
+HASLAB is being designed in public from the numerical contract upward. The project begins with exact software models and bounded interfaces before committing them to RTL. This lets future hardware be checked against an independent golden model instead of defining correctness after the circuit is built.
 
-The repository is in the **reference-model and architecture stage**. It contains specifications, an executable Python numerical golden model, and a functional v0 command simulator. No tensor accelerator RTL, compiler, runtime, FPGA design, cycle-accurate simulator, or supported model execution exists yet.
+## Current status
+
+**Stage: numerical reference model and functional command simulation.**
+
+The repository currently contains an architecture specification, an executable Python golden model, and a byte-level simulator for the proposed v0 accelerator commands. It does not yet contain tensor-accelerator RTL, an ONNX compiler, a runtime, an FPGA bitstream, an ASIC implementation, or demonstrated YOLO execution.
+
+| Component | Status | What that means |
+|---|---|---|
+| Architecture and v0 contract | Proposed | Detailed enough for review, still open to evidence-driven revision |
+| Python numerical model | Implemented and unit-tested | Defines FP8/INT8 conversion, accumulation, tensor operations, layouts, and edge cases |
+| Functional command simulator | Implemented and unit-tested | Executes the proposed 128-byte command ABI over modeled memory spaces |
+| ONNX importer and compiler | Planned | No model can be compiled to HASLAB yet |
+| Runtime | Planned | No application-facing device API exists yet |
+| RTL and RTL testbenches | Planned | No hardware implementation exists yet |
+| FPGA target | Planned | No board has been selected or benchmarked |
+| ASIC flow and fabrication kit | Future | No design is currently ready to fabricate |
+
+Run all currently implemented verification with:
+
+```sh
+make check
+make test
+```
+
+The current test suite covers the numerical model and functional command simulator. Passing it establishes consistency with the Python specification; it is not an FPGA or silicon performance result.
+
+## Why physical AI?
+
+Physical-AI systems turn sensor data into decisions under real latency, power, memory, and reliability constraints. Examples include robots, autonomous instruments, inspection systems, smart cameras, laboratory equipment, and embedded perception nodes.
+
+Many accelerators expose impressive peak arithmetic while leaving model conversion, data movement, preprocessing, control, and reproducibility as separate problems. HASLAB treats the complete inference path as the engineering object:
+
+- Move tensors explicitly through DMA and local SRAM.
+- Execute modern quantized vision operations with documented numerical behavior.
+- Keep the model format separate from the hardware command interface.
+- Use standard ONNX export rather than asking users to rewrite networks manually.
+- Expose unsupported operations and host partitions instead of hiding fallback work.
+- Measure complete latency and data movement, not only theoretical operations per second.
+- Preserve a path from university-scale FPGA work to an open, physically realizable ASIC.
+
+HASLAB is an inference engine, not a training platform, camera ISP, safety-certified controller, or complete robotics stack. It is intended to become a reliable perception and policy-inference building block inside those larger systems.
 
 ## Target workloads
 
-- Modern YOLO-class object detection and contemporary CNN vision models
-- Small policy networks and robotics perception-to-action pipelines
-- Later, selected compact transformers where the required operations and memory traffic are demonstrated feasible
+The primary target is batch-one edge vision:
 
-The proposed v0 workload is a pinned YOLOv8n detector at batch one with 320×320 RGB input. This is a proposed validation target, not an implemented feature or performance claim.
+- Modern YOLO-class object detection
+- Contemporary compact CNNs
+- Robotics perception pipelines
+- Small policy and decision networks
+- Sensor-processing plus neural-network inference
 
-## Proposed architecture
+Compact vision transformers and edge transformers are later research targets where operator coverage and memory traffic prove practical. Large-model training and datacenter LLM inference are outside the initial scope.
 
-The planned system separates model format from accelerator commands:
+The proposed first end-to-end workload is a pinned YOLOv8n detector at 320×320. The FPGA would eventually execute the quantized backbone, neck, and learned detection head, while the host performs declared image preparation and final box decoding/DFL/NMS. This is a validation target, not an implemented feature or real-time claim.
 
-```text
-Framework model → ONNX → HASLAB compiler → target-specific package
-                                             ↓
-Application ← HASLAB runtime ← FPGA / future ASIC
+## Architecture direction
+
+The long-term architecture combines an INT8/FP8 tensor engine, explicit SRAM and DMA, a bounded vector/utility datapath, and a small RISC-V control core.
+
+```mermaid
+flowchart LR
+    H[Host or sensors] <--> D[DMA and external memory]
+    D <--> S[Local tensor SRAM]
+    S <--> T[Tensor engine\nINT8 and future FP8]
+    S <--> V[Utility and vector operations]
+    R[RISC-V control\nplanned after v0] --> D
+    R --> T
+    R --> V
+    V --> O[Detections, policy state, or actions]
 ```
 
-The long-term design includes an INT8/FP8 tensor engine, explicit SRAM and DMA, vector/utility operations, and a RISC-V control core. The proposed v0 FPGA profile deliberately starts smaller: host-controlled INT8 convolution, INT32 accumulation, bounded utility operations, and serialized DMA. Native FP8 and RISC-V integration are planned for a later FPGA stage only after the INT8 path is validated.
+The proposed v0 stays deliberately small: eight INT8 output-channel MAC lanes, INT32 accumulation, roughly 52 KiB of logical local storage, serialized DMA, and host control. It prioritizes a complete, inspectable detector path over peak throughput. Native FP8 and integrated RISC-V control belong to later stages after INT8 correctness and workload feasibility are measured.
 
-| Stage | Precision and control | Scope |
+### Precision
+
+| Format | Intended role | Current support |
 |---|---|---|
-| v0 FPGA | INT8 inputs/weights, INT32 accumulation; host control | One complete, explicitly partitioned detector pipeline |
-| v1 FPGA | Expanded INT8 and native FP8 candidate; RISC-V control | Measured programmable inference prototype |
-| ASIC | Configuration chosen from measured PPA and memory traffic | Physically viable implementation, subject to flow and fabrication validation |
+| INT8 | Activations and weights for the first hardware path | Golden-model and command-simulator semantics implemented |
+| INT32 | Exact accumulation, bias, and optional raw logits | Golden-model and command-simulator semantics implemented |
+| E4M3FN FP8 | First planned native FP8 mode | Conversion and FP32-accumulated reference behavior only; no v0 device command |
+| E5M2 FP8 | Optional later format | Conversion reference only |
+| FP32 | Proposed FP8 accumulation and host/reference calculations | Software reference use only |
+| FP16 accumulation | Possible constrained future mode | Not selected or implemented |
 
-Read the [revised architecture](docs/haslab-v0-revised-architecture.md) and [v0 software/hardware contract](docs/haslab-v0-contract.md) before adding implementation work. The [original architecture plan](docs/architecture-plan.md) remains background material.
+Numerical behavior—including ties-to-even rounding, saturation, signed zero, NaN handling, overflow rejection, accumulation order, and the SiLU lookup-table path—is documented in the [reference-model specification](reference/numerical-semantics.md).
 
-## Repository map
+## Choose a path through the project
 
-| Area | Purpose today |
+### I want to study the arithmetic
+
+Start with the [Python reference model](reference/README.md) and [numerical semantics](reference/numerical-semantics.md). This is the best entry point for quantization experiments, independent test-vector generation, and numerical review.
+
+### I want to study the accelerator interface
+
+Read the [v0 software/hardware contract](docs/haslab-v0-contract.md), then inspect the [functional command simulator](simulation/README.md). The simulator covers command encoding, memory spaces, DMA, accumulator lifecycle, tensor operations, completion, reset, and architectural errors.
+
+### I want to work on FPGA implementation
+
+Begin with the [revised architecture](docs/haslab-v0-revised-architecture.md) and hardware source-tree guidance. The RTL and FPGA areas are placeholders today. Board selection, clock target, memory bridge, resource mapping, and RTL verification must be resolved before an FPGA capability can be claimed.
+
+### I want to explore fabrication
+
+Treat the planned profiles below as a roadmap. There is not yet a tapeout-ready release. A fabricatable version will need frozen RTL, conformance vectors, synthesis and timing evidence, process-specific SRAM wrappers, IO and clocking, power delivery, DFT/BIST, physical verification, packaging, and a documented fabrication path.
+
+## Planned implementation profiles
+
+HASLAB is intended to support different levels of experimentation without forcing every group to build the largest system.
+
+| Profile | Intended user | Planned contents | Maturity |
+|---|---|---|---|
+| Software/reference | Algorithms, architecture courses, compiler research | Numerical model, command simulator, future compiler backend | Numerical model and command simulator available |
+| v0 FPGA core | University labs and first hardware bring-up | Host control, INT8/INT32 compute, small scratchpads, serialized DMA | Architecture only |
+| v1 FPGA subsystem | Accelerator and robotics researchers | Higher measured throughput, RISC-V control, native FP8 candidate, bounded overlap | Future |
+| Basic ASIC test core | Open-silicon courses and shuttle experiments | Small proven compute core, SRAM macros, simple host interface, scan/BIST | Future; configuration depends on process and shuttle limits |
+| Integrated edge ASIC | Advanced university or commercial labs | Workload-sized compute/SRAM, RISC-V control, vector utilities, viable external-memory interface | Long-term research target |
+
+The basic test core should favor portability and observability over headline performance. The integrated version should be sized from measured workloads, memory bandwidth, area, and power rather than by copying the largest FPGA configuration. Each future release should state exactly which profile, process, memories, tools, and tests it supports.
+
+## FPGA-to-silicon roadmap
+
+1. **Numerical foundation — current.** Maintain exact reference behavior and edge-case tests.
+2. **Command-level behavior — current.** Validate byte-level commands, memory rules, state transitions, and error behavior.
+3. **Workload audit.** Pin the initial ONNX export, classify every operator, establish floating-point output and accuracy baselines, and calibrate the INT8 profile.
+4. **Compiler and runtime.** Lower the supported ONNX graph to target-specific HASLAB packages without hidden fallback.
+5. **RTL simulation.** Implement small modules against independent golden vectors, then integrate the complete serialized v0 path.
+6. **v0 FPGA.** Publish reproducible board files, timing, resources, accuracy, transfers, and complete pipeline latency.
+7. **v1 FPGA.** Add only the RISC-V, FP8, concurrency, and vector features justified by measurements.
+8. **ASIC feasibility.** Select an actual process and memory macros, run synthesis/place-and-route, and close IO, clock, power, DFT, and packaging gaps.
+9. **Test chip and silicon.** Publish fabrication collateral, bring-up results, measured behavior, and errata.
+
+No stage is considered complete solely because a demo produces plausible boxes. Numerical agreement, declared partitions, reproducible builds, and measured hardware results are required.
+
+## Repository guide
+
+| Area | What belongs there |
 |---|---|
-| `hardware/rtl/` | Future portable synthesizable RTL; intentionally empty of logic |
-| `hardware/testbenches/` | Future RTL testbenches and test vectors |
-| `simulation/` | Functional v0 command/memory simulator; future RTL harnesses |
-| `fpga/` | Future board targets, constraints, and build wrappers |
-| `software/` | Future host-facing software and firmware support |
-| `compiler/` | Future graph lowering, scheduling, and package generation |
-| `runtime/` | Future C-compatible runtime and platform backends |
-| `onnx/` | ONNX profile, importer, and operator-coverage work |
-| `reference/` | Python numerical golden model and its unit tests |
-| `benchmarks/` | Workload manifests, evaluation recipes, and results schema |
-| `docs/` | Architecture, contracts, decisions, and contributor documentation |
-| `scripts/` | Reproducible developer and CI helpers |
-| `.github/` | Continuous-integration workflows and issue templates |
+| [`reference/`](reference/) | Python golden model, numerical specification, and unit tests |
+| [`simulation/`](simulation/) | Functional v0 command/memory simulator and future RTL harnesses |
+| [`hardware/rtl/`](hardware/rtl/) | Future portable synthesizable RTL |
+| [`hardware/testbenches/`](hardware/testbenches/) | Future RTL testbenches, assertions, and checked-in vectors |
+| [`hardware/formal/`](hardware/formal/) | Future protocol and state-machine properties |
+| [`fpga/`](fpga/) | Future board wrappers, constraints, and reproducible builds |
+| [`compiler/`](compiler/) | Future graph validation, lowering, tiling, and package generation |
+| [`onnx/`](onnx/) | Supported ONNX profile, export recipes, and operator coverage |
+| [`runtime/`](runtime/) | Future public runtime API and platform backends |
+| [`software/`](software/) | Future host utilities and RISC-V firmware support |
+| [`benchmarks/`](benchmarks/) | Workload manifests, evaluation methods, and machine-readable results |
+| [`docs/`](docs/) | Architecture, interface contracts, design decisions, and project guidance |
+| [`scripts/`](scripts/) | Reproducible development and CI helpers |
 
-The root [Makefile](Makefile) provides repository checks and Python reference/simulator tests. It does not build accelerator hardware or a model runtime.
+Core reading order:
 
-## FPGA and ASIC direction
+1. [Revised v0, v1, and ASIC architecture](docs/haslab-v0-revised-architecture.md)
+2. [v0 software/hardware contract](docs/haslab-v0-contract.md)
+3. [Numerical semantics](reference/numerical-semantics.md)
+4. [Command-simulator behavior](simulation/command-simulator.md)
+5. [Original broad architecture plan](docs/architecture-plan.md) for background and alternatives
 
-The first FPGA target will use an existing board memory/host transport and keep vendor-specific wrappers outside portable accelerator logic. The future ASIC path will require separately validated SRAM macros, IO, clocking, power, test, packaging, and fabrication collateral. Open RTL-to-GDS tools are useful infrastructure but are not alone evidence of tapeout readiness.
+## For universities and research groups
 
-## Contributions
+HASLAB is structured so individual projects can contribute at different layers: quantization studies, operator lowering, command scheduling, memory systems, arithmetic RTL, protocol verification, FPGA integration, physical design, or robotics evaluation. Research results should pin the repository revision, model/export artifacts, numerical profile, dataset, tool versions, and measurement conditions.
 
-Contributions are welcome once the project begins accepting implementation work. Proposed changes should preserve the documented command and numerical contracts, state their verification method, avoid unmeasured performance claims, and keep third-party model, dataset, and tool licenses explicit. The contribution process, code of conduct, and issue templates are placeholders to be completed before broad implementation contributions are requested.
+Course and thesis projects can begin with the software/reference profile without waiting for RTL. Hardware projects should add independently checked vectors and avoid changing the numerical contract merely to match an implementation bug.
+
+## For commercial and applied laboratories
+
+The project is intended to be inspectable and adaptable for applied research, prototypes, and commercial experimentation under its licenses. Current materials are suitable for architecture review and software-level evaluation, not product deployment. Future hardware releases should make integration boundaries, supported operations, verification evidence, tool dependencies, and process-specific collateral explicit so a lab can decide whether to reuse a core, extend a profile, or build a larger subsystem.
+
+No safety, security, uptime, power, latency, fabrication-yield, or fitness-for-purpose guarantee is made.
+
+## Contributing
+
+Architecture review and numerical scrutiny are useful now. Broad implementation contributions will become easier after the initial model artifact, tool requirements, and issue workflow are pinned. A strong contribution should:
+
+- Identify the affected specification or interface.
+- Explain the workload or measurement motivating the change.
+- Include tests or verification evidence appropriate to the layer.
+- Preserve strict reporting of unsupported behavior.
+- Avoid performance and compatibility claims without reproducible results.
+- Record third-party model, dataset, PDK, IP, and tool licensing.
+
+See the current [contribution guidance](docs/contributing.md). Design decisions that change an interface or numerical rule should eventually receive a short record under `docs/decisions/`.
 
 ## Licensing
 
-Original hardware designs and design documentation are licensed under **CERN-OHL-S-2.0**. Original software is licensed under **GPL-3.0-or-later**. Both allow commercial use under their terms. See [LICENSE](LICENSE), [NOTICE](NOTICE), and [licensing notes](docs/licensing.md).
+Original hardware designs and design documentation are licensed under **CERN-OHL-S-2.0**. Original software is licensed under **GPL-3.0-or-later**. Both allow commercial use under their terms and carry reciprocal obligations in their respective scopes.
 
-The local `haslab-site/` directory is reserved for website assets and intentionally ignored by Git. Use a separate repository or direct deployment workflow when a public site is ready.
+See [LICENSE](LICENSE), [NOTICE](NOTICE), and the [licensing explanation](docs/licensing.md). Model weights, datasets, PDKs, vendor IP, and other third-party materials keep their own licenses and are not automatically covered by HASLAB's licenses.
+
+Copyright © 2026 Zubin Bhuyan and contributors.
+
+## Website
+
+The [website content brief](docs/website-content-brief.md) defines a proposed sitemap, audience paths, content hierarchy, visual direction, and a ready-to-use generation prompt for a structured neo-brutalist site.
+
+The local `haslab-site/` directory is intentionally ignored by Git so website work can be developed or deployed separately to Cloudflare Pages, Netlify, or a similar static host.

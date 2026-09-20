@@ -1,6 +1,9 @@
 # Local website workspace (kept outside this repository's tracked content)
 /haslab-site/
 
+# Local website planning brief
+/docs/website-content-brief.md
+
 # macOS / desktop metadata
 .DS_Store
 ._*

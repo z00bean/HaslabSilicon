@@ -9,6 +9,7 @@ Architecture and interface specifications live here. They are proposed contracts
 | [haslab-v0-contract.md](haslab-v0-contract.md) | Proposed v0 software/hardware contract |
 | [../reference/numerical-semantics.md](../reference/numerical-semantics.md) | Executable reference-model numerical behavior |
 | [../simulation/command-simulator.md](../simulation/command-simulator.md) | Functional command/memory simulator behavior |
+| [website-content-brief.md](website-content-brief.md) | Proposed sitemap, audience paths, visual system, and website-generation prompt |
 | [hardware/](hardware/) | Hardware design documentation skeleton |
 | [decisions/](decisions/) | Future architecture decision records |
 | [contributing.md](contributing.md) | Contribution-process placeholder |

@@ -2,6 +2,8 @@
 
 > **Open silicon for edge intelligence.**
 
+Website: [haslab-site.pages.dev](https://haslab-site.pages.dev/)
+
 HASLAB is an open-source physical-AI inference-engine project for computer vision, robotics, and edge AI. Its aim is to create a programmable, inspectable path from a trained neural network to hardware that researchers can simulate, study, modify, place on an FPGA, and eventually fabricate as silicon.
 
 ```text

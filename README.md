@@ -208,8 +208,3 @@ See [LICENSE](LICENSE), [NOTICE](NOTICE), and the [licensing explanation](docs/l
 
 Copyright © 2026 Zubin Bhuyan and contributors.
 
-## Website
-
-The [website content brief](docs/website-content-brief.md) defines a proposed sitemap, audience paths, content hierarchy, visual direction, and a ready-to-use generation prompt for a structured neo-brutalist site.
-
-The local `haslab-site/` directory is intentionally ignored by Git so website work can be developed or deployed separately to Cloudflare Pages, Netlify, or a similar static host.

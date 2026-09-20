@@ -1,0 +1,72 @@
+# Local website workspace (kept outside this repository's tracked content)
+/haslab-site/
+
+# macOS / desktop metadata
+.DS_Store
+._*
+.Spotlight-V100/
+.Trashes/
+Thumbs.db
+Desktop.ini
+
+# Editor temporary files
+*~
+*.swp
+*.swo
+.idea/
+
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+!.env.sample
+.venv/
+venv/
+
+# Python caches and test output
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+# JavaScript dependencies / generated output
+node_modules/
+.next/
+.netlify/
+.wrangler/
+
+# Generated builds and simulation output; keep source/configuration tracked
+/build/
+/dist/
+/artifacts/
+/cache/
+obj_dir/
+sim_build/
+*.vcd
+*.fst
+*.ghw
+.Xil/
+*.jou
+
+# Downloaded/generated workload assets belong in ignored directories;
+# model manifests, export recipes, small fixtures, and constraints stay tracked.
+/models/downloads/
+/models/generated/
+/datasets/
+
+# Compiled objects, FPGA checkpoints/bitstreams, and simulator binaries
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+*.bit
+*.pdi
+*.dcp
+*.wdb
+*.vvp

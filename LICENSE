@@ -1,0 +1,61 @@
+HASLAB licensing
+
+Copyright (C) 2026 Zubin Bhuyan.
+Other contributors retain copyright in their respective contributions.
+
+Unless an individual file carries a different notice, original HASLAB material
+is licensed by category as follows:
+
+1. Hardware designs and design documentation
+
+   Hardware description language sources, schematics, board/chip layouts,
+   fabrication design sources, architecture specifications, interface
+   specifications, and their associated documentation (including README.md and
+   docs/) are licensed under the CERN Open Hardware Licence Version 2 - Strongly
+   Reciprocal, SPDX identifier CERN-OHL-S-2.0.
+
+   The complete, unmodified license text is in:
+   LICENSES/CERN-OHL-S-2.0.txt
+
+   Source location: https://github.com/z00bean/HaslabSilicon
+
+   You may redistribute and modify this Covered Source under the terms of that
+   license. This Covered Source is distributed WITHOUT ANY EXPRESS OR IMPLIED
+   WARRANTY, INCLUDING OF MERCHANTABILITY, SATISFACTORY QUALITY AND FITNESS
+   FOR A PARTICULAR PURPOSE. See the license for applicable conditions.
+
+2. Software
+
+   Original HASLAB compiler, simulator, runtime, firmware, tests, scripts,
+   software build/configuration files, and other software are licensed under
+   the GNU General Public License, version 3 or (at your option) any later
+   version, SPDX identifier GPL-3.0-or-later. This category also applies to
+   software scripts accompanying hardware designs; HDL design sources remain
+   in category 1.
+
+   The complete, unmodified GPL version 3 text is in:
+   LICENSES/GPL-3.0-or-later.txt
+
+   This software is free software: you can redistribute it and/or modify it
+   under the terms of the GNU General Public License as published by the Free
+   Software Foundation, either version 3 of the License, or (at your option)
+   any later version.
+
+   This software is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+   for more details.
+
+These are category-specific licenses, not a choice between two licenses for
+the same material. Individual third-party notices take precedence for those
+third-party materials. License texts themselves retain their original notices.
+
+Model weights, datasets, PDKs, vendor IP, and other third-party dependencies are
+not relicensed by this notice. Their own terms must be followed.
+
+Both selected licenses permit commercial use under their terms. No separate
+permission or payment is required solely because a use is commercial. This
+project does not impose an additional noncommercial restriction.
+
+See docs/licensing.md for a short explanation of this choice. The full license
+texts, not that explanation, define the granted rights and obligations.

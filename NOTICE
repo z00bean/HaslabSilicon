@@ -1,0 +1,14 @@
+HASLAB
+Copyright (C) 2026 Zubin Bhuyan.
+Contributors retain copyright in their respective contributions.
+
+Source location: https://github.com/z00bean/HaslabSilicon
+
+Original hardware designs and design documentation: CERN-OHL-S-2.0.
+Original software: GPL-3.0-or-later.
+See LICENSE for scope and LICENSES/ for the complete license texts.
+
+References to ONNX, RISC-V, YOLO, FPGA tools, and ASIC tools in the
+specifications describe planned interoperability. This repository does not
+include their implementations, model weights, datasets, or fabrication IP.
+Future third-party additions must retain their own notices and licenses.

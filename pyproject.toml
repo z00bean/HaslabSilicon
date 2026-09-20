@@ -12,9 +12,9 @@ authors = [{ name = "Zubin Bhuyan" }]
 dependencies = ["numpy>=1.26"]
 
 [tool.setuptools.packages.find]
-where = ["reference"]
-include = ["haslab_ref*"]
+where = ["reference", "simulation"]
+include = ["haslab_ref*", "haslab_sim*"]
 
 [tool.pytest.ini_options]
-testpaths = ["reference/tests", "compiler/tests", "runtime/tests"]
+testpaths = ["reference/tests", "simulation/tests", "compiler/tests", "runtime/tests"]
 addopts = "-ra"

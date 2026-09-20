@@ -3,7 +3,7 @@
 Copyright (C) 2026 Zubin Bhuyan.
 SPDX-License-Identifier: CERN-OHL-S-2.0
 
-**Status:** proposed specification, revision 0.1, September 20, 2026. This defines an intended hardware/software interface, not existing accelerator functionality. The release profile is `haslab-v0-int8`. The [revised architecture](haslab-v0-revised-architecture.md) supplies its rationale; this document takes precedence for interface details. The executable [Python numerical reference model](../reference/numerical-semantics.md) now defines and tests the arithmetic subset. No compiler, runtime, model export, command simulator, or RTL is implemented here.
+**Status:** proposed specification, revision 0.1, September 20, 2026. This defines an intended hardware/software interface, not existing accelerator functionality. The release profile is `haslab-v0-int8`. The [revised architecture](haslab-v0-revised-architecture.md) supplies its rationale; this document takes precedence for interface details. The executable [Python numerical reference model](../reference/numerical-semantics.md) defines the arithmetic subset, and the [functional command simulator](../simulation/command-simulator.md) exercises the byte-level ABI and state behavior. No compiler, runtime, model export, cycle model, or RTL is implemented here.
 
 The intended workflow is:
 
@@ -439,4 +439,4 @@ Future tests must cover independent numeric reference agreement; positive/negati
 
 A representative byte-layout test should show that pixel (0,1), logical channel 2 in an HWC8 tensor with C=3 is at byte offset 10, while the next row begins at W×8. A 3×3, 32-input-channel, eight-output-lane weight tile occupies 2,304 bytes. An 8×8 output tile uses 2,048 ACC bytes and 512 INT8 OUTPUT bytes. These examples are specification checks, not test implementation.
 
-The Python golden model now accompanies the numerical portions of this contract. Remaining pre-RTL work includes resolving the pinned workload and quantization-accuracy gates, then extending verification to byte-level command sequences and state behavior. No RTL has been written.
+The Python golden model and functional command simulator now accompany the numerical and byte-level portions of this contract. Remaining pre-RTL work includes resolving the pinned workload and quantization-accuracy gates and generating independent conformance vectors for a future RTL implementation. No RTL has been written.

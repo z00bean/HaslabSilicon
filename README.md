@@ -8,7 +8,7 @@ Physical-AI systems need perception results in a form that can feed a controller
 
 ## Status
 
-The repository is in the **reference-model and architecture stage**. It contains specifications, repository scaffolding, and an executable Python numerical golden model. No tensor accelerator RTL, compiler, runtime, FPGA design, hardware simulator, or supported model execution exists yet.
+The repository is in the **reference-model and architecture stage**. It contains specifications, an executable Python numerical golden model, and a functional v0 command simulator. No tensor accelerator RTL, compiler, runtime, FPGA design, cycle-accurate simulator, or supported model execution exists yet.
 
 ## Target workloads
 
@@ -44,7 +44,7 @@ Read the [revised architecture](docs/haslab-v0-revised-architecture.md) and [v0 
 |---|---|
 | `hardware/rtl/` | Future portable synthesizable RTL; intentionally empty of logic |
 | `hardware/testbenches/` | Future RTL testbenches and test vectors |
-| `simulation/` | Future simulation harnesses and backend integration |
+| `simulation/` | Functional v0 command/memory simulator; future RTL harnesses |
 | `fpga/` | Future board targets, constraints, and build wrappers |
 | `software/` | Future host-facing software and firmware support |
 | `compiler/` | Future graph lowering, scheduling, and package generation |
@@ -56,7 +56,7 @@ Read the [revised architecture](docs/haslab-v0-revised-architecture.md) and [v0 
 | `scripts/` | Reproducible developer and CI helpers |
 | `.github/` | Continuous-integration workflows and issue templates |
 
-The root [Makefile](Makefile) provides repository checks and Python reference-model tests. It does not build accelerator hardware or a model runtime.
+The root [Makefile](Makefile) provides repository checks and Python reference/simulator tests. It does not build accelerator hardware or a model runtime.
 
 ## FPGA and ASIC direction
 

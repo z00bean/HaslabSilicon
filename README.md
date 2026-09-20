@@ -207,4 +207,3 @@ Original hardware designs and design documentation are licensed under **CERN-OHL
 See [LICENSE](LICENSE), [NOTICE](NOTICE), and the [licensing explanation](docs/licensing.md). Model weights, datasets, PDKs, vendor IP, and other third-party materials keep their own licenses and are not automatically covered by HASLAB's licenses.
 
 Copyright © 2026 Zubin Bhuyan and contributors.
-

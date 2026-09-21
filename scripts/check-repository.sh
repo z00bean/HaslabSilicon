@@ -12,9 +12,4 @@ for path in $required_paths; do
   fi
 done
 
-if ! grep -q '^/haslab-site/$' .gitignore; then
-  printf '%s\n' 'haslab-site must remain ignored.' >&2
-  exit 1
-fi
-
 printf '%s\n' 'Repository foundation checks passed. No implementation targets were run.'

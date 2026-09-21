@@ -16,5 +16,5 @@ jobs:
         run: make check
       - name: Install reference-model dependencies
         run: python -m pip install 'numpy>=1.26'
-      - name: Test reference model, simulator, and independent conformance corpus
+      - name: Test reference model, compiler/runtime slice, simulator, and conformance corpus
         run: make test

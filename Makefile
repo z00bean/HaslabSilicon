@@ -20,6 +20,8 @@ check:
 test:
 	@PYTHONPATH=reference python3 -m unittest discover -s reference/tests -p 'test_*.py' -v
 	@PYTHONPATH=reference:simulation python3 -m unittest discover -s simulation/tests -p 'test_*.py' -v
+	@PYTHONPATH=reference:simulation:compiler:runtime python3 -m unittest discover -s compiler/tests -p 'test_*.py' -v
+	@PYTHONPATH=reference:simulation:compiler:runtime python3 -m unittest discover -s runtime/tests -p 'test_*.py' -v
 	@python3 -m unittest discover -s benchmarks/tests -p 'test_*.py' -v
 	@$(MAKE) conformance
 

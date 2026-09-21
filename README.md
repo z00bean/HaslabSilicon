@@ -20,9 +20,9 @@ HASLAB is being designed in public from the numerical contract upward. The proje
 
 ## Current status
 
-**Stage: v0 contract candidate and conformance corpus implemented; first workload audit active.**
+**Stage: v0 contract candidate and conformance corpus implemented; calibrated workload complete; minimal compiler/runtime active.**
 
-The repository currently contains an architecture specification, an executable Python golden model, a byte-level command simulator, 46 independently authored binary conformance fixtures with a strict runner, and a pinned YOLOv8n workload with a reproducible full-dataset FLOAT baseline. It does not yet contain tensor-accelerator RTL, an ONNX compiler, a runtime, an FPGA bitstream, an ASIC implementation, calibrated INT8 accuracy, or demonstrated YOLO execution on HASLAB hardware.
+The repository currently contains an architecture specification, an executable Python golden model, a byte-level command simulator, 46 independently authored binary conformance fixtures with a strict runner, and a pinned YOLOv8n workload with reproducible FLOAT and calibrated INT8 software baselines. A narrow M6 compiler/runtime slice now executes one first-layer YOLO tile through exact HASLAB commands and matches the golden model. The repository does not yet contain a whole-model ONNX compiler, production runtime, tensor-accelerator RTL, FPGA bitstream, ASIC implementation, or end-to-end YOLO execution through HASLAB commands or hardware.
 
 | Component | Status | What that means |
 |---|---|---|
@@ -31,9 +31,9 @@ The repository currently contains an architecture specification, an executable P
 | Functional command simulator | Implemented and unit-tested | Executes the proposed 128-byte command ABI over modeled memory spaces |
 | v0 contract freeze | Active | ABI 0.1 candidate has conformance evidence; stable freeze awaits independent review |
 | v0 conformance package | Candidate implemented and tested | 46 stored command/memory/status fixtures, machine-readable ABI registry, integrity checks, and CI runner; final release tied to ABI freeze |
-| Pinned YOLO-class workload | Active | Exact weight/export, graph inventory, preprocessing, learned-head partition, local-memory audit, and reproducible 5,000-image COCO FLOAT accuracy are tracked; INT8 calibration and complete scheduling remain open |
-| ONNX importer and compiler | Planned | No model can be compiled to HASLAB yet |
-| Runtime | Planned | No application-facing device API exists yet |
+| Pinned YOLO-class workload | Pinned and measured in software | Exact weight/export, graph inventory, preprocessing, partition, FLOAT baseline, deterministic INT8 calibration package, layerwise diagnostics, and proxy COCO accuracy are tracked |
+| ONNX importer and compiler | Narrow slice implemented | Validates and compiles one 8×8, eight-channel tile of the pinned first Conv-SiLU block; whole-layer and graph lowering remain open |
+| Runtime | Narrow simulator backend implemented | Strictly loads the experimental slice package, binds input, submits, waits, resets, and reports errors; no C/FPGA or host-tail backend yet |
 | RTL and RTL testbenches | Planned | No hardware implementation exists yet |
 | FPGA target | Planned | No board has been selected or benchmarked |
 | ASIC flow and fabrication kit | Future | No design is currently ready to fabricate |
@@ -45,7 +45,7 @@ make check
 make test
 ```
 
-The current test suite covers the numerical model, functional command simulator, conformance infrastructure, stored independent expectations, and workload-manifest consistency. Run `make conformance` for the corpus alone. Passing establishes agreement for the tested cases; it is not an FPGA or silicon performance result. See the [conformance guide](conformance/README.md) for coverage and derivations.
+The current test suite covers the numerical model, functional command simulator, compiler/package writer, strict runtime loader and lifecycle, conformance infrastructure, stored independent expectations, and workload-manifest consistency. Run `make conformance` for the corpus alone. Passing establishes agreement for the tested cases; it is not an FPGA or silicon performance result. See the [conformance guide](conformance/README.md) for coverage and derivations.
 
 ### Progress at a glance
 
@@ -56,8 +56,8 @@ The current test suite covers the numerical model, functional command simulator,
 - [ ] Freeze the stable v0 ABI after independent review and conformance evidence.
 - [x] Build the candidate independent conformance corpus, ABI registry, and CI runner.
 - [ ] Release the final conformance corpus after stable ABI freeze and independent review.
-- [ ] Complete the first YOLO-class workload audit. Artifact, export, graph partition, static memory checks, and the COCO FLOAT baseline are pinned; INT8 calibration and complete scheduling are next.
-- [ ] Implement the minimal compiler and simulated runtime path.
+- [x] Pin and audit the first YOLO-class workload, including reproducible FLOAT accuracy and a calibrated INT8 software proxy inside the one-point mAP50–95 budget.
+- [ ] Implement the minimal compiler and simulated runtime path. **Active: first Conv-SiLU tile passes; full first layer is next.**
 - [ ] Implement and differentially verify the first RTL vertical slice.
 - [ ] Expand RTL operation coverage one conformance-gated operation at a time.
 - [ ] Select an FPGA from measured resource probes and complete v0 bring-up.
@@ -96,7 +96,7 @@ The primary target is batch-one edge vision:
 
 Compact vision transformers and edge transformers are later research targets where operator coverage and memory traffic prove practical. Large-model training and datacenter LLM inference are outside the initial scope.
 
-The first end-to-end workload candidate is a pinned YOLOv8n detector at 320×320. Its exact third-party weight, FLOAT ONNX export, preprocessing, complete graph inventory, and learned-head/host-tail boundary are recorded in the [workload manifest](benchmarks/manifests/yolov8n-320-opset13/README.md). The proposed FPGA path executes the quantized backbone, neck, and learned detection head, while the host performs declared image preparation and final box decoding/DFL/NMS. The structural audit found no unsupported accelerator nodes and all proposed convolution tiles fit local memory. Two full FLOAT evaluations over COCO val2017 produced identical predictions and measured 0.28497 bbox mAP50–95 and 0.41359 mAP50. INT8 calibration, command generation, and hardware execution remain unimplemented.
+The first end-to-end workload candidate is a pinned YOLOv8n detector at 320×320. Its exact third-party weight, FLOAT ONNX export, preprocessing, complete graph inventory, learned-head/host-tail boundary, and calibration package are recorded in the [workload manifest](benchmarks/manifests/yolov8n-320-opset13/README.md). The proposed FPGA path executes the quantized backbone, neck, and learned detection head, while the host performs declared image preparation and final box decoding/DFL/NMS. The structural audit found no unsupported accelerator nodes and all proposed convolution tiles fit local memory. Repeated full COCO val2017 evaluations measured 0.28497 bbox mAP50–95 for FLOAT and 0.27610 for the signed-symmetric INT8 software proxy, a 0.887-percentage-point loss within the stated one-point budget. One first-layer tile now passes exact command-level comparison; full-layer, whole-model, and hardware execution remain unimplemented.
 
 ## Architecture direction
 
@@ -178,9 +178,9 @@ No stage is considered complete solely because a demo produces plausible boxes. 
 | [`hardware/testbenches/`](hardware/testbenches/) | Future RTL testbenches, assertions, and checked-in vectors |
 | [`hardware/formal/`](hardware/formal/) | Future protocol and state-machine properties |
 | [`fpga/`](fpga/) | Future board wrappers, constraints, and reproducible builds |
-| [`compiler/`](compiler/) | Future graph validation, lowering, tiling, and package generation |
+| [`compiler/`](compiler/) | First-block graph validation, tile lowering, and experimental `.hxb` generation; whole-graph work remains |
 | [`onnx/`](onnx/) | Supported ONNX profile, export recipes, and operator coverage |
-| [`runtime/`](runtime/) | Future public runtime API and platform backends |
+| [`runtime/`](runtime/) | Minimal strict package loader and simulator lifecycle; future C and platform backends |
 | [`software/`](software/) | Future host utilities and RISC-V firmware support |
 | [`benchmarks/`](benchmarks/) | Pinned workload manifests, audit tools, evaluation methods, and machine-readable results |
 | [`docs/`](docs/) | Architecture, interface contracts, design decisions, and project guidance |

@@ -34,10 +34,13 @@ def main() -> int:
     parser.add_argument("model", type=Path)
     parser.add_argument("--dataset-root", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--expected-sha256", default=EXPECTED_MODEL_SHA256)
+    parser.add_argument("--run-name", default="yolov8n-320-opset13-float")
+    parser.add_argument("--profile", default="FLOAT32")
     args = parser.parse_args()
 
     model_hash = sha256_file(args.model)
-    if model_hash != EXPECTED_MODEL_SHA256:
+    if model_hash != args.expected_sha256:
         raise SystemExit(f"model hash mismatch: {model_hash}")
     root = args.dataset_root.resolve()
     preparation_path = root / "preparation.json"
@@ -55,7 +58,7 @@ def main() -> int:
     dataset_yaml.write_text("\n".join(yaml_lines) + "\n", encoding="utf-8")
 
     run_root = root / "runs"
-    run_name = "yolov8n-320-opset13-float"
+    run_name = args.run_name
     if "CPUExecutionProvider" not in onnxruntime.get_available_providers():
         raise SystemExit("ONNX Runtime CPUExecutionProvider is unavailable")
     original_provider_query = onnxruntime.get_available_providers
@@ -105,6 +108,7 @@ def main() -> int:
         "model": {
             "filename": args.model.name,
             "sha256": model_hash,
+            "profile": args.profile,
             "backend": "ONNX Runtime CPUExecutionProvider via Ultralytics AutoBackend",
         },
         "dataset": preparation,
@@ -130,7 +134,7 @@ def main() -> int:
             },
             "predictions_sha256": sha256_file(predictions),
             "predictions_bytes": predictions.stat().st_size,
-            "command_profile": "static ONNX, CPUExecutionProvider, batch 1, 320x320, conf 0.001, NMS IoU 0.7, max_det 300, square validation batches",
+            "command_profile": f"{args.profile}, static ONNX, CPUExecutionProvider, batch 1, 320x320, conf 0.001, NMS IoU 0.7, max_det 300, square validation batches",
         },
         "environment": {
             "python": platform.python_version(),

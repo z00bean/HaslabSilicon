@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "workload_id": "yolov8n-320-opset13",
-  "status": "float_baseline_complete_quantization_and_schedule_pending",
+  "status": "int8_calibration_and_proxy_accuracy_complete_exact_execution_and_schedule_pending",
   "model": {
     "family": "Ultralytics YOLOv8",
     "variant": "YOLOv8n detection",
@@ -99,7 +99,8 @@
       "padding_lanes": "zero",
       "dtype": "INT8",
       "zero_point": 0,
-      "scale": "pending calibration; must be positive finite binary32 and recorded in the quantized package"
+      "scale": 0.007874015718698502,
+      "scale_binary32_sha256": "98b9945237670ef9fbb395830200d04e05a4a00a787ec50edac20200ee3cea02"
     }
   },
   "partition": {
@@ -165,6 +166,11 @@
     "graph_inventory": "graph-audit.json",
     "float_smoke_baseline": "float-smoke-baseline.json",
     "float_coco_baseline": "float-coco-baseline.json",
+    "calibration_selection": "calibration-selection.json",
+    "int8_calibration": "int8-calibration.json",
+    "int8_diagnostics": "int8-diagnostics.json",
+    "int8_coco_baseline": "int8-coco-baseline.json",
+    "int8_silu_luts": "int8-silu-luts.bin",
     "accelerator_node_count": 218,
     "host_tail_node_count": 43,
     "accelerator_convolution_count": 63,
@@ -223,29 +229,81 @@
     "reproducibility": "two complete evaluations produced identical aggregate metrics, all 80 per-class AP pairs, and prediction-file SHA256"
   },
   "quantization": {
-    "status": "pending",
+    "status": "calibrated_proxy_passes_accuracy_budget_exact_haslab_execution_pending",
     "weights": "symmetric signed INT8, zero point 0, per-output-channel scale",
     "activations": "symmetric signed INT8, zero point 0, per-tensor scale",
-    "accumulation": "signed INT32 with overflow rejected",
+    "accumulation": "signed INT32 in the QOperator proxy; overflow rejection remains part of the HASLAB command contract",
     "calibration_dataset": "512 images from COCO 2017 train, selected by lexicographically smallest SHA256(image filename), with no validation images",
+    "selection": {
+      "result": "calibration-selection.json",
+      "annotation_archive_sha256": "113a836d90195ee1f884e704da6304dfaaecff1f023f49b6ca93c4aaae470268",
+      "instances_train2017_sha256": "610fce4944abdeb15354cc765333805529359d12d88f2f711393ca586901d01d",
+      "image_count": 512,
+      "ordered_filename_sha256": "cf40f74b98f22fd76f974be06357a2fc3c06bf422cade84752f6105eb73e3e7c",
+      "image_collection_sha256": "c6661e43d1d8fe20a3cc62b52a0de095a53773bbb0dbdebee3f5f61b3dc2c760",
+      "total_image_bytes": 81630075
+    },
+    "calibration": {
+      "result": "int8-calibration.json",
+      "algorithm": "ONNX Runtime 1.20.1 MinMax with an explicitly symmetric range",
+      "activation_scale_count": 205,
+      "weight_scale_tensor_count": 63,
+      "zero_point_count": 268,
+      "all_zero_points_are_zero": true,
+      "silu_table_count": 57,
+      "silu_binary_bytes": 58368,
+      "silu_binary_sha256": "78dbd09a7389d23cc517ca6930075d5bb53dc152eb9c4248de7e8235f6c4caf4",
+      "quantized_proxy_model_bytes": 3392732,
+      "quantized_proxy_model_sha256": "48f967b5a756f47163176195c0efb8bd4e2467e658c0f49fb89e9d8479d15d3e",
+      "reproducibility": "two complete calibrations produced byte-identical ONNX models and SiLU table binaries"
+    },
+    "diagnostics": {
+      "result": "int8-diagnostics.json",
+      "images": 512,
+      "activation_tensor_count": 215,
+      "activation_values": 6927155200,
+      "activation_clipped_fraction": 0.00008517955538227295,
+      "activation_saturated_fraction": 0.007437638036462645,
+      "activation_cumulative_mean_absolute_error": 0.14310617316465601,
+      "weight_values": 3146160,
+      "weight_clipped_fraction": 0.0,
+      "weight_saturated_fraction": 0.0008051084496656241,
+      "weight_mean_absolute_error": 0.0009708007253032486
+    },
     "acceptance_budget": {
       "metric": "COCO bbox mAP50-95",
-      "maximum_absolute_loss": 1.0,
+      "maximum_absolute_loss": 0.01,
+      "maximum_loss_percentage_points": 1.0,
       "comparison": "against this pinned FLOAT export at 320x320 with identical preprocessing and host-tail settings"
     },
-    "required_records": [
-      "dataset archive and annotation hashes",
-      "ordered calibration image list and its hash",
-      "observer/calibration algorithm and version",
-      "every activation/weight scale",
-      "SiLU LUT grids and hashes",
-      "clipping and saturation counts",
-      "layerwise FLOAT versus quantized error",
-      "final accuracy metrics"
-    ]
+    "proxy_evaluation": {
+      "result": "int8-coco-baseline.json",
+      "profile": "ONNX Runtime signed-symmetric QOperator software proxy over accelerator nodes 0-217, followed by the unchanged FLOAT host tail",
+      "mAP50_95": 0.27609816109784063,
+      "mAP50": 0.40444382830799325,
+      "precision": 0.5825443393075068,
+      "recall": 0.37429433143171714,
+      "absolute_mAP50_95_loss": 0.008871031101605975,
+      "loss_percentage_points": 0.8871031101605975,
+      "passes_budget": true,
+      "predictions_bytes": 85090984,
+      "predictions_sha256": "2793fd75bf77628a9af92fabadc428f6b3b36c2944f687ecc00fc33e57e73216",
+      "reproducibility": "two complete evaluations produced identical aggregate metrics, all 80 per-class AP pairs, and prediction-file SHA256"
+    },
+    "acceptance_scope": "The calibrated proxy passes the numerical budget, but is not final HASLAB acceptance because QLinearSigmoid/QLinearMul do not execute the specified fused SiLU LUT and the proxy requantizes final learned-head outputs rather than preserving the specified INT32 boundary."
+  },
+  "m6_vertical_slice": {
+    "status": "first_conv_silu_tile_passes",
+    "result": "m6-first-conv-silu-slice.json",
+    "package_schema": "haslab.vertical-slice.v1",
+    "package_sha256": "a2e420402f27fc5af59970c5e9140e85794d896324e6d2017e203d4d60c338ab",
+    "commands": 8,
+    "exact_values_compared": 512,
+    "mismatches": 0,
+    "scope": "one interior 8x8 tile and output channels 0-7 of nodes 0-2"
   },
   "open_gates": [
-    "Implement calibration and measure the candidate INT8 profile against the one-point mAP50-95 budget.",
+    "Extend the passing first tile to the complete first layer and then the calibrated accelerator graph, including boundary halos, fixed-point epilogues, residual scaling, and the INT32 learned-head boundary; repeat the accuracy comparison.",
     "Generate an optimized whole-graph liveness/allocation and total command/DMA traffic report in M6.",
     "Measure whether the eight-entry command FIFO and host refill path can sustain the required command rate."
   ]

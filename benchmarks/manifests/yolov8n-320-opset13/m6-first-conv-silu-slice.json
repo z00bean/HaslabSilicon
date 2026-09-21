@@ -1,0 +1,82 @@
+{
+  "calibration_sha256": "d27fe25a304c633e44b226e81fc23c4ba707690f257ce99ce0204c41db3e44b7",
+  "environment": {
+    "numpy": "1.26.4",
+    "onnx": "1.17.0",
+    "onnxruntime": "1.20.1",
+    "python": "3.11.10"
+  },
+  "exact_integer_comparison": {
+    "compared_values": 512,
+    "mismatch_count": 0,
+    "output_sha256": "ee79b853ccce8d896d5d09f4b3e9f822767d160d55d51ced797e26bd3d96e854",
+    "pass": true,
+    "reference": "haslab_ref conv2d_i8 + silu_lut_i32"
+  },
+  "input": {
+    "full_shape": [
+      1,
+      3,
+      320,
+      320
+    ],
+    "generator": "((channel*37 + y*3 + x*5) mod 256) / FLOAT32(255)",
+    "patch_bytes": 2312,
+    "patch_physical_shape": [
+      17,
+      17,
+      1,
+      8
+    ],
+    "patch_sha256": "d32cd38fcea4000a0d54faa64034ec76154e8ed6cc4010ece3c60a0a565720c3"
+  },
+  "lut_binary_sha256": "78dbd09a7389d23cc517ca6930075d5bb53dc152eb9c4248de7e8235f6c4caf4",
+  "onnx_float_comparison": {
+    "compared_values": 512,
+    "int8_saturation_count": 0,
+    "maximum_absolute_error": 0.2089371681213379,
+    "mean_absolute_error": 0.09520698999938837,
+    "reference": "ONNX Runtime output of node 2 for the same deterministic input",
+    "root_mean_square_error": 0.10964398703289595
+  },
+  "package": {
+    "bytes": 5056,
+    "commands": 8,
+    "constant_bytes": 1728,
+    "repeated_compilation_byte_identical": true,
+    "schema": "haslab.vertical-slice.v1",
+    "sha256": "a2e420402f27fc5af59970c5e9140e85794d896324e6d2017e203d4d60c338ab"
+  },
+  "runtime": {
+    "backend": "haslab_sim functional command simulator",
+    "completion": "success",
+    "final_sequence": 8,
+    "reset_generation": 0
+  },
+  "schema_version": 1,
+  "scope": {
+    "limitation": "This is one interior tile and one eight-channel group of the first block, not whole-layer or whole-model execution.",
+    "nodes": [
+      "/model.0/conv/Conv",
+      "/model.0/act/Sigmoid",
+      "/model.0/act/Mul"
+    ],
+    "output_channels": [
+      0,
+      7
+    ],
+    "output_tile_origin_yx": [
+      1,
+      1
+    ],
+    "output_tile_shape": [
+      8,
+      8
+    ]
+  },
+  "source_model": {
+    "filename": "yolov8n-320-opset13.onnx",
+    "sha256": "5b232bf21720cac4264463896ace02b919d8bec3f3fd1e4b9d36695493fa1718"
+  },
+  "status": "passing_vertical_slice"
+}

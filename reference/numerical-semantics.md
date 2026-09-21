@@ -107,4 +107,4 @@ The converters preserve input dtype and reject nonnumeric, nonpositive, or struc
 
 The test suite exhaustively round-trips every finite encoding of both FP8 formats and separately tests special values, subnormal and normal ties, saturation, scaling, integer rounding, accumulator overflow, layout padding, convolution, pooling, upsampling, activation LUT behavior, argmax ties, and unsupported sampling.
 
-These tests establish the Python definition. Before RTL, the project still needs byte-level command conformance vectors, an audited pinned ONNX export, and measured detector quantization accuracy.
+These tests establish the Python definition. The repository now also contains byte-level command conformance vectors, an audited pinned ONNX export, and measured calibration accuracy from a signed-symmetric INT8 software proxy. Before RTL can claim workload agreement, the compiler and simulated runtime must execute the pinned model with these exact HASLAB numerical rules and pass layerwise differential checks.

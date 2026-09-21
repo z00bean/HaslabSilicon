@@ -22,7 +22,9 @@ The M3 implementation review is complete and documented in the [contract review 
 
 M4's candidate package is implemented in [conformance/](../conformance/README.md): 46 independently authored binary fixtures, schema version 1, ABI registry with consistency checks, strict artifact validation, simulator runner, and CI integration. These expectations are independent of implementation helpers, but have not received independent external review. M3 freeze and final M4 release remain open.
 
-M5 is active. The first YOLOv8n weight and FLOAT ONNX export are pinned, the complete graph is inventoried, the accelerator/host-tail boundary is explicit, and every proposed convolution tile fits the v0 local memories. A deterministic PyTorch/ONNX smoke comparison passes. Two complete evaluations over all 5,000 COCO 2017 validation images produced identical predictions, with 0.28497 bbox mAP50–95 and 0.41359 mAP50. INT8 calibration, optimized liveness, and measured command feasibility remain open; those results are required before M5 can close. Independent review of the candidate contract and corpus can proceed alongside this work.
+M5 is complete as a workload-pinning milestone. The exact YOLOv8n artifact, graph, preprocessing, host boundary, FLOAT baseline, deterministic 512-image calibration set, all candidate INT8 scales, 57 SiLU tables, and layerwise diagnostics are recorded. The signed-symmetric INT8 software proxy measured 0.27610 bbox mAP50–95, a 0.887-point loss from FLOAT and inside the one-point budget. This proxy uses ONNX Runtime QLinear sigmoid/multiply operations and requantized learned-head outputs, so it does not claim whole-model HASLAB command or hardware agreement.
+
+M6 is active. Its first vertical slice consumes the pinned graph and calibration package, lowers one interior 8×8 tile and output channels 0–7 of the first Conv-SiLU block, emits a deterministic `.hxb`, validates and relocates it through a minimal runtime, and executes eight commands in the simulator. All 512 output bytes match the independent integer golden path, and the same intermediate is compared with ONNX Runtime. The next slice must schedule the complete first layer, including border padding and both channel groups, and derive command/DMA/FIFO counts from that schedule. Independent M3/M4 review remains required before a stable ABI/corpus or package release.
 
 ## Milestone plan
 
@@ -33,8 +35,8 @@ M5 is active. The first YOLOv8n weight and FLOAT ONNX export are pinned, the com
 | M2 | Functional command simulator | `DONE` | M1 | Versioned 128-byte command encoding, memory/device behavior, architectural errors, and passing simulator tests |
 | M3 | Freeze the v0 contract | `ACTIVE` | M1, M2; independent M4 review for closure | Candidate and conformance evidence available; final freeze awaits independent command/transition review |
 | M4 | v0 conformance package | `ACTIVE` | Candidate implemented; frozen M3 for final corpus release | 46 binary fixtures, hashes/schema, ABI consistency, simulator runner, and CI implemented; final release awaits independent review and stable ABI |
-| M5 | Pin the first YOLO workload | `ACTIVE` | M3 candidate (ready) | Exact artifact, export, preprocessing, graph inventory, host partition, structural audit, and COCO FLOAT evidence are tracked; INT8 and complete schedule evidence remain open |
-| M6 | Minimal compiler and simulated runtime | `BLOCKED` | M4, M5 | Deterministic model package generation and complete execution through the simulator with layerwise comparisons |
+| M5 | Pin the first YOLO workload | `DONE` | M3 candidate | Exact artifact, graph, preprocessing, partition, FLOAT baseline, deterministic INT8 calibration package, proxy accuracy, and diagnostic evidence are tracked; exact target execution belongs to M6 |
+| M6 | Minimal compiler and simulated runtime | `ACTIVE` | M5 complete; M3/M4 candidate usable, stable release still gated by independent review | First Conv-SiLU tile passes exactly; completion still requires deterministic whole-model packaging, execution, host tail, and layerwise comparisons |
 | M7 | First RTL vertical slice | `BLOCKED` | Frozen M3, M4 | Command decode through one INT8 MAC path, INT32 accumulation, requantization, completion/error behavior, and differential tests |
 | M8 | Incremental RTL operation coverage | `BLOCKED` | M7 | Each added DMA, convolution, or utility operation passes its conformance and assertion gates |
 | M9 | FPGA selection and v0 bring-up | `BLOCKED` | M5, M6, M8 | Measured resource probes inform board selection; reproducible build, timing, utilization, accuracy, transfer, and end-to-end latency reports are published |
@@ -72,7 +74,7 @@ Location: [conformance/](../conformance/README.md). Candidate schema/runner deci
 - [x] Add normal cases for DMA, fill, copy, convolution, epilogue, map, add, pool, upsample, and end/reset behavior.
 - [x] Add boundary cases for rounding ties, saturation, overflow, channel padding, halos, and chunk continuation.
 - [x] Add negative cases for malformed framing, unknown opcodes, bounds, alignment, overlap, FIFO full, sequence gaps, and illegal accumulator state.
-- [ ] Add stale-token tests when M6 provides a runtime; the device simulator has no token API.
+- [x] Add stale-token tests through the M6 simulator runtime; transport reset with outstanding work remains assigned to M9.
 - [ ] Add DMA bus failure/reset-with-outstanding-transfer cases when the transport model exists (M9).
 - [x] Keep expected-value recipes independent from the implementation being tested.
 - [x] Validate every fixture against the functional simulator through `make conformance`, included in `make test` and CI.
@@ -87,13 +89,13 @@ Exit criterion: another implementation can consume the fixture specification wit
 
 - [x] Select the exact model revision and confirm redistribution and weight licenses.
 - [x] Pin input shape, exporter version and commit, ONNX IR version, opset, export command, and graph/weight hashes.
-- [ ] Freeze preprocessing: the UINT8-to-FLOAT path, letterbox, normalization, and layouts are pinned; the device INT8 input scale remains pending calibration.
+- [x] Freeze preprocessing: UINT8 source, RGB letterbox, normalization, NCHW reference layout, HWC8 device layout, and binary32 INT8 input scale are pinned.
 - [x] Inventory every graph node, shape, attribute, initializer, and graph constant.
 - [x] Classify each node as native HASLAB, compiler-fused, compiler view/fold, declared host-tail, or unsupported.
 - [x] Freeze the learned-head/host-tail boundary and output coordinate/order conventions. The boundary uses three INT32 HWC8 tensors with per-channel dequantization scales.
 - [x] Record a reproducible floating-point output and accuracy baseline. The synthetic PyTorch/ONNX output comparison passes, and two full COCO 2017 validation runs produced identical aggregate metrics, all 80 per-class AP pairs, and prediction JSON hash.
-- [ ] Calibrate INT8 and agree the accuracy-loss budget before treating quantization as acceptable.
-- [ ] Check every layer against local-memory, tiling, channel-group, convolution-chunk, and command-traffic limits. All 63 learned convolutions and graph alignment constraints pass the static audit; the 38,696-command CONV/EPILOGUE subtotal for the reference tiling requires schedule optimization, a generated full traffic count, and host-refill measurement.
+- [x] Calibrate signed-symmetric INT8 with the deterministic 512-image train2017 subset and measure the candidate against the one-percentage-point budget. The QOperator proxy loses 0.887 points mAP50–95 and passes; exact HASLAB execution remains an M6 differential gate.
+- [x] Check every layer against local-memory, tiling, channel-group, and convolution-chunk limits. All 63 learned convolutions and graph alignment constraints pass. The 38,696-command CONV/EPILOGUE reference subtotal is only a warning; optimized whole-graph traffic and FIFO demand must be generated in M6.
 - [x] Publish a machine-readable workload manifest under `benchmarks/manifests/`.
 
 Exit criterion: no operator, preprocessing step, fallback, or accuracy comparison is implicit.
@@ -107,6 +109,17 @@ Exit criterion: no operator, preprocessing step, fallback, or accuracy compariso
 - [ ] Load packages, bind tensors, submit commands, wait, reset, and report structured errors through a simulator backend.
 - [ ] Compare intermediate tensors layer by layer against an independent ONNX or framework reference.
 - [ ] Execute the declared host tail explicitly; never use silent per-layer fallback.
+
+First vertical-slice evidence:
+
+- [x] Validate the pinned model/hash/opset and exact first `Conv → Sigmoid → Mul` dataflow with node-level failures.
+- [x] Extract constants, quantize weights and bias, pack KHWCI8, and lower one interior 8×8 tile for output channels 0–7.
+- [x] Emit eight ABI 0.1 commands in the proposed sectioned `.hxb` framing with section hashes, debug provenance, and validated EXT relocations.
+- [x] Recompile the same inputs to a byte-identical 5,056-byte package.
+- [x] Strictly load, bind, submit, wait, reset, reject corruption/invalid binding, and invalidate stale tokens through the simulator backend.
+- [x] Match all 512 tile output bytes against `haslab_ref` and compare the dequantized intermediate with ONNX Runtime.
+- [ ] Schedule the full first layer: boundary halos, 400 spatial tiles, two output groups, output assembly, and generated command/DMA/FIFO accounting.
+- [ ] Generalize from the first layer to every accelerator-region node and the declared host tail before closing M6.
 
 ## M7–M9 — RTL and FPGA rules
 
@@ -166,3 +179,5 @@ When work changes status:
 | 2026-09-20 | M4 candidate validation passed: 104 unit tests (43 numerical + 42 simulator + 19 conformance infrastructure), all 46 binary fixture cases, byte-for-byte corpus reproduction, repository checks, and whitespace checks. | `make test`, `make check`, `git diff --check` |
 | 2026-09-21 | Activated M5 with a pinned YOLOv8n v8.3.0 weight, reproducible 320×320 opset-13 export, complete 261-node/149-constant inventory, explicit learned-head boundary, deterministic FLOAT smoke baseline, and per-convolution v0 memory audit. Structural coverage passes; full COCO FLOAT accuracy, INT8 calibration, and total schedule/traffic remain open. | [Manifest and report](../benchmarks/manifests/yolov8n-320-opset13/README.md), [audit tool](../benchmarks/tools/audit_yolov8n.py) |
 | 2026-09-21 | Completed the pinned FLOAT accuracy baseline over all 5,000 COCO val2017 images: bbox mAP50–95 0.284969 and mAP50 0.413595. A second full run reproduced the aggregate metrics, every per-class AP pair, and the 79,449,100-byte prediction JSON hash exactly. INT8 calibration is the next M5 step. | [Evaluation report](../benchmarks/manifests/yolov8n-320-opset13/float-coco-baseline.json), [reproduction guide](../benchmarks/manifests/yolov8n-320-opset13/README.md) |
+| 2026-09-21 | Completed M5 calibration evidence with a deterministic 512-image train2017 subset, 205 activation scales, 63 per-output-channel weight-scale vectors, 57 SiLU tables, and diagnostics over 6.93 billion activation values. The INT8 QOperator proxy measured 0.276098 mAP50–95, a 0.887-point loss that passes the one-point budget. Calibration artifacts and two full evaluations reproduced exactly. Exact HASLAB command semantics remain the first M6 differential target. | [Calibration](../benchmarks/manifests/yolov8n-320-opset13/int8-calibration.json), [diagnostics](../benchmarks/manifests/yolov8n-320-opset13/int8-diagnostics.json), [accuracy](../benchmarks/manifests/yolov8n-320-opset13/int8-coco-baseline.json) |
+| 2026-09-21 | Activated M6 with a strict first-block compiler/runtime slice. One 8×8 tile and output channels 0–7 compile to a deterministic 5,056-byte `.hxb`, execute as eight ABI commands, and match all 512 integer golden values; the dequantized tile is also compared with ONNX Runtime. Package binaries remain ignored because they contain derived third-party weights. | [Slice report](../benchmarks/manifests/yolov8n-320-opset13/m6-first-conv-silu-slice.json), [compiler](../compiler/README.md), [runtime](../runtime/README.md) |

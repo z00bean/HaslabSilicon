@@ -9,6 +9,10 @@ Result: document revision 0.2 is an ABI 0.1 freeze candidate. This review compar
 
 Follow-up, 2026-09-20: [M4's candidate corpus](../../conformance/README.md) now supplies 46 independently authored command fixtures plus an ABI registry, schema, hashes, and CI runner. Fixture development described in the original review is complete at candidate scope. Independent review of the contract/derivations and stable ABI allocation remain open; M5 workload auditing is the next implementation task.
 
+Follow-up, 2026-09-21: [M5's pinned workload](../../benchmarks/manifests/yolov8n-320-opset13/README.md) now supplies the exact artifact and graph inventory, preprocessing and host-tail boundary, reproducible FLOAT baseline, deterministic INT8 calibration package, LUT/coefficient records, full calibration diagnostics, and proxy accuracy inside the adopted one-percentage-point budget. Exact HASLAB command-level agreement remains an M6 differential gate; this evidence does not close the independent M3/M4 review.
+
+Follow-up, 2026-09-21: [M6's first vertical slice](../../benchmarks/manifests/yolov8n-320-opset13/m6-first-conv-silu-slice.json) now compiles one first-block tile into the proposed `.hxb` framing, loads and relocates it through the simulator runtime, and matches all 512 output bytes against the independent integer model. This validates a narrow package/command path; full-layer scheduling, whole-graph allocation, stable manifest limits, host-tail execution, and independent M3/M4 review remain open.
+
 ## Scope and review results
 
 | Area | Reviewed behavior | Outcome / evidence |
@@ -45,10 +49,10 @@ Validation on 2026-09-20: `make test` passed 43 numerical-model tests and 42 sim
 |---|---|---|
 | ABI allocation and command/state review | M3 candidate + ADR 0001; independent M4 evidence required for stable freeze | Candidate ready; independent review pending |
 | Single definition for multiple implementation consumers | M4 machine-readable ABI definition and schema consistency checks | Candidate registry implemented and checked against simulator constants; new consumers still require integration |
-| Workload artifact, exporter, IR, opset, weights, hashes | M5 pinned manifest | Pending |
-| Detection-tail boundary and preprocessing/output conventions | M5 graph inventory and reproducible baseline | Pending |
-| INT8 accuracy budget and calibration | M5 evaluation; proposed mAP budget must be explicitly adopted or revised | Pending |
-| Scale approximation and reproducible coefficient/LUT bytes | M5/M6 coefficient-generation policy and accuracy/error report | Pending |
+| Workload artifact, exporter, IR, opset, weights, hashes | M5 pinned manifest | Complete for the first YOLOv8n workload |
+| Detection-tail boundary and preprocessing/output conventions | M5 graph inventory and reproducible baseline | Complete for the pinned workload |
+| INT8 accuracy budget and calibration | M5 evaluation; one-percentage-point mAP50–95 budget | Calibrated proxy passes; exact command-level comparison remains in M6 |
+| Scale approximation and reproducible coefficient/LUT bytes | M5/M6 coefficient-generation policy and accuracy/error report | Candidate bytes and approximation errors recorded; M6 must execute them exactly |
 | Residual/concat scales, split boundaries, chunk/halo layouts | M5 every-layer audit, then M6 lowering tests | Pending |
 | Package schema, limits, relocations, parser behavior | M6 schema freeze before compiler/runtime implementation | Pending |
 | Commands per frame, host refill, patch copies, spill traffic | M5/M6 schedule estimates; M9 measurements | Pending |
@@ -61,6 +65,6 @@ Small isolated RTL experiments may follow reviewed independent vectors, but full
 
 ## Next action and closure criteria
 
-Build the M4 fixture schema and a first independently derived corpus against **ABI 0.1 / contract revision 0.2**. Include byte commands, initial memories, expected output spans, counters, fault codes, and explicit masks for unspecified memory/optional diagnostics. Start with manually auditable rounding, framing, DMA, accumulator, epilogue, and fault cases.
+The M4 fixture schema and first independently derived corpus now exist against **ABI 0.1 / contract revision 0.2**, and the M5 workload package is pinned. The next implementation action is the narrow M6 compiler/runtime path that consumes those two artifacts and performs layerwise differential execution through the command simulator.
 
-Before marking M3 complete, independently review the command tables and transitions, run those fixtures against the simulator, resolve discrepancies with a decision record, and explicitly allocate the frozen ABI. Then expand M4 coverage and pin the M5 workload before committing to the full RTL design.
+Before marking M3 complete, independently review the command tables and transitions, run the fixtures against another implementation or derivation, resolve discrepancies with a decision record, and explicitly allocate the frozen ABI. M6 candidate work may proceed, but a stable compiler/package release and full RTL commitment still depend on that independent review.

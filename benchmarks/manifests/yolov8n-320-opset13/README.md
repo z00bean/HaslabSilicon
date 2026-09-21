@@ -1,6 +1,6 @@
 # YOLOv8n 320×320 workload candidate
 
-This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. The model has **not** been calibrated to INT8, compiled to HASLAB commands, or run on RTL.
+This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. One interior 8×8 tile and eight output channels of the first Conv-SiLU block now compile to exact HASLAB commands and execute bit exactly in the functional simulator. The complete first layer, model, RTL, and hardware remain unimplemented.
 
 ## Third-party artifact and license
 
@@ -11,6 +11,7 @@ Expected local paths are ignored by Git:
 ```text
 models/downloads/yolov8n.pt
 models/generated/yolov8n-320-opset13.onnx
+models/generated/yolov8n-320-opset13-int8-qoperator.onnx
 ```
 
 ## Reproduce the export
@@ -95,4 +96,77 @@ The evaluator uses the static FLOAT32 ONNX model through ONNX Runtime's CPU prov
 
 Two complete runs produced the same aggregate metrics, every per-class AP value, and prediction-file hash. Runtime measurements are recorded for diagnostics but are not treated as a performance result. See [`float-coco-baseline.json`](float-coco-baseline.json) for the full evidence.
 
-M5 remains open for calibrated INT8 comparison and optimized whole-graph scheduling/traffic evidence. The next implementation step is to pin the COCO train2017 calibration subset, generate all quantization parameters, and compare INT8 accuracy with this FLOAT baseline.
+## Reproduce INT8 calibration and evaluation
+
+Extract the train annotation file from the already pinned annotation archive. The selection tool sorts every train2017 filename by the SHA-256 of its UTF-8 filename, uses the filename as an explicit tie-breaker, and takes the first 512. It downloads only that 81.6 MB subset rather than requiring the full train image archive.
+
+```sh
+unzip datasets/downloads/annotations_trainval2017.zip \
+  annotations/instances_train2017.json -d datasets/coco
+
+python benchmarks/tools/prepare_coco_train_calibration.py \
+  --dataset-root datasets/coco \
+  --annotation-archive datasets/downloads/annotations_trainval2017.zip \
+  --download \
+  --output benchmarks/manifests/yolov8n-320-opset13/calibration-selection.json
+
+python benchmarks/tools/quantize_yolov8n_int8.py \
+  models/generated/yolov8n-320-opset13.onnx \
+  --dataset-root datasets/coco \
+  --selection-manifest benchmarks/manifests/yolov8n-320-opset13/calibration-selection.json \
+  --output-model models/generated/yolov8n-320-opset13-int8-qoperator.onnx \
+  --output-report benchmarks/manifests/yolov8n-320-opset13/int8-calibration.json \
+  --output-luts benchmarks/manifests/yolov8n-320-opset13/int8-silu-luts.bin
+
+python benchmarks/tools/diagnose_yolov8n_int8.py \
+  models/generated/yolov8n-320-opset13.onnx \
+  models/generated/yolov8n-320-opset13-int8-qoperator.onnx \
+  --dataset-root datasets/coco \
+  --output benchmarks/manifests/yolov8n-320-opset13/int8-diagnostics.json
+
+python benchmarks/tools/evaluate_yolov8n_coco.py \
+  models/generated/yolov8n-320-opset13-int8-qoperator.onnx \
+  --dataset-root datasets/coco \
+  --expected-sha256 48f967b5a756f47163176195c0efb8bd4e2467e658c0f49fb89e9d8479d15d3e \
+  --run-name yolov8n-320-opset13-int8-qoperator \
+  --profile INT8-QOperator-proxy \
+  --output benchmarks/manifests/yolov8n-320-opset13/int8-coco-baseline.json
+```
+
+Calibration uses ONNX Runtime 1.20.1 MinMax ranges forced symmetric around zero. Activations use one signed INT8 scale per tensor; all 63 convolution weight tensors use signed INT8 scales per output channel; all 268 zero points are zero. The package records 205 activation scales, 63 weight-scale vectors, and 57 independently generated 1,024-byte SiLU tables. Each LUT uses `delta = binary32(pre-SiLU scale × 127 / 511)`, so indices −512 through 511 cover the calibrated symmetric preactivation range; per-channel accumulator-to-grid ratios are serialized as v0 multipliers and shifts with their maximum approximation error. Two complete calibrations produced byte-identical quantized models and LUT binaries.
+
+| Measurement | FLOAT | INT8 proxy | Change |
+|---|---:|---:|---:|
+| COCO bbox mAP50–95 | 0.2849691922 | 0.2760981611 | −0.0088710311 |
+| COCO bbox mAP50 | 0.4135947784 | 0.4044438283 | −0.0091509501 |
+| Ultralytics matched precision | 0.5715859845 | 0.5825443393 | +0.0109583548 |
+| Ultralytics matched recall | 0.3857629412 | 0.3742943314 | −0.0114686098 |
+
+The mAP50–95 loss is **0.887 percentage points**, inside the specified maximum of 1.0 percentage point. Two complete INT8 evaluations produced identical aggregate metrics, all 80 per-class AP pairs, and prediction JSON SHA-256 `2793fd75bf77628a9af92fabadc428f6b3b36c2944f687ecc00fc33e57e73216`.
+
+The full diagnostic covers 215 quantized accelerator-region tensors over all 512 calibration images: 6,927,155,200 activation values with a 0.00852% clipping fraction, plus 3,146,160 weights with zero clipping. See [`int8-calibration.json`](int8-calibration.json), [`int8-diagnostics.json`](int8-diagnostics.json), and [`int8-coco-baseline.json`](int8-coco-baseline.json).
+
+This accuracy result is a calibrated **ONNX Runtime QOperator software proxy**. Its QLinear sigmoid/multiply path does not execute the HASLAB fused SiLU LUT, and it requantizes final learned-head outputs where the v0 architecture preserves an INT32 boundary. It therefore establishes that the calibration candidate meets the budget, but it is not evidence of exact command-level or hardware agreement.
+
+## Reproduce the first exact HASLAB command slice
+
+Use the pinned export environment, with the repository packages on `PYTHONPATH`:
+
+```sh
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/compile_yolov8n_vertical_slice.py
+```
+
+The tool validates the model and calibration hashes, compiles nodes 0–2, emits a deterministic package under ignored `artifacts/m6/`, executes all eight commands through the simulator runtime, and compares 512 INT8 output values against `haslab_ref`. It also exposes the same intermediate tensor as an ONNX Runtime output and records dequantized error for a deterministic 320×320 input.
+
+| Slice measurement | Result |
+|---|---:|
+| Package bytes | 5,056 |
+| Package SHA-256 | `a2e420402f27fc5af59970c5e9140e85794d896324e6d2017e203d4d60c338ab` |
+| Commands | 8 |
+| Exact integer values compared | 512 |
+| Integer mismatches | 0 |
+| FLOAT-reference mean absolute error | 0.095207 |
+| INT8 saturation count | 0 |
+
+The checked-in [`m6-first-conv-silu-slice.json`](m6-first-conv-silu-slice.json) is evidence for this narrow slice. It does not establish whole-layer accuracy or package-schema stability. The next implementation step is to schedule the complete first Conv-SiLU layer: all 20×20 spatial tiles, both output-channel groups, and boundary padding, followed by a full 16×160×160 intermediate comparison. That work should produce measured command, DMA-byte, and FIFO-refill counts from the generated schedule.

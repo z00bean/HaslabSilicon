@@ -1,3 +1,4 @@
+import hashlib
 import json
 import unittest
 from pathlib import Path
@@ -16,6 +17,11 @@ class TestYolov8nManifest(unittest.TestCase):
         cls.coco_baseline = json.loads(
             (WORKLOAD / "float-coco-baseline.json").read_text()
         )
+        cls.selection = json.loads((WORKLOAD / "calibration-selection.json").read_text())
+        cls.int8_calibration = json.loads((WORKLOAD / "int8-calibration.json").read_text())
+        cls.int8_diagnostics = json.loads((WORKLOAD / "int8-diagnostics.json").read_text())
+        cls.int8_baseline = json.loads((WORKLOAD / "int8-coco-baseline.json").read_text())
+        cls.m6_slice = json.loads((WORKLOAD / "m6-first-conv-silu-slice.json").read_text())
 
     def test_artifact_identity_is_consistent(self):
         self.assertEqual(
@@ -49,7 +55,7 @@ class TestYolov8nManifest(unittest.TestCase):
         self.assertTrue(comparison["allclose"])
         self.assertEqual(self.manifest["evaluation"]["status"], "complete")
         self.assertEqual(self.coco_baseline["status"], "complete")
-        self.assertEqual(self.manifest["quantization"]["status"], "pending")
+        self.assertIn("proxy_passes", self.manifest["quantization"]["status"])
 
     def test_coco_baseline_matches_manifest(self):
         evaluation = self.manifest["evaluation"]
@@ -80,6 +86,69 @@ class TestYolov8nManifest(unittest.TestCase):
             result["dataset"]["annotation_archive"]["sha256"],
             evaluation["annotation_archive"]["sha256"],
         )
+
+    def test_int8_calibration_package_is_internally_consistent(self):
+        quantization = self.manifest["quantization"]
+        calibration = self.int8_calibration
+        selection = self.selection["selection"]
+
+        self.assertEqual(selection["image_count"], 512)
+        filename_hashes = [item["filename_sha256"] for item in selection["images"]]
+        self.assertEqual(filename_hashes, sorted(filename_hashes))
+        self.assertEqual(len({item["filename"] for item in selection["images"]}), 512)
+        self.assertEqual(
+            selection["ordered_filename_sha256"],
+            quantization["selection"]["ordered_filename_sha256"],
+        )
+        self.assertEqual(calibration["calibration"]["images"], 512)
+        self.assertEqual(calibration["scale_counts"]["activation_per_tensor"], 205)
+        self.assertEqual(calibration["scale_counts"]["weight_per_output_channel"], 63)
+        self.assertTrue(calibration["all_zero_points_are_zero"])
+        self.assertEqual(calibration["silu"]["tables"], 57)
+        lut_bytes = (WORKLOAD / "int8-silu-luts.bin").read_bytes()
+        self.assertEqual(
+            hashlib.sha256(lut_bytes).hexdigest(),
+            calibration["silu"]["binary_sha256"],
+        )
+
+    def test_int8_proxy_passes_budget_without_claiming_target_equivalence(self):
+        quantization = self.manifest["quantization"]
+        proxy = quantization["proxy_evaluation"]
+        metrics = self.int8_baseline["evaluation"]["metrics"]
+
+        self.assertEqual(
+            self.int8_baseline["model"]["sha256"],
+            quantization["calibration"]["quantized_proxy_model_sha256"],
+        )
+        self.assertAlmostEqual(proxy["mAP50_95"], metrics["metrics/mAP50-95(B)"])
+        expected_loss = (
+            self.coco_baseline["evaluation"]["metrics"]["metrics/mAP50-95(B)"]
+            - metrics["metrics/mAP50-95(B)"]
+        )
+        self.assertAlmostEqual(proxy["absolute_mAP50_95_loss"], expected_loss)
+        self.assertLessEqual(
+            proxy["absolute_mAP50_95_loss"],
+            quantization["acceptance_budget"]["maximum_absolute_loss"],
+        )
+        self.assertTrue(proxy["passes_budget"])
+        self.assertEqual(len(self.int8_baseline["evaluation"]["per_class"]), 80)
+        self.assertIn("not final HASLAB acceptance", quantization["acceptance_scope"])
+        self.assertEqual(self.int8_diagnostics["images"], 512)
+        self.assertEqual(self.int8_diagnostics["tensor_count"], 215)
+        self.assertEqual(
+            self.int8_diagnostics["weights"]["aggregate"]["clipped_fraction"], 0.0
+        )
+
+    def test_m6_slice_records_exact_command_execution_without_overclaiming(self):
+        result = self.m6_slice
+        self.assertEqual(result["source_model"]["sha256"], self.manifest["export"]["onnx_sha256"])
+        self.assertEqual(result["package"]["schema"], "haslab.vertical-slice.v1")
+        self.assertEqual(result["package"]["commands"], 8)
+        self.assertTrue(result["package"]["repeated_compilation_byte_identical"])
+        self.assertTrue(result["exact_integer_comparison"]["pass"])
+        self.assertEqual(result["exact_integer_comparison"]["mismatch_count"], 0)
+        self.assertEqual(result["exact_integer_comparison"]["compared_values"], 512)
+        self.assertIn("not whole-layer", result["scope"]["limitation"])
 
 
 if __name__ == "__main__":

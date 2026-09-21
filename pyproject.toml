@@ -12,8 +12,8 @@ authors = [{ name = "Zubin Bhuyan" }]
 dependencies = ["numpy>=1.26"]
 
 [tool.setuptools.packages.find]
-where = ["reference", "simulation"]
-include = ["haslab_ref*", "haslab_sim*"]
+where = ["reference", "simulation", "compiler", "runtime"]
+include = ["haslab_ref*", "haslab_sim*", "haslab_compiler*", "haslab_runtime*"]
 
 [tool.pytest.ini_options]
 testpaths = ["reference/tests", "simulation/tests", "compiler/tests", "runtime/tests"]

@@ -31,6 +31,8 @@ The [revision 0.2 review](../docs/reviews/v0-contract-review.md) adds regression
 
 `test_contract_review.py` is regression evidence, not the independently serialized M4 conformance package. Fixtures for portable targets must mask optional fault diagnostics and unspecified post-arithmetic/bus-fault memory. The simulator retains queued records after an execution fault, but hardware queue contents in FAULT are not a portable result.
 
+The [M4 candidate corpus](../conformance/README.md) now provides 46 stored binary fixtures independent of simulator/reference helper functions. Run `make conformance` to validate the ABI registry, artifact integrity, runner, and fixture results. These fixtures supply separate expected values but do not constitute external review or cycle/bus verification.
+
 ## Deliberately unmodeled behavior
 
 This is not a cycle-accurate or bus-signal simulator. It does not assign cycle counts, split bursts, model backpressure, represent host cache maintenance, emulate MMIO staging registers, inject DMA bus errors, model interrupts, or enforce immutable EXT buffers after submission. `DMA_BUS` remains reserved for a future platform/bus model.

@@ -4,7 +4,7 @@
 
 set -eu
 
-required_paths='README.md LICENSE NOTICE docs hardware/rtl hardware/testbenches simulation/haslab_sim simulation/tests fpga software compiler runtime onnx reference/haslab_ref reference/tests benchmarks scripts .github/workflows'
+required_paths='README.md LICENSE NOTICE docs hardware/rtl hardware/testbenches simulation/haslab_sim simulation/tests conformance/abi-v0.1.json conformance/corpus/manifest.json conformance/runner.py conformance/tests fpga software compiler runtime onnx reference/haslab_ref reference/tests benchmarks scripts .github/workflows'
 for path in $required_paths; do
   if [ ! -e "$path" ]; then
     printf '%s\n' "Missing required path: $path" >&2

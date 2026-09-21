@@ -20,17 +20,17 @@ HASLAB is being designed in public from the numerical contract upward. The proje
 
 ## Current status
 
-**Stage: v0 contract candidate reviewed; independent conformance vectors next.**
+**Stage: v0 contract candidate and conformance corpus implemented; pinned workload audit next.**
 
-The repository currently contains an architecture specification, an executable Python golden model, and a byte-level simulator for the proposed v0 accelerator commands. It does not yet contain tensor-accelerator RTL, an ONNX compiler, a runtime, an FPGA bitstream, an ASIC implementation, or demonstrated YOLO execution.
+The repository currently contains an architecture specification, an executable Python golden model, a byte-level command simulator, and 46 independently authored binary conformance fixtures with a strict runner. It does not yet contain tensor-accelerator RTL, an ONNX compiler, a runtime, an FPGA bitstream, an ASIC implementation, or demonstrated YOLO execution.
 
 | Component | Status | What that means |
 |---|---|---|
-| Architecture and v0 contract | Freeze candidate | Document revision 0.2 reviewed against the software models; independent evidence still required |
+| Architecture and v0 contract | Freeze candidate | Document revision 0.2 reviewed against the software models; independent review remains open |
 | Python numerical model | Implemented and unit-tested | Defines FP8/INT8 conversion, accumulation, tensor operations, layouts, and edge cases |
 | Functional command simulator | Implemented and unit-tested | Executes the proposed 128-byte command ABI over modeled memory spaces |
-| v0 contract freeze | Active | ABI 0.1 candidate and compatibility/reset/fault decisions recorded; stable freeze awaits independent review and conformance vectors |
-| v0 conformance package | Next | Independent reusable command, memory, completion, and error fixtures do not exist yet |
+| v0 contract freeze | Active | ABI 0.1 candidate has conformance evidence; stable freeze awaits independent review |
+| v0 conformance package | Candidate implemented and tested | 46 stored command/memory/status fixtures, machine-readable ABI registry, integrity checks, and CI runner; final release tied to ABI freeze |
 | Pinned YOLO-class workload | Next | Proposed target exists, but model/export hashes, operator audit, baseline, and INT8 budget are not frozen |
 | ONNX importer and compiler | Planned | No model can be compiled to HASLAB yet |
 | Runtime | Planned | No application-facing device API exists yet |
@@ -45,7 +45,7 @@ make check
 make test
 ```
 
-The current test suite covers the numerical model and functional command simulator. Passing it establishes consistency with the Python specification; it is not an FPGA or silicon performance result.
+The current test suite covers the numerical model, functional command simulator, conformance infrastructure, and stored independent expectations. Run `make conformance` for the corpus alone. Passing establishes agreement for the tested cases; it is not an FPGA or silicon performance result. See the [conformance guide](conformance/README.md) for coverage and derivations.
 
 ### Progress at a glance
 
@@ -54,8 +54,9 @@ The current test suite covers the numerical model and functional command simulat
 - [x] Implement and test the functional command simulator.
 - [x] Review the v0 contract against the software models, fix discrepancies, and record the ABI candidate decisions.
 - [ ] Freeze the stable v0 ABI after independent review and conformance evidence.
-- [ ] Build and publish independent v0 conformance vectors. **Next implementation step.**
-- [ ] Pin and audit the first YOLO-class ONNX workload.
+- [x] Build the candidate independent conformance corpus, ABI registry, and CI runner.
+- [ ] Release the final conformance corpus after stable ABI freeze and independent review.
+- [ ] Pin and audit the first YOLO-class ONNX workload. **Next implementation step.**
 - [ ] Implement the minimal compiler and simulated runtime path.
 - [ ] Implement and differentially verify the first RTL vertical slice.
 - [ ] Expand RTL operation coverage one conformance-gated operation at a time.
@@ -172,6 +173,7 @@ No stage is considered complete solely because a demo produces plausible boxes. 
 |---|---|
 | [`reference/`](reference/) | Python golden model, numerical specification, and unit tests |
 | [`simulation/`](simulation/) | Functional v0 command/memory simulator and future RTL harnesses |
+| [`conformance/`](conformance/) | Versioned binary fixtures, independent derivations, ABI registry, and simulator conformance runner |
 | [`hardware/rtl/`](hardware/rtl/) | Future portable synthesizable RTL |
 | [`hardware/testbenches/`](hardware/testbenches/) | Future RTL testbenches, assertions, and checked-in vectors |
 | [`hardware/formal/`](hardware/formal/) | Future protocol and state-machine properties |

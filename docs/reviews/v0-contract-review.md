@@ -7,6 +7,8 @@ Date: 2026-09-20
 
 Result: document revision 0.2 is an ABI 0.1 freeze candidate. This review compared the contract with the numerical model, command simulator, and existing tests. It is not an independent external review, complete conformance proof, or hardware sign-off. M3 remains open for independent evidence; M4 fixture development is now the next action.
 
+Follow-up, 2026-09-20: [M4's candidate corpus](../../conformance/README.md) now supplies 46 independently authored command fixtures plus an ABI registry, schema, hashes, and CI runner. Fixture development described in the original review is complete at candidate scope. Independent review of the contract/derivations and stable ABI allocation remain open; M5 workload auditing is the next implementation task.
+
 ## Scope and review results
 
 | Area | Reviewed behavior | Outcome / evidence |
@@ -42,7 +44,7 @@ Validation on 2026-09-20: `make test` passed 43 numerical-model tests and 42 sim
 | Gate | Resolution / owner milestone | Status |
 |---|---|---|
 | ABI allocation and command/state review | M3 candidate + ADR 0001; independent M4 evidence required for stable freeze | Candidate ready; independent review pending |
-| Single definition for multiple implementation consumers | M4 machine-readable ABI definition and schema consistency checks | Pending |
+| Single definition for multiple implementation consumers | M4 machine-readable ABI definition and schema consistency checks | Candidate registry implemented and checked against simulator constants; new consumers still require integration |
 | Workload artifact, exporter, IR, opset, weights, hashes | M5 pinned manifest | Pending |
 | Detection-tail boundary and preprocessing/output conventions | M5 graph inventory and reproducible baseline | Pending |
 | INT8 accuracy budget and calibration | M5 evaluation; proposed mAP budget must be explicitly adopted or revised | Pending |

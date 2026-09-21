@@ -7,3 +7,4 @@ Future records should state the decision, context, alternatives, consequences, a
 | Record | Status |
 |---|---|
 | [0001: v0 ABI candidate and compatibility boundary](0001-v0-abi-freeze-candidate.md) | Accepted for experimental development; stable freeze pending independent evidence |
+| [0002: independent binary conformance corpus](0002-conformance-corpus-format.md) | Accepted for candidate fixture development; final release follows stable ABI review |

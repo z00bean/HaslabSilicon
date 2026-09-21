@@ -1,0 +1,4184 @@
+{
+  "abi": [
+    0,
+    1
+  ],
+  "abi_sha256": "776f8b2c913a61ac816afeb168efe7e4dac4214ce4042e92d247e19ebf7186fe",
+  "artifacts": {
+    "accumulator-overflow/commands.bin": {
+      "bytes": 58368,
+      "sha256": "32a0bd942bb5ae65102ea894d34c8b1adb2d685c448e80193eaa31f83dfed5ff"
+    },
+    "accumulator-overflow/initial-0.bin": {
+      "bytes": 288,
+      "sha256": "88f2f6050a4ef8c9fd8bd69d3e51689155f6aa570f0ac0da6d3c0ee794bf3867"
+    },
+    "accumulator-overflow/initial-1.bin": {
+      "bytes": 2304,
+      "sha256": "a1df809ce58b5f3778eec74cb368a79d6d282177afd7b4d8af990005d5f69e43"
+    },
+    "add-shift-mismatch/commands.bin": {
+      "bytes": 128,
+      "sha256": "22f091a4efb79caf17a9a618f06b011cb1b5d9159bd4a428a0e319918c307346"
+    },
+    "add-shift-mismatch/expected-3.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "add-shift-mismatch/initial-0.bin": {
+      "bytes": 16,
+      "sha256": "374708fff7719dd5979ec875d56cd2286f6d3cf7ec317a3b25632aab28ec37bb"
+    },
+    "add-shift-mismatch/initial-1.bin": {
+      "bytes": 256,
+      "sha256": "9446ff585606d550f4d04a77722bd148bf63fed70a6d77d318006e63c1b0e064"
+    },
+    "add-shift-mismatch/initial-2.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "add-single-round/commands.bin": {
+      "bytes": 256,
+      "sha256": "d100c6ac10123932651129fd5f408d235a6274a48e3e512126898a72c21b70c1"
+    },
+    "add-single-round/expected-2.bin": {
+      "bytes": 8,
+      "sha256": "0c87ef8a439ca7e3648a3b4a1be6f36e688d546241f6b09b0323e54b2a6a03f2"
+    },
+    "add-single-round/initial-0.bin": {
+      "bytes": 16,
+      "sha256": "021347f0e248bd2d0297b34c873ac2481095feca24746fbc659585ac288c822c"
+    },
+    "add-single-round/initial-1.bin": {
+      "bytes": 128,
+      "sha256": "aeceb180e9738848aa24441ebbe21ed7b152723fd03920f7473fc4c8869666d7"
+    },
+    "bias-overflow/commands.bin": {
+      "bytes": 256,
+      "sha256": "58e5b85c57f12db8c84fba7fe4b25d68557e424366e1163d8e5d2579a594f8e3"
+    },
+    "bias-overflow/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "7c9fa136d4413fa6173637e883b6998d32e1d675f88cddff9dcbcf331820f4b8"
+    },
+    "bias-overflow/initial-1.bin": {
+      "bytes": 64,
+      "sha256": "16abab341fb7f370e27e4dadcf81766dd0dfd0ae64469477bb2cf6614938b2af"
+    },
+    "bias-overflow/initial-2.bin": {
+      "bytes": 128,
+      "sha256": "137b01fa68507913a89e0d3c215b0d06ce0491825532ea14e5c9d378973f1270"
+    },
+    "bias-overflow/initial-3.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "conv-bounds/commands.bin": {
+      "bytes": 128,
+      "sha256": "f45b7532703e6c84cd75ea6edcbec39c70e7b11c8dca6bc8efd63d7b9c9e8925"
+    },
+    "conv-bounds/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "conv-bounds/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "conv-chunks/commands.bin": {
+      "bytes": 640,
+      "sha256": "cefcf74f9b0497a1a2e69661473612999bdc3d88371d14bbf5b68bf0ad0cf484"
+    },
+    "conv-chunks/expected-3.bin": {
+      "bytes": 32,
+      "sha256": "067dc6a810183e9069f63c2020b692c122c8d58263ed7f5c0e531504dc3b6e06"
+    },
+    "conv-chunks/expected-4.bin": {
+      "bytes": 32,
+      "sha256": "9f448f59d867b2d529109d798eeb7c7c3522b0e896d226b575a1f72b3cce5a57"
+    },
+    "conv-chunks/initial-0.bin": {
+      "bytes": 16,
+      "sha256": "68b4de943c7e3e7a9e9034f3b25c8e37935d972e77bba2216a0d70fd49eb106a"
+    },
+    "conv-chunks/initial-1.bin": {
+      "bytes": 128,
+      "sha256": "adc7c711fdb3d77eeb36715af209607b3208d44c9d752766f7454b0d9a9e5c56"
+    },
+    "conv-chunks/initial-2.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "conv-missing-first/commands.bin": {
+      "bytes": 128,
+      "sha256": "19ba85fc6d72331a64bf6773049623094f16b43c57efa67f8b3eaba6c29e4d3f"
+    },
+    "conv-missing-first/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "conv-missing-first/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "conv-raw/commands.bin": {
+      "bytes": 384,
+      "sha256": "730e24c33f9ae5ea91f3de36f42ff3b6706754b8c8ea00358f0fe8007dd1fdb6"
+    },
+    "conv-raw/expected-3.bin": {
+      "bytes": 32,
+      "sha256": "3fedfb6d4cadababe3a69357d1f5a58ad16cb85af13b48bb9bc76343022c3090"
+    },
+    "conv-raw/expected-4.bin": {
+      "bytes": 32,
+      "sha256": "9440b17686f572868f4ec17482d97ce4d80c2c884f109374eb5e8ed5b58187b0"
+    },
+    "conv-raw/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "755247beed01c620f85b31297b9ee0e8c4f8dee4081b5277f682028bd6dbd3db"
+    },
+    "conv-raw/initial-1.bin": {
+      "bytes": 64,
+      "sha256": "eb6b4f083b6a6d4e8a92c2a6eabe537816bdc0970591c8a34fee313b80245cf1"
+    },
+    "conv-raw/initial-2.bin": {
+      "bytes": 128,
+      "sha256": "b152ac4c34a089ed348a4f5baa0b952467d764315c8d29703f8a2f64cae2697c"
+    },
+    "conv-wrong-continuation/commands.bin": {
+      "bytes": 256,
+      "sha256": "0289b061d32eb528c1d705df86224f0ab3114557399b3db76bba0ee69fbe1e24"
+    },
+    "conv-wrong-continuation/expected-2.bin": {
+      "bytes": 32,
+      "sha256": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
+    },
+    "conv-wrong-continuation/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "conv-wrong-continuation/initial-1.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "conv3-stride2/commands.bin": {
+      "bytes": 384,
+      "sha256": "8dcd2285d2c52146cf698968d8df0b4c689508d3e83518891d048ea5161c6dad"
+    },
+    "conv3-stride2/expected-3.bin": {
+      "bytes": 128,
+      "sha256": "d9ed8a8688793a28a5c02f3ee3193e4d8794118268707c42114c078767474d6a"
+    },
+    "conv3-stride2/initial-0.bin": {
+      "bytes": 200,
+      "sha256": "e2b78fccea83ef84594a6dfdec731a620cef36f010095f3283ee9aa020dcdcf6"
+    },
+    "conv3-stride2/initial-1.bin": {
+      "bytes": 576,
+      "sha256": "6f381f8a8f067596f999086461b4679fee29d58096b99b05ef3d82eebd4855d1"
+    },
+    "conv3-stride2/initial-2.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "conv3-zero-halo/commands.bin": {
+      "bytes": 384,
+      "sha256": "4577716647878b0dea06ca03bbabc1ccf90723ac4b72c2b5be73f0d5b82b921d"
+    },
+    "conv3-zero-halo/expected-3.bin": {
+      "bytes": 32,
+      "sha256": "f5411ec7e51e46159c654bdbdf3cc20785a217b87384810ed2e541dc0016943a"
+    },
+    "conv3-zero-halo/initial-0.bin": {
+      "bytes": 72,
+      "sha256": "eadc22abd8c7fc56361201e26d10b6a325e5d0f983725cdfdec4adf8080be200"
+    },
+    "conv3-zero-halo/initial-1.bin": {
+      "bytes": 576,
+      "sha256": "6f381f8a8f067596f999086461b4679fee29d58096b99b05ef3d82eebd4855d1"
+    },
+    "conv3-zero-halo/initial-2.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "copy-cross-row-overlap/commands.bin": {
+      "bytes": 128,
+      "sha256": "348a4ce42dbd5d4c0f0e2d61b738aaf0680d014d27432b70633671dfee5cd216"
+    },
+    "copy-cross-row-overlap/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "copy-cross-row-overlap/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "copy-interleaved/commands.bin": {
+      "bytes": 256,
+      "sha256": "76ab4dc765249ccc7fba2e893dcb1eea7fa6e47a31191738e3478dfc3b2c608b"
+    },
+    "copy-interleaved/expected-1.bin": {
+      "bytes": 32,
+      "sha256": "1df87cff27b9c64011b38c67ce7b2c72e4ff1d91d871fe0e70639940fefa4577"
+    },
+    "copy-interleaved/initial-0.bin": {
+      "bytes": 32,
+      "sha256": "9985314ce88582d4a1d326d921b13b06a9bad3095d4a30fb07c274f981fb3cac"
+    },
+    "dma-alignment/commands.bin": {
+      "bytes": 128,
+      "sha256": "193a128ffe191ef07d27950ef85a987813491b5316e453526e563f7d37984f45"
+    },
+    "dma-alignment/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "dma-alignment/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "dma-bounds/commands.bin": {
+      "bytes": 128,
+      "sha256": "7c28c6a75084b39b885813f86145062f636572e638c2a3451d295edd888d3525"
+    },
+    "dma-bounds/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "dma-bounds/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "dma-fill-copy/commands.bin": {
+      "bytes": 768,
+      "sha256": "99d4463eb54129f7f33513a1468873ee526a454c5cc36038f34567e7f5fbcc8d"
+    },
+    "dma-fill-copy/expected-2.bin": {
+      "bytes": 24,
+      "sha256": "d5b28e4f9ee3d1a6eb710c9ced45e35ae7497fef0510a0eeb286481274f4f042"
+    },
+    "dma-fill-copy/expected-3.bin": {
+      "bytes": 16,
+      "sha256": "25398eac925fcfc8683be7f3c9543e03d65304e01505aed717a8922d51319803"
+    },
+    "dma-fill-copy/expected-4.bin": {
+      "bytes": 24,
+      "sha256": "715666b4cfb39c5afe7b56120d3606699624b0c194a2cecdc29c4aa92e3ec214"
+    },
+    "dma-fill-copy/initial-0.bin": {
+      "bytes": 24,
+      "sha256": "1d64add2a6388367c9bc2d1f1b384b069a6ef382cdaaa89771dd103e28613a25"
+    },
+    "dma-fill-copy/initial-1.bin": {
+      "bytes": 24,
+      "sha256": "07c1e8a7e9f32faa11790ca70417d6b24cd6ab07ec37fce73aff960ac84a144e"
+    },
+    "dma-single-row-stride/commands.bin": {
+      "bytes": 128,
+      "sha256": "0b11e7cfb4b60a53e30d5befd1f07bcd2e6f6adcd5d29e08e8cff0692cb60c13"
+    },
+    "dma-single-row-stride/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "dma-single-row-stride/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "dma-space/commands.bin": {
+      "bytes": 128,
+      "sha256": "9934ef228a478b8b33257f9c8f7cee34d625ec1fcc8a859c3f6e8f2627ad583b"
+    },
+    "dma-space/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "dma-space/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "dma-wide-bounds/commands.bin": {
+      "bytes": 128,
+      "sha256": "9046506a950bdcdb7cd9ef4128ced152417847e25dc4fcb77da94db6e0d63e99"
+    },
+    "dma-wide-bounds/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "dma-wide-bounds/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "dma-zero-size/commands.bin": {
+      "bytes": 128,
+      "sha256": "6c95ed03ffea110786797872cf3ea5bc3e1dada02c10f0978bfade628a83eec9"
+    },
+    "dma-zero-size/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "dma-zero-size/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "end-open-context/commands.bin": {
+      "bytes": 256,
+      "sha256": "ac50dc22953ed28a50ece69beb516ed7f12cd2a9cc464e26c9c78d787d2aae26"
+    },
+    "end-open-context/expected-2.bin": {
+      "bytes": 32,
+      "sha256": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
+    },
+    "end-open-context/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "end-open-context/initial-1.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "epilogue-output-preflight/commands.bin": {
+      "bytes": 256,
+      "sha256": "f73035b1d8e889819c00d740ce12fcbb3835593a3495cbc50e0ac36bbc463f17"
+    },
+    "epilogue-output-preflight/expected-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "epilogue-output-preflight/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "7c9fa136d4413fa6173637e883b6998d32e1d675f88cddff9dcbcf331820f4b8"
+    },
+    "epilogue-output-preflight/initial-1.bin": {
+      "bytes": 64,
+      "sha256": "16abab341fb7f370e27e4dadcf81766dd0dfd0ae64469477bb2cf6614938b2af"
+    },
+    "epilogue-output-preflight/initial-2.bin": {
+      "bytes": 128,
+      "sha256": "137b01fa68507913a89e0d3c215b0d06ce0491825532ea14e5c9d378973f1270"
+    },
+    "epilogue-output-preflight/initial-3.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "epilogue-without-context/commands.bin": {
+      "bytes": 128,
+      "sha256": "e7e190ce5bfb1eda00a96a284c490ef38c38d27056203d27af2f20c2a3f587d2"
+    },
+    "epilogue-without-context/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "epilogue-without-context/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "fifo-retry/commands.bin": {
+      "bytes": 1158,
+      "sha256": "2a868eb923f3c1807a8dcbe7c4b61c0771ae0620a111f8d83c8f8daaa0962f50"
+    },
+    "framing-rejections/commands.bin": {
+      "bytes": 895,
+      "sha256": "2b06c26edd41b8e6d2396d8eda42c6eaa30bf262d868d38ee581ada645af766d"
+    },
+    "linear-epilogue-ties/commands.bin": {
+      "bytes": 384,
+      "sha256": "5f607c76db3adec65c5ef73fd3f39fdcb82c2f4264a2fee36c2dd0253d2e0f03"
+    },
+    "linear-epilogue-ties/expected-3.bin": {
+      "bytes": 8,
+      "sha256": "cbb49edd4fbfb446cfb6493dbdda84b97048b6461fa0682536826806539bcc43"
+    },
+    "linear-epilogue-ties/initial-0.bin": {
+      "bytes": 128,
+      "sha256": "07dd0892c99a31bf04fcaae3abc6fbb42a7e71c5dfe575c6732cd5f5b82e34fb"
+    },
+    "linear-epilogue-ties/initial-1.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "linear-epilogue-ties/initial-2.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "lut-overlap/commands.bin": {
+      "bytes": 256,
+      "sha256": "fa94479d607f0ca2f8072ad0c6d4e04c00b1d03c387aca434118507ed7e03e63"
+    },
+    "lut-overlap/expected-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "lut-overlap/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "7c9fa136d4413fa6173637e883b6998d32e1d675f88cddff9dcbcf331820f4b8"
+    },
+    "lut-overlap/initial-1.bin": {
+      "bytes": 64,
+      "sha256": "16abab341fb7f370e27e4dadcf81766dd0dfd0ae64469477bb2cf6614938b2af"
+    },
+    "lut-overlap/initial-2.bin": {
+      "bytes": 128,
+      "sha256": "137b01fa68507913a89e0d3c215b0d06ce0491825532ea14e5c9d378973f1270"
+    },
+    "lut-overlap/initial-3.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "map-padding-record/commands.bin": {
+      "bytes": 128,
+      "sha256": "5cf91a9032becb34ad2c5732a949f3ae533f7244e9f22ac81a01ee5dfbc1c8bc"
+    },
+    "map-padding-record/expected-3.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "map-padding-record/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "map-padding-record/initial-1.bin": {
+      "bytes": 128,
+      "sha256": "e1e49841aec8e5d9d964314d16009ec65f457b4e94f2483a9aa4e292ac04da94"
+    },
+    "map-padding-record/initial-2.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "map-ties/commands.bin": {
+      "bytes": 256,
+      "sha256": "cbbf8fea763ff0e934e15921c5c800e8d2822ed9b29f9536d6f6f874f1395cd8"
+    },
+    "map-ties/expected-2.bin": {
+      "bytes": 8,
+      "sha256": "cbb49edd4fbfb446cfb6493dbdda84b97048b6461fa0682536826806539bcc43"
+    },
+    "map-ties/initial-0.bin": {
+      "bytes": 128,
+      "sha256": "5b409ec8048a2abb6c8788e1cc848fac0f91623bf88215aa2486c324f1493b6c"
+    },
+    "map-ties/initial-1.bin": {
+      "bytes": 8,
+      "sha256": "88bfe0ce6fd51a8752d6df2dd646a14cf907adeecc370dc7070920e303047f17"
+    },
+    "pool-negative-halo/commands.bin": {
+      "bytes": 256,
+      "sha256": "6dd25fb340702d053457ff1b5d15bcdcf7d9053eb277d7a8bb883ceeb4a121f0"
+    },
+    "pool-negative-halo/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "8ad4ece194d2c45c1875fb71d30b75bee60ce19eef02345df9d4965679e69a88"
+    },
+    "pool-negative-halo/initial-0.bin": {
+      "bytes": 200,
+      "sha256": "eafa206e502f6558236f86bb94d49e11aaa3f6bbb097f506f12421f1165568a6"
+    },
+    "reserved-payload-01/commands.bin": {
+      "bytes": 128,
+      "sha256": "3bf27dd2f1a0ef72b8a55d0172e01e5b3a9844913d4e4c43e6f20946e1ad2c28"
+    },
+    "reserved-payload-01/expected-5.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-01/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "reserved-payload-01/initial-1.bin": {
+      "bytes": 200,
+      "sha256": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a"
+    },
+    "reserved-payload-01/initial-2.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "reserved-payload-01/initial-3.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "reserved-payload-01/initial-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-02/commands.bin": {
+      "bytes": 128,
+      "sha256": "feb4d1dc0caca16d944c25bb127af1c5cfdd178762a4238ca984f4ec2e461f9d"
+    },
+    "reserved-payload-02/expected-5.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-02/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "reserved-payload-02/initial-1.bin": {
+      "bytes": 200,
+      "sha256": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a"
+    },
+    "reserved-payload-02/initial-2.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "reserved-payload-02/initial-3.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "reserved-payload-02/initial-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-10/commands.bin": {
+      "bytes": 128,
+      "sha256": "8f622744ad8b80fbc81c20b727d5fa8a773cc4a622498bdfa9b2c8d7f46fba8d"
+    },
+    "reserved-payload-10/expected-5.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-10/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "reserved-payload-10/initial-1.bin": {
+      "bytes": 200,
+      "sha256": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a"
+    },
+    "reserved-payload-10/initial-2.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "reserved-payload-10/initial-3.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "reserved-payload-10/initial-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-11/commands.bin": {
+      "bytes": 256,
+      "sha256": "f3b5423a9b5a62b067054118469a65c7dcc4c6129287d0dfab632a5205bef6f2"
+    },
+    "reserved-payload-11/expected-5.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-11/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "reserved-payload-11/initial-1.bin": {
+      "bytes": 200,
+      "sha256": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a"
+    },
+    "reserved-payload-11/initial-2.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "reserved-payload-11/initial-3.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "reserved-payload-11/initial-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-20/commands.bin": {
+      "bytes": 128,
+      "sha256": "087cbaa629cf3beb254cdf24a2cc7390323c829a02c2efc21f0e53b0483b556a"
+    },
+    "reserved-payload-20/expected-5.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-20/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "reserved-payload-20/initial-1.bin": {
+      "bytes": 200,
+      "sha256": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a"
+    },
+    "reserved-payload-20/initial-2.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "reserved-payload-20/initial-3.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "reserved-payload-20/initial-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-21/commands.bin": {
+      "bytes": 128,
+      "sha256": "61b88b5a3fe9ebe7c90c9061d2928f0dd6d534a166a278a9013735c9d9ab7464"
+    },
+    "reserved-payload-21/expected-5.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-21/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "reserved-payload-21/initial-1.bin": {
+      "bytes": 200,
+      "sha256": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a"
+    },
+    "reserved-payload-21/initial-2.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "reserved-payload-21/initial-3.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "reserved-payload-21/initial-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-22/commands.bin": {
+      "bytes": 128,
+      "sha256": "94f8c68c4b281024bcbe3eaad80fb60c9f7aadfc6edcdc44a27637ceffc80b00"
+    },
+    "reserved-payload-22/expected-5.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-22/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "reserved-payload-22/initial-1.bin": {
+      "bytes": 200,
+      "sha256": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a"
+    },
+    "reserved-payload-22/initial-2.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "reserved-payload-22/initial-3.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "reserved-payload-22/initial-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-23/commands.bin": {
+      "bytes": 128,
+      "sha256": "2df39d17c57ca1360800e201b93e13734376b331b7ea5afd09cffb01adc16b19"
+    },
+    "reserved-payload-23/expected-5.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-23/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "reserved-payload-23/initial-1.bin": {
+      "bytes": 200,
+      "sha256": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a"
+    },
+    "reserved-payload-23/initial-2.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "reserved-payload-23/initial-3.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "reserved-payload-23/initial-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-24/commands.bin": {
+      "bytes": 128,
+      "sha256": "547ff4ea09e51653baea1eac248a1180ccb15d3dcf47bffe6c7196ec6a4a8d56"
+    },
+    "reserved-payload-24/expected-5.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-24/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "reserved-payload-24/initial-1.bin": {
+      "bytes": 200,
+      "sha256": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a"
+    },
+    "reserved-payload-24/initial-2.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "reserved-payload-24/initial-3.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "reserved-payload-24/initial-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-30/commands.bin": {
+      "bytes": 128,
+      "sha256": "292ac395533bf406c174e2ccd0100344e1f7706e41132df9ef2e4fa5cabcf6ed"
+    },
+    "reserved-payload-30/expected-5.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-30/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "reserved-payload-30/initial-1.bin": {
+      "bytes": 200,
+      "sha256": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a"
+    },
+    "reserved-payload-30/initial-2.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "reserved-payload-30/initial-3.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "reserved-payload-30/initial-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-31/commands.bin": {
+      "bytes": 128,
+      "sha256": "ff704f1cbfd4535930cede05734e014632d65845cc6ea56667b5a7aab91cc34e"
+    },
+    "reserved-payload-31/expected-5.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reserved-payload-31/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "reserved-payload-31/initial-1.bin": {
+      "bytes": 200,
+      "sha256": "6d9c54dee5660c46886f32d80e57e9dd0ffa57ee0cd2a762b036d9c8e0c3a33a"
+    },
+    "reserved-payload-31/initial-2.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "reserved-payload-31/initial-3.bin": {
+      "bytes": 128,
+      "sha256": "38723a2e5e8a17aa7950dc008209944e898f69a7bd10a23c839d341e935fd5ca"
+    },
+    "reserved-payload-31/initial-4.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "reset-drops-queue/commands.bin": {
+      "bytes": 384,
+      "sha256": "9b87e1702d49b6156380b2248c9eb3d55e07234d337cf24af3828f7e28614025"
+    },
+    "reset-drops-queue/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "532a800b3d9638feb2b2028c8efa41b534bc5d1c0042eebf0ba154d963988dd9"
+    },
+    "reset-drops-queue/expected-2.bin": {
+      "bytes": 8,
+      "sha256": "81dcbecf88d35d828096dfd9f9b24b252f90ea14529d6198734f562b5c56c705"
+    },
+    "reset-drops-queue/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "532a800b3d9638feb2b2028c8efa41b534bc5d1c0042eebf0ba154d963988dd9"
+    },
+    "silu-lookup-boundaries/commands.bin": {
+      "bytes": 384,
+      "sha256": "85776e0070b41797b1a83169babd956819b70b013346e16d4069f8f4cfadc8d7"
+    },
+    "silu-lookup-boundaries/expected-4.bin": {
+      "bytes": 8,
+      "sha256": "fbb2e03785d482628b98f17af16856e29aa3cbd4dfc13653a065c9ad6c5f0c4d"
+    },
+    "silu-lookup-boundaries/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "silu-lookup-boundaries/initial-1.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    },
+    "silu-lookup-boundaries/initial-2.bin": {
+      "bytes": 128,
+      "sha256": "86808fc9fad1dee79333987b9381990fdf743ba43e043e61b81ea2c4a9786675"
+    },
+    "silu-lookup-boundaries/initial-3.bin": {
+      "bytes": 1024,
+      "sha256": "e395bcfad476a4d4a6ed4fb1eedb8cd867a93ecd5bb9dc788164924bd57f520c"
+    },
+    "sticky-unknown-opcode/commands.bin": {
+      "bytes": 512,
+      "sha256": "16617d1b86bbe2e07531005e747f7737b3f14e3154eca50c0b8276ab7f883b48"
+    },
+    "sticky-unknown-opcode/expected-1.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "sticky-unknown-opcode/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "2b7847b7b705781d7cf21a05e9c1bb37cbf078aea103bc3edcc6aca52ab65453"
+    },
+    "upsample-padding/commands.bin": {
+      "bytes": 256,
+      "sha256": "ec65ee63ac1bcf62b3fa92677e07b106c4bee3d9e65d498780c461cb52171641"
+    },
+    "upsample-padding/expected-1.bin": {
+      "bytes": 64,
+      "sha256": "e23fd438ad147ca909a520318239e3c40cdc022baa297e12b2dc8d3a43392cf6"
+    },
+    "upsample-padding/initial-0.bin": {
+      "bytes": 16,
+      "sha256": "80fddd7989e7e4f7efb320f147fe8b679d9f0d56c10d89e97fe1b1b2edae33da"
+    },
+    "utility-open-context/commands.bin": {
+      "bytes": 256,
+      "sha256": "61f98c86808908e9e010f08bdf44d3ef0ad8e3301673f0a9f7032e84af792b35"
+    },
+    "utility-open-context/expected-2.bin": {
+      "bytes": 32,
+      "sha256": "66687aadf862bd776c8fc18b8e9f8e20089714856ee233b3902a591d0d5f2925"
+    },
+    "utility-open-context/initial-0.bin": {
+      "bytes": 8,
+      "sha256": "af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc"
+    },
+    "utility-open-context/initial-1.bin": {
+      "bytes": 64,
+      "sha256": "f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b"
+    }
+  },
+  "byte_order": "little",
+  "cases": [
+    {
+      "commands": "dma-fill-copy/commands.bin",
+      "derivation": "FILL writes 0x55. DMA gathers two 8-byte EXT rows at 0 and 16. COPY moves the 16 gathered bytes to OUTPUT; DMA scatters them at EXT 64 and 80. Guard bytes must survive.",
+      "ext_bytes": 256,
+      "id": "dma-fill-copy",
+      "initial": [
+        {
+          "artifact": "dma-fill-copy/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        },
+        {
+          "artifact": "dma-fill-copy/initial-1.bin",
+          "offset": 64,
+          "space": 0
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 6,
+          "offset": 0,
+          "retired": 6
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "dma-fill-copy/expected-2.bin",
+              "offset": 0,
+              "space": 1
+            },
+            {
+              "artifact": "dma-fill-copy/expected-3.bin",
+              "offset": 0,
+              "space": 4
+            },
+            {
+              "artifact": "dma-fill-copy/expected-4.bin",
+              "offset": 64,
+              "space": 0
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 6,
+            "last_completed": 6,
+            "last_end": 6,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "DMA_COPY2D",
+        "FILL8",
+        "COPY2D",
+        "FENCE",
+        "END",
+        "guards"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "conv-raw/commands.bin",
+      "derivation": "Lane 0: 1*2+2*3+3*4+5=25; lane 1: 1+2+3-1=5. Six padding lanes remain zero.",
+      "ext_bytes": 256,
+      "id": "conv-raw",
+      "initial": [
+        {
+          "artifact": "conv-raw/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "conv-raw/initial-1.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "conv-raw/initial-2.bin",
+          "offset": 0,
+          "space": 5
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 1
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "conv-raw/expected-3.bin",
+              "offset": 0,
+              "space": 3
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 1,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 2
+          }
+        },
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 128,
+          "retired": 2
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "conv-raw/expected-4.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 3,
+            "last_completed": 3,
+            "last_end": 3,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "CONV_I8",
+        "EPILOGUE",
+        "padding",
+        "bias"
+      ],
+      "tensors": [
+        {
+          "dtype": "I8",
+          "layout": "HWC8",
+          "physical_shape": [
+            1,
+            1,
+            1,
+            8
+          ]
+        },
+        {
+          "dtype": "I8",
+          "layout": "KHWCI8",
+          "physical_shape": [
+            1,
+            1,
+            8,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "commands": "conv-chunks/commands.bin",
+      "derivation": "First eight channels contribute 8. Final two channels contribute 2*4+3*5=23. ACC is 31 before bias; no intermediate requantization.",
+      "ext_bytes": 256,
+      "id": "conv-chunks",
+      "initial": [
+        {
+          "artifact": "conv-chunks/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "conv-chunks/initial-1.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "conv-chunks/initial-2.bin",
+          "offset": 0,
+          "space": 5
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 0,
+          "retired": 2
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "conv-chunks/expected-3.bin",
+              "offset": 0,
+              "space": 3
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 2,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 2
+          }
+        },
+        {
+          "action": "execute",
+          "count": 3,
+          "offset": 256,
+          "retired": 3
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "conv-chunks/expected-4.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 5,
+            "last_completed": 5,
+            "last_end": 5,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "CONV_I8",
+        "EPILOGUE",
+        "chunks",
+        "FENCE"
+      ],
+      "tensors": [
+        {
+          "dtype": "I8",
+          "layout": "HWC8",
+          "physical_shape": [
+            1,
+            1,
+            1,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "commands": "conv3-stride2/commands.bin",
+      "derivation": "All nine valid weights are 1. Sum each explicit 3x3 window; stride2 window sums are 63,81,153,171. The zero-halo case sums to 7.",
+      "ext_bytes": 256,
+      "id": "conv3-stride2",
+      "initial": [
+        {
+          "artifact": "conv3-stride2/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "conv3-stride2/initial-1.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "conv3-stride2/initial-2.bin",
+          "offset": 0,
+          "space": 5
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 3,
+          "offset": 0,
+          "retired": 3
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "conv3-stride2/expected-3.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 3,
+            "last_completed": 3,
+            "last_end": 3,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "CONV_I8",
+        "EPILOGUE",
+        "halo",
+        "stride"
+      ],
+      "tensors": [
+        {
+          "dtype": "I8",
+          "layout": "HWC8",
+          "physical_shape": [
+            5,
+            5,
+            1,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "commands": "conv3-zero-halo/commands.bin",
+      "derivation": "All nine valid weights are 1. Sum each explicit 3x3 window; stride2 window sums are 63,81,153,171. The zero-halo case sums to 7.",
+      "ext_bytes": 256,
+      "id": "conv3-zero-halo",
+      "initial": [
+        {
+          "artifact": "conv3-zero-halo/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "conv3-zero-halo/initial-1.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "conv3-zero-halo/initial-2.bin",
+          "offset": 0,
+          "space": 5
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 3,
+          "offset": 0,
+          "retired": 3
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "conv3-zero-halo/expected-3.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 3,
+            "last_completed": 3,
+            "last_end": 3,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "CONV_I8",
+        "EPILOGUE",
+        "halo",
+        "stride"
+      ],
+      "tensors": [
+        {
+          "dtype": "I8",
+          "layout": "HWC8",
+          "physical_shape": [
+            3,
+            3,
+            1,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "commands": "map-ties/commands.bin",
+      "derivation": "RNE(5/2,7/2,-5/2,-7/2)=[2,4,-2,-4]; 127*2 and -128*2 saturate; M=0 zeroes the final lanes.",
+      "ext_bytes": 256,
+      "id": "map-ties",
+      "initial": [
+        {
+          "artifact": "map-ties/initial-0.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "map-ties/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 0,
+          "retired": 2
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "map-ties/expected-2.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 2,
+            "last_end": 2,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "MAP_I8",
+        "ties",
+        "saturation",
+        "zero-multiplier"
+      ],
+      "tensors": [
+        {
+          "dtype": "I8",
+          "layout": "HWC8",
+          "physical_shape": [
+            1,
+            1,
+            1,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "commands": "linear-epilogue-ties/commands.bin",
+      "derivation": "RNE(5/2,7/2,-5/2,-7/2)=[2,4,-2,-4]; 127*2 and -128*2 saturate; M=0 zeroes the final lanes.",
+      "ext_bytes": 256,
+      "id": "linear-epilogue-ties",
+      "initial": [
+        {
+          "artifact": "linear-epilogue-ties/initial-0.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "linear-epilogue-ties/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "linear-epilogue-ties/initial-2.bin",
+          "offset": 0,
+          "space": 2
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 3,
+          "offset": 0,
+          "retired": 3
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "linear-epilogue-ties/expected-3.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 3,
+            "last_completed": 3,
+            "last_end": 3,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "EPILOGUE",
+        "ties",
+        "saturation",
+        "zero-multiplier"
+      ],
+      "tensors": [
+        {
+          "dtype": "I8",
+          "layout": "HWC8",
+          "physical_shape": [
+            1,
+            1,
+            1,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "commands": "add-single-round/commands.bin",
+      "derivation": "Sum both integers before dividing by 2. Numerators [2,3,-2,-3,254,-256,7,-7] round/saturate to [1,2,-1,-2,127,-128,4,-4].",
+      "ext_bytes": 256,
+      "id": "add-single-round",
+      "initial": [
+        {
+          "artifact": "add-single-round/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "add-single-round/initial-1.bin",
+          "offset": 0,
+          "space": 5
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 0,
+          "retired": 2
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "add-single-round/expected-2.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 2,
+            "last_end": 2,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "ADD_I8",
+        "ties",
+        "saturation"
+      ],
+      "tensors": [
+        {
+          "dtype": "I8",
+          "layout": "HWC8",
+          "physical_shape": [
+            1,
+            1,
+            1,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "commands": "silu-lookup-boundaries/commands.bin",
+      "derivation": "Synthetic LUT tests addressing, not SiLU accuracy. Bias/2 indices clamp at -512 and 511; ties select -2,-4,2,4,0,0. Explicit table entries return [-128,127,-2,-4,2,4,0,0].",
+      "ext_bytes": 256,
+      "id": "silu-lookup-boundaries",
+      "initial": [
+        {
+          "artifact": "silu-lookup-boundaries/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "silu-lookup-boundaries/initial-1.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "silu-lookup-boundaries/initial-2.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "silu-lookup-boundaries/initial-3.bin",
+          "offset": 128,
+          "space": 5
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 3,
+          "offset": 0,
+          "retired": 3
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "silu-lookup-boundaries/expected-4.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 3,
+            "last_completed": 3,
+            "last_end": 3,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "EPILOGUE",
+        "lut",
+        "ties",
+        "clamp"
+      ],
+      "tensors": [
+        {
+          "dtype": "I8",
+          "layout": "HWC8",
+          "physical_shape": [
+            1,
+            1,
+            1,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "commands": "pool-negative-halo/commands.bin",
+      "derivation": "The 5x5 patch is -128 except centre=-7; maximum=-7. Invalid output lanes are zero, not -128.",
+      "ext_bytes": 256,
+      "id": "pool-negative-halo",
+      "initial": [
+        {
+          "artifact": "pool-negative-halo/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 0,
+          "retired": 2
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "pool-negative-halo/expected-1.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 2,
+            "last_end": 2,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "MAXPOOL5_I8",
+        "halo",
+        "padding"
+      ],
+      "tensors": [
+        {
+          "dtype": "I8",
+          "layout": "HWC8",
+          "physical_shape": [
+            5,
+            5,
+            1,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "commands": "upsample-padding/commands.bin",
+      "derivation": "Two input pixels -3 and 7 replicate to two rows [-3,-3,7,7]. Nonzero input padding is masked.",
+      "ext_bytes": 256,
+      "id": "upsample-padding",
+      "initial": [
+        {
+          "artifact": "upsample-padding/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 0,
+          "retired": 2
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "upsample-padding/expected-1.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 2,
+            "last_end": 2,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "UPSAMPLE2_I8",
+        "padding"
+      ],
+      "tensors": [
+        {
+          "dtype": "I8",
+          "layout": "HWC8",
+          "physical_shape": [
+            1,
+            2,
+            1,
+            8
+          ]
+        }
+      ]
+    },
+    {
+      "commands": "copy-interleaved/commands.bin",
+      "derivation": "Source rows [0,8) and [16,24) do not intersect destination rows [8,16) and [24,32).",
+      "ext_bytes": 256,
+      "id": "copy-interleaved",
+      "initial": [
+        {
+          "artifact": "copy-interleaved/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 0,
+          "retired": 2
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "copy-interleaved/expected-1.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 2,
+            "last_end": 2,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "COPY2D",
+        "alias"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "fifo-retry/commands.bin",
+      "derivation": "Eight FENCE records fill the FIFO; malformed input returns BUSY first. After one retirement it returns INVALID. Sequence 9 can then be retried unchanged.",
+      "ext_bytes": 256,
+      "id": "fifo-retry",
+      "initial": [],
+      "steps": [
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 0,
+          "result": 0
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 128,
+          "result": 0
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 256,
+          "result": 0
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 384,
+          "result": 0
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 512,
+          "result": 0
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 640,
+          "result": 0
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 768,
+          "result": 0
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 896,
+          "result": 0
+        },
+        {
+          "action": "submit",
+          "length": 3,
+          "offset": 1024,
+          "result": 1
+        },
+        {
+          "action": "run",
+          "count": 1,
+          "retired": 1
+        },
+        {
+          "action": "submit",
+          "length": 3,
+          "offset": 1027,
+          "result": 3
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 1030,
+          "result": 0
+        },
+        {
+          "action": "run",
+          "count": 8,
+          "retired": 8
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 9,
+            "last_completed": 9,
+            "last_end": 9,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "fifo",
+        "framing",
+        "FENCE",
+        "END"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "reset-drops-queue/commands.bin",
+      "derivation": "Reset discards a queued fill, clears counters, increments generation, preserves untouched EXT. Local reset bytes are unspecified and not compared; a new fill initializes them before observation.",
+      "ext_bytes": 256,
+      "id": "reset-drops-queue",
+      "initial": [
+        {
+          "artifact": "reset-drops-queue/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        }
+      ],
+      "steps": [
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 0,
+          "result": 0
+        },
+        {
+          "action": "reset"
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reset-drops-queue/expected-1.bin",
+              "offset": 0,
+              "space": 0
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 0,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 1,
+            "state": 1
+          }
+        },
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 128,
+          "retired": 2
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reset-drops-queue/expected-2.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 2,
+            "last_end": 2,
+            "reset_generation": 1,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "reset",
+        "END",
+        "FILL8"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "framing-rejections/commands.bin",
+      "derivation": "Malformed length, wrong ABI, sequence zero/gap, reserved header, and illegal flags reject without consuming sequence 1 or changing execution fault state.",
+      "ext_bytes": 256,
+      "id": "framing-rejections",
+      "initial": [],
+      "steps": [
+        {
+          "action": "submit",
+          "length": 127,
+          "offset": 0,
+          "result": 3
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 0,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 1
+          }
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 127,
+          "result": 3
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 0,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 1
+          }
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 255,
+          "result": 3
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 0,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 1
+          }
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 383,
+          "result": 3
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 0,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 1
+          }
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 511,
+          "result": 3
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 0,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 1
+          }
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 639,
+          "result": 3
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 0,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 1
+          }
+        },
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 767,
+          "retired": 1
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [],
+          "status": {
+            "error_code": 0,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 0,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 1,
+            "last_end": 1,
+            "reset_generation": 0,
+            "state": 1
+          }
+        }
+      ],
+      "tags": [
+        "framing",
+        "version",
+        "sequence",
+        "flags"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "sticky-unknown-opcode/commands.bin",
+      "derivation": "Unknown opcode is accepted, then faults at seq2. Seq3 is queued but must not overwrite the INPUT sentinel. Subsequent submission is BLOCKED until reset.",
+      "ext_bytes": 256,
+      "id": "sticky-unknown-opcode",
+      "initial": [
+        {
+          "artifact": "sticky-unknown-opcode/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 0,
+          "result": 0
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 128,
+          "result": 0
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 256,
+          "result": 0
+        },
+        {
+          "action": "run",
+          "count": 3,
+          "retired": 1
+        },
+        {
+          "action": "submit",
+          "length": 128,
+          "offset": 384,
+          "result": 2
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "sticky-unknown-opcode/expected-1.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 1,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 2,
+            "error_space": 4294967295,
+            "last_accepted": 3,
+            "last_completed": 1,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "BAD_OPCODE",
+        "sticky-fault"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "dma-alignment/commands.bin",
+      "derivation": "One isolated invalid operand/context must produce fault code 3 before changing INPUT sentinel; no command retires.",
+      "ext_bytes": 256,
+      "id": "dma-alignment",
+      "initial": [
+        {
+          "artifact": "dma-alignment/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "dma-alignment/expected-1.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 3,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "negative",
+        "dma-alignment"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "dma-bounds/commands.bin",
+      "derivation": "One isolated invalid operand/context must produce fault code 4 before changing INPUT sentinel; no command retires.",
+      "ext_bytes": 256,
+      "id": "dma-bounds",
+      "initial": [
+        {
+          "artifact": "dma-bounds/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "dma-bounds/expected-1.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 4,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "negative",
+        "dma-bounds"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "dma-wide-bounds/commands.bin",
+      "derivation": "One isolated invalid operand/context must produce fault code 4 before changing INPUT sentinel; no command retires.",
+      "ext_bytes": 256,
+      "id": "dma-wide-bounds",
+      "initial": [
+        {
+          "artifact": "dma-wide-bounds/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "dma-wide-bounds/expected-1.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 4,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "negative",
+        "dma-wide-bounds"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "dma-space/commands.bin",
+      "derivation": "One isolated invalid operand/context must produce fault code 5 before changing INPUT sentinel; no command retires.",
+      "ext_bytes": 256,
+      "id": "dma-space",
+      "initial": [
+        {
+          "artifact": "dma-space/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "dma-space/expected-1.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 5,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "negative",
+        "dma-space"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "dma-single-row-stride/commands.bin",
+      "derivation": "One isolated invalid operand/context must produce fault code 2 before changing INPUT sentinel; no command retires.",
+      "ext_bytes": 256,
+      "id": "dma-single-row-stride",
+      "initial": [
+        {
+          "artifact": "dma-single-row-stride/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "dma-single-row-stride/expected-1.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "negative",
+        "dma-single-row-stride"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "dma-zero-size/commands.bin",
+      "derivation": "One isolated invalid operand/context must produce fault code 2 before changing INPUT sentinel; no command retires.",
+      "ext_bytes": 256,
+      "id": "dma-zero-size",
+      "initial": [
+        {
+          "artifact": "dma-zero-size/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "dma-zero-size/expected-1.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "negative",
+        "dma-zero-size"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "copy-cross-row-overlap/commands.bin",
+      "derivation": "One isolated invalid operand/context must produce fault code 2 before changing INPUT sentinel; no command retires.",
+      "ext_bytes": 256,
+      "id": "copy-cross-row-overlap",
+      "initial": [
+        {
+          "artifact": "copy-cross-row-overlap/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "copy-cross-row-overlap/expected-1.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "negative",
+        "copy-cross-row-overlap"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "epilogue-without-context/commands.bin",
+      "derivation": "One isolated invalid operand/context must produce fault code 6 before changing INPUT sentinel; no command retires.",
+      "ext_bytes": 256,
+      "id": "epilogue-without-context",
+      "initial": [
+        {
+          "artifact": "epilogue-without-context/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "epilogue-without-context/expected-1.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 6,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "negative",
+        "epilogue-without-context"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "conv-missing-first/commands.bin",
+      "derivation": "One isolated invalid operand/context must produce fault code 6 before changing INPUT sentinel; no command retires.",
+      "ext_bytes": 256,
+      "id": "conv-missing-first",
+      "initial": [
+        {
+          "artifact": "conv-missing-first/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "conv-missing-first/expected-1.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 6,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "negative",
+        "conv-missing-first"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "conv-bounds/commands.bin",
+      "derivation": "One isolated invalid operand/context must produce fault code 4 before changing INPUT sentinel; no command retires.",
+      "ext_bytes": 256,
+      "id": "conv-bounds",
+      "initial": [
+        {
+          "artifact": "conv-bounds/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "conv-bounds/expected-1.bin",
+              "offset": 0,
+              "space": 1
+            }
+          ],
+          "status": {
+            "error_code": 4,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "negative",
+        "conv-bounds"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "reserved-payload-01/commands.bin",
+      "derivation": "P27 is reserved for every v0 opcode. Other operands and context are valid; nonzero P27 alone causes BAD_FIELD.",
+      "ext_bytes": 256,
+      "id": "reserved-payload-01",
+      "initial": [
+        {
+          "artifact": "reserved-payload-01/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        },
+        {
+          "artifact": "reserved-payload-01/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "reserved-payload-01/initial-2.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "reserved-payload-01/initial-3.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "reserved-payload-01/initial-4.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reserved-payload-01/expected-5.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "reserved",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "reserved-payload-02/commands.bin",
+      "derivation": "P27 is reserved for every v0 opcode. Other operands and context are valid; nonzero P27 alone causes BAD_FIELD.",
+      "ext_bytes": 256,
+      "id": "reserved-payload-02",
+      "initial": [
+        {
+          "artifact": "reserved-payload-02/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        },
+        {
+          "artifact": "reserved-payload-02/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "reserved-payload-02/initial-2.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "reserved-payload-02/initial-3.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "reserved-payload-02/initial-4.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reserved-payload-02/expected-5.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "reserved",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "reserved-payload-10/commands.bin",
+      "derivation": "P27 is reserved for every v0 opcode. Other operands and context are valid; nonzero P27 alone causes BAD_FIELD.",
+      "ext_bytes": 256,
+      "id": "reserved-payload-10",
+      "initial": [
+        {
+          "artifact": "reserved-payload-10/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        },
+        {
+          "artifact": "reserved-payload-10/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "reserved-payload-10/initial-2.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "reserved-payload-10/initial-3.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "reserved-payload-10/initial-4.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reserved-payload-10/expected-5.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "reserved",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "reserved-payload-11/commands.bin",
+      "derivation": "P27 is reserved for every v0 opcode. Other operands and context are valid; nonzero P27 alone causes BAD_FIELD.",
+      "ext_bytes": 256,
+      "id": "reserved-payload-11",
+      "initial": [
+        {
+          "artifact": "reserved-payload-11/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        },
+        {
+          "artifact": "reserved-payload-11/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "reserved-payload-11/initial-2.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "reserved-payload-11/initial-3.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "reserved-payload-11/initial-4.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 1
+        },
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 128,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reserved-payload-11/expected-5.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 2,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 1,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "reserved",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "reserved-payload-20/commands.bin",
+      "derivation": "P27 is reserved for every v0 opcode. Other operands and context are valid; nonzero P27 alone causes BAD_FIELD.",
+      "ext_bytes": 256,
+      "id": "reserved-payload-20",
+      "initial": [
+        {
+          "artifact": "reserved-payload-20/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        },
+        {
+          "artifact": "reserved-payload-20/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "reserved-payload-20/initial-2.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "reserved-payload-20/initial-3.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "reserved-payload-20/initial-4.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reserved-payload-20/expected-5.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "reserved",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "reserved-payload-21/commands.bin",
+      "derivation": "P27 is reserved for every v0 opcode. Other operands and context are valid; nonzero P27 alone causes BAD_FIELD.",
+      "ext_bytes": 256,
+      "id": "reserved-payload-21",
+      "initial": [
+        {
+          "artifact": "reserved-payload-21/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        },
+        {
+          "artifact": "reserved-payload-21/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "reserved-payload-21/initial-2.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "reserved-payload-21/initial-3.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "reserved-payload-21/initial-4.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reserved-payload-21/expected-5.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "reserved",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "reserved-payload-22/commands.bin",
+      "derivation": "P27 is reserved for every v0 opcode. Other operands and context are valid; nonzero P27 alone causes BAD_FIELD.",
+      "ext_bytes": 256,
+      "id": "reserved-payload-22",
+      "initial": [
+        {
+          "artifact": "reserved-payload-22/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        },
+        {
+          "artifact": "reserved-payload-22/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "reserved-payload-22/initial-2.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "reserved-payload-22/initial-3.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "reserved-payload-22/initial-4.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reserved-payload-22/expected-5.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "reserved",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "reserved-payload-23/commands.bin",
+      "derivation": "P27 is reserved for every v0 opcode. Other operands and context are valid; nonzero P27 alone causes BAD_FIELD.",
+      "ext_bytes": 256,
+      "id": "reserved-payload-23",
+      "initial": [
+        {
+          "artifact": "reserved-payload-23/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        },
+        {
+          "artifact": "reserved-payload-23/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "reserved-payload-23/initial-2.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "reserved-payload-23/initial-3.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "reserved-payload-23/initial-4.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reserved-payload-23/expected-5.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "reserved",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "reserved-payload-24/commands.bin",
+      "derivation": "P27 is reserved for every v0 opcode. Other operands and context are valid; nonzero P27 alone causes BAD_FIELD.",
+      "ext_bytes": 256,
+      "id": "reserved-payload-24",
+      "initial": [
+        {
+          "artifact": "reserved-payload-24/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        },
+        {
+          "artifact": "reserved-payload-24/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "reserved-payload-24/initial-2.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "reserved-payload-24/initial-3.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "reserved-payload-24/initial-4.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reserved-payload-24/expected-5.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "reserved",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "reserved-payload-30/commands.bin",
+      "derivation": "P27 is reserved for every v0 opcode. Other operands and context are valid; nonzero P27 alone causes BAD_FIELD.",
+      "ext_bytes": 256,
+      "id": "reserved-payload-30",
+      "initial": [
+        {
+          "artifact": "reserved-payload-30/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        },
+        {
+          "artifact": "reserved-payload-30/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "reserved-payload-30/initial-2.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "reserved-payload-30/initial-3.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "reserved-payload-30/initial-4.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reserved-payload-30/expected-5.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "reserved",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "reserved-payload-31/commands.bin",
+      "derivation": "P27 is reserved for every v0 opcode. Other operands and context are valid; nonzero P27 alone causes BAD_FIELD.",
+      "ext_bytes": 256,
+      "id": "reserved-payload-31",
+      "initial": [
+        {
+          "artifact": "reserved-payload-31/initial-0.bin",
+          "offset": 0,
+          "space": 0
+        },
+        {
+          "artifact": "reserved-payload-31/initial-1.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "reserved-payload-31/initial-2.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "reserved-payload-31/initial-3.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "reserved-payload-31/initial-4.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "reserved-payload-31/expected-5.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "reserved",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "end-open-context/commands.bin",
+      "derivation": "A first chunk opens ACC with 8 of 16 channels consumed; the following command violates context ownership or continuation.",
+      "ext_bytes": 256,
+      "id": "end-open-context",
+      "initial": [
+        {
+          "artifact": "end-open-context/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "end-open-context/initial-1.bin",
+          "offset": 0,
+          "space": 2
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 0,
+          "retired": 1
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "end-open-context/expected-2.bin",
+              "offset": 0,
+              "space": 3
+            }
+          ],
+          "status": {
+            "error_code": 6,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 2,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 1,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "context",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "utility-open-context/commands.bin",
+      "derivation": "A first chunk opens ACC with 8 of 16 channels consumed; the following command violates context ownership or continuation.",
+      "ext_bytes": 256,
+      "id": "utility-open-context",
+      "initial": [
+        {
+          "artifact": "utility-open-context/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "utility-open-context/initial-1.bin",
+          "offset": 0,
+          "space": 2
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 0,
+          "retired": 1
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "utility-open-context/expected-2.bin",
+              "offset": 0,
+              "space": 3
+            }
+          ],
+          "status": {
+            "error_code": 6,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 2,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 1,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "context",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "conv-wrong-continuation/commands.bin",
+      "derivation": "A first chunk opens ACC with 8 of 16 channels consumed; the following command violates context ownership or continuation.",
+      "ext_bytes": 256,
+      "id": "conv-wrong-continuation",
+      "initial": [
+        {
+          "artifact": "conv-wrong-continuation/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "conv-wrong-continuation/initial-1.bin",
+          "offset": 0,
+          "space": 2
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 0,
+          "retired": 1
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "conv-wrong-continuation/expected-2.bin",
+              "offset": 0,
+              "space": 3
+            }
+          ],
+          "status": {
+            "error_code": 6,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 2,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 1,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "context",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "add-shift-mismatch/commands.bin",
+      "derivation": "ADD lane 0 has shifts 0 and 1, which must fault before writing OUTPUT.",
+      "ext_bytes": 256,
+      "id": "add-shift-mismatch",
+      "initial": [
+        {
+          "artifact": "add-shift-mismatch/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "add-shift-mismatch/initial-1.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "add-shift-mismatch/initial-2.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "add-shift-mismatch/expected-3.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "parameters",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "map-padding-record/commands.bin",
+      "derivation": "MAP has only one valid lane, so lane 1 multiplier=1 is an invalid padding record.",
+      "ext_bytes": 256,
+      "id": "map-padding-record",
+      "initial": [
+        {
+          "artifact": "map-padding-record/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "map-padding-record/initial-1.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "map-padding-record/initial-2.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 1,
+          "offset": 0,
+          "retired": 0
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "map-padding-record/expected-3.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 1,
+            "error_space": 4294967295,
+            "last_accepted": 1,
+            "last_completed": 0,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "parameters",
+        "padding",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "bias-overflow/commands.bin",
+      "derivation": "CONV produces 1; adding INT32_MAX would overflow. Structural LUT/output errors must win before arithmetic. No memory is asserted after a numeric fault.",
+      "ext_bytes": 256,
+      "id": "bias-overflow",
+      "initial": [
+        {
+          "artifact": "bias-overflow/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "bias-overflow/initial-1.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "bias-overflow/initial-2.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "bias-overflow/initial-3.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 0,
+          "retired": 1
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [],
+          "status": {
+            "error_code": 7,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 2,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 1,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "EPILOGUE",
+        "overflow",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "lut-overlap/commands.bin",
+      "derivation": "CONV produces 1; adding INT32_MAX would overflow. Structural LUT/output errors must win before arithmetic. No memory is asserted after a numeric fault.",
+      "ext_bytes": 256,
+      "id": "lut-overlap",
+      "initial": [
+        {
+          "artifact": "lut-overlap/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "lut-overlap/initial-1.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "lut-overlap/initial-2.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "lut-overlap/initial-3.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 0,
+          "retired": 1
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "lut-overlap/expected-4.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 2,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 2,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 1,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "EPILOGUE",
+        "preflight",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "epilogue-output-preflight/commands.bin",
+      "derivation": "CONV produces 1; adding INT32_MAX would overflow. Structural LUT/output errors must win before arithmetic. No memory is asserted after a numeric fault.",
+      "ext_bytes": 256,
+      "id": "epilogue-output-preflight",
+      "initial": [
+        {
+          "artifact": "epilogue-output-preflight/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "epilogue-output-preflight/initial-1.bin",
+          "offset": 0,
+          "space": 2
+        },
+        {
+          "artifact": "epilogue-output-preflight/initial-2.bin",
+          "offset": 0,
+          "space": 5
+        },
+        {
+          "artifact": "epilogue-output-preflight/initial-3.bin",
+          "offset": 0,
+          "space": 4
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 2,
+          "offset": 0,
+          "retired": 1
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [
+            {
+              "artifact": "epilogue-output-preflight/expected-4.bin",
+              "offset": 0,
+              "space": 4
+            }
+          ],
+          "status": {
+            "error_code": 4,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 2,
+            "error_space": 4294967295,
+            "last_accepted": 2,
+            "last_completed": 1,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "EPILOGUE",
+        "preflight",
+        "negative"
+      ],
+      "tensors": []
+    },
+    {
+      "commands": "accumulator-overflow/commands.bin",
+      "derivation": "Each -128*-128 term is 16384; 3*3*32=288 terms per chunk. 455 chunks give 2146959360. Chunk 456 crosses INT32_MAX at term 131072 overall and must not retire. Failed ACC/output bytes are unspecified.",
+      "ext_bytes": 256,
+      "id": "accumulator-overflow",
+      "initial": [
+        {
+          "artifact": "accumulator-overflow/initial-0.bin",
+          "offset": 0,
+          "space": 1
+        },
+        {
+          "artifact": "accumulator-overflow/initial-1.bin",
+          "offset": 0,
+          "space": 2
+        }
+      ],
+      "steps": [
+        {
+          "action": "execute",
+          "count": 456,
+          "offset": 0,
+          "retired": 455
+        },
+        {
+          "action": "check",
+          "diagnostic_masks": {
+            "error_field": 0,
+            "error_offset": 0,
+            "error_space": 0
+          },
+          "memory": [],
+          "status": {
+            "error_code": 7,
+            "error_field": 4294967295,
+            "error_offset": 0,
+            "error_seq": 456,
+            "error_space": 4294967295,
+            "last_accepted": 456,
+            "last_completed": 455,
+            "last_end": 0,
+            "reset_generation": 0,
+            "state": 3
+          }
+        }
+      ],
+      "tags": [
+        "CONV_I8",
+        "overflow",
+        "chunks",
+        "negative"
+      ],
+      "tensors": []
+    }
+  ],
+  "contract_revision": "0.2",
+  "contract_sha256": "a5578ad48e63250764cf6b51c24721f472459669b521e675d531e306cff3330e",
+  "profile": "haslab-v0-int8",
+  "provenance": "Independent manual contract derivations; serialized by conformance/generate.py; no implementation imports; not external review.",
+  "schema_version": 1
+}

@@ -18,11 +18,11 @@ A feature is not `DONE` because it has placeholder files, compiles once, or prod
 
 ## Current focus
 
-The M3 implementation review is complete and documented in the [contract review record](reviews/v0-contract-review.md). Document revision 0.2 is a freeze candidate for experimental command ABI 0.1. Stable freeze remains open until independent command/transition review and conformance evidence are available.
+The M3 implementation review is complete and documented in the [contract review record](reviews/v0-contract-review.md). Document revision 0.2 is a freeze candidate for experimental command ABI 0.1. Stable freeze remains open until independent command/transition review of the candidate and its conformance evidence is complete.
 
-Next: build M4's independent conformance-vector format against the pinned candidate before accelerator RTL begins. This evidence feeds back into M3; candidate readiness is not a stable ABI release.
+M4's candidate package is implemented in [conformance/](../conformance/README.md): 46 independently authored binary fixtures, schema version 1, ABI registry with consistency checks, strict artifact validation, simulator runner, and CI integration. These expectations are independent of implementation helpers, but have not received independent external review. M3 freeze and final M4 release remain open.
 
-The next implementation artifact should be a small, versioned conformance package containing serialized commands, initial memory, expected memory, expected completion or error state, and human-readable metadata. These vectors will be shared by the functional simulator and future RTL tests.
+Next implementation task: M5, pin and audit the first YOLO-class workload against this candidate. Record model/export hashes, operator coverage, preprocessing/host-tail boundaries, baseline accuracy, calibration, and memory/tiling feasibility before committing to full RTL. Independent review of the candidate contract and corpus can proceed alongside that audit.
 
 ## Milestone plan
 
@@ -31,8 +31,8 @@ The next implementation artifact should be a small, versioned conformance packag
 | M0 | Repository foundation | `DONE` | — | Project structure, build entry points, documentation skeletons, CI skeleton, and licensing are tracked |
 | M1 | Numerical golden model | `DONE` | M0 | Documented FP8/INT8 semantics and passing numerical, layout, activation, and operation tests |
 | M2 | Functional command simulator | `DONE` | M1 | Versioned 128-byte command encoding, memory/device behavior, architectural errors, and passing simulator tests |
-| M3 | Freeze the v0 contract | `ACTIVE` | M1, M2; independent M4 evidence for closure | Candidate review and compatibility policy documented; final freeze awaits independent command/transition review and conformance evidence |
-| M4 | v0 conformance package | `NEXT` | M3 candidate (ready); frozen M3 for final corpus release | Checked-in independent positive and negative vectors with hashes, schema documentation, and automated simulator validation |
+| M3 | Freeze the v0 contract | `ACTIVE` | M1, M2; independent M4 review for closure | Candidate and conformance evidence available; final freeze awaits independent command/transition review |
+| M4 | v0 conformance package | `ACTIVE` | Candidate implemented; frozen M3 for final corpus release | 46 binary fixtures, hashes/schema, ABI consistency, simulator runner, and CI implemented; final release awaits independent review and stable ABI |
 | M5 | Pin the first YOLO workload | `NEXT` | M3 candidate (ready) | Exact model/export hashes, license, ONNX profile, preprocessing, operator inventory, host partition, floating baseline, and INT8 acceptance budget are tracked |
 | M6 | Minimal compiler and simulated runtime | `BLOCKED` | M4, M5 | Deterministic model package generation and complete execution through the simulator with layerwise comparisons |
 | M7 | First RTL vertical slice | `BLOCKED` | Frozen M3, M4 | Command decode through one INT8 MAC path, INT32 accumulation, requantization, completion/error behavior, and differential tests |
@@ -60,21 +60,26 @@ The v0 contract can freeze without selecting v1 FP8 payloads, an ASIC SRAM macro
 
 ## M4 — build the conformance package
 
-Planned location: `conformance/`.
+Location: [conformance/](../conformance/README.md). Candidate schema/runner decision: [ADR 0002](decisions/0002-conformance-corpus-format.md).
 
-- [ ] Specify a versioned fixture manifest and directory layout.
-- [ ] Introduce one machine-readable ABI definition with checks against executable constants before adding compiler/RTL consumers.
-- [ ] Store serialized 128-byte commands as the actual bytes consumed by an implementation.
-- [ ] Store initial and expected memory images without deriving expected results during the test.
-- [ ] Store expected completion records, sequence counters, reset generation, and structured errors.
-- [ ] Mask optional fault diagnostics and unspecified memory after arithmetic/bus faults; use isolated violations or allowed error sets for invalid commands.
-- [ ] Include provenance, ABI version, endianness, dimensions, tensor layout, and file hashes.
-- [ ] Add normal cases for DMA, fill, copy, convolution, epilogue, map, add, pool, upsample, and end/reset behavior.
-- [ ] Add boundary cases for rounding ties, saturation, overflow, channel padding, halos, and chunk continuation.
-- [ ] Add negative cases for malformed framing, unknown opcodes, bounds, alignment, overlap, FIFO full, sequence gaps, stale tokens, and illegal accumulator state.
-- [ ] Keep the expected-value source independent from the implementation being tested.
-- [ ] Validate every fixture against the functional simulator in CI.
-- [ ] Minimize every discovered failure into a permanent regression fixture.
+- [x] Specify a versioned fixture manifest and directory layout.
+- [x] Introduce one machine-readable ABI definition with checks against executable constants before adding compiler/RTL consumers.
+- [x] Store serialized 128-byte commands as the actual bytes consumed by an implementation.
+- [x] Store initial and expected memory images without deriving expected results during device execution.
+- [x] Store expected completion counters, reset generation, and structured errors at checkpoints.
+- [x] Mask optional fault diagnostics and omit unspecified memory after arithmetic faults; document the same rule for future bus-fault cases.
+- [x] Include provenance, ABI version, endianness, tensor metadata, and file hashes.
+- [x] Add normal cases for DMA, fill, copy, convolution, epilogue, map, add, pool, upsample, and end/reset behavior.
+- [x] Add boundary cases for rounding ties, saturation, overflow, channel padding, halos, and chunk continuation.
+- [x] Add negative cases for malformed framing, unknown opcodes, bounds, alignment, overlap, FIFO full, sequence gaps, and illegal accumulator state.
+- [ ] Add stale-token tests when M6 provides a runtime; the device simulator has no token API.
+- [ ] Add DMA bus failure/reset-with-outstanding-transfer cases when the transport model exists (M9).
+- [x] Keep expected-value recipes independent from the implementation being tested.
+- [x] Validate every fixture against the functional simulator through `make conformance`, included in `make test` and CI.
+- [x] Test the runner using corrupted artifacts, malformed schemas, and deliberately wrong expectations.
+- [ ] Complete independent review and stable-ABI corpus release after M3 closes.
+
+Ongoing rule: minimize each newly discovered failure into a permanent regression. The initial corpus reproduced the candidate simulator results without requiring a new arithmetic or command-semantic change. Runner discrepancies found during future use are bugs to investigate, not reasons to copy the implementation's output into golden files.
 
 Exit criterion: another implementation can consume the fixture specification without importing private helpers from the Python reference model or simulator.
 
@@ -157,3 +162,5 @@ When work changes status:
 | 2026-09-20 | Established the tracked implementation plan; recorded repository foundation, numerical model, and functional simulator as complete; made contract freeze the active milestone | `README.md`, `reference/numerical-semantics.md`, `reference/tests/`, `simulation/command-simulator.md`, `simulation/tests/`, `docs/haslab-v0-contract.md` |
 | 2026-09-20 | Completed M3 implementation review; published document revision 0.2 / ABI 0.1 candidate and ADR 0001; corrected simulator snapshot, validation, aperture, stride, and diagnostics behavior; enabled M4 candidate fixtures while retaining independent review as the stable-freeze gate | [Review](reviews/v0-contract-review.md), [decision](decisions/0001-v0-abi-freeze-candidate.md), [regressions](../simulation/tests/test_contract_review.py) |
 | 2026-09-20 | Review validation passed: 43 numerical tests + 42 simulator tests = 85 total; repository and whitespace checks passed | `make test`, `make check`, `git diff --check`; details in the [review record](reviews/v0-contract-review.md) |
+| 2026-09-20 | Implemented M4 candidate package: 46 independently authored binary fixtures, schema v1, pinned contract/registry hashes, strict loader, simulator runner, and ABI consistency checks. Added 19 infrastructure tests and integrated the corpus into CI. Stable M3/M4 release remains pending independent review; next implementation task is M5 workload pinning/audit. | [Package](../conformance/README.md), [format](../conformance/FORMAT.md), [ADR 0002](decisions/0002-conformance-corpus-format.md) |
+| 2026-09-20 | M4 candidate validation passed: 104 unit tests (43 numerical + 42 simulator + 19 conformance infrastructure), all 46 binary fixture cases, byte-for-byte corpus reproduction, repository checks, and whitespace checks. | `make test`, `make check`, `git diff --check` |

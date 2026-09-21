@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "profile": "haslab-v0-int8",
+  "contract_revision": "0.2",
+  "abi": {"major": 0, "minor": 1},
+  "byte_order": "little",
+  "command_bytes": 128,
+  "command_words": 32,
+  "payload_words": 28,
+  "header": {"abi_major": [0, 24, 8], "abi_minor": [0, 16, 8], "opcode": [0, 0, 16], "flags": [1, 0, 32], "sequence": [2, 0, 32], "reserved_zero": [3, 0, 32]},
+  "fifo_depth": 8,
+  "ext_capacity_max": 4294967295,
+  "spaces": {"EXT": 0, "INPUT": 1, "WEIGHT": 2, "ACC": 3, "OUTPUT": 4, "PARAM": 5},
+  "local_bytes": {"INPUT": 16384, "WEIGHT": 16384, "ACC": 8192, "OUTPUT": 8192, "PARAM": 3072},
+  "states": {"RESETTING": 0, "IDLE": 1, "RUNNING": 2, "FAULT": 3},
+  "submit_results": {"ACCEPTED": 0, "BUSY": 1, "BLOCKED": 2, "INVALID": 3},
+  "errors": {"NONE": 0, "BAD_OPCODE": 1, "BAD_FIELD": 2, "ALIGNMENT": 3, "BOUNDS": 4, "BAD_SPACE": 5, "BAD_STATE": 6, "ARITH_OVERFLOW": 7, "DMA_BUS": 8, "INTERNAL": 9},
+  "layouts": {"activation": "HWC8", "weight_tile": "KHWCI8", "lanes": 8},
+  "dtypes": {"I8": 1, "I32": 2, "F8E4M3FN": 16, "F8E5M2": 17, "F16": 18, "F32": 19},
+  "parameter_record": {"bytes": 16, "lanes": 8, "fields": ["bias_i32", "multiplier_u31", "shift_0_62", "reserved_zero"]},
+  "commands": {
+    "DMA_COPY2D": {"opcode": 1, "flags": {}, "payload": ["src_space", "src_offset", "dst_space", "dst_offset", "row_bytes", "rows", "src_stride", "dst_stride", "reserved_zero"]},
+    "FILL8": {"opcode": 2, "flags": {}, "payload": ["space", "offset", "length", "byte"]},
+    "CONV_I8": {"opcode": 16, "flags": {"FIRST": 1, "LAST": 2}, "payload": ["input_offset", "weight_offset", "acc_offset", "out_h", "out_w", "valid_lanes", "chunk_channels", "chunk_start", "total_channels", "kernel", "stride"]},
+    "EPILOGUE": {"opcode": 17, "flags": {}, "payload": ["acc_offset", "output_offset", "param_offset", "mode", "lut_offset"]},
+    "MAP_I8": {"opcode": 32, "flags": {}, "payload": ["input_offset", "output_offset", "h", "w", "valid_lanes", "param_offset"]},
+    "ADD_I8": {"opcode": 33, "flags": {}, "payload": ["a_offset", "b_offset", "output_offset", "h", "w", "valid_lanes", "a_param", "b_param"]},
+    "MAXPOOL5_I8": {"opcode": 34, "flags": {}, "payload": ["input_offset", "output_offset", "h", "w", "valid_lanes"]},
+    "UPSAMPLE2_I8": {"opcode": 35, "flags": {}, "payload": ["input_offset", "output_offset", "h", "w", "valid_lanes"]},
+    "COPY2D": {"opcode": 36, "flags": {}, "payload": ["src_space", "src_offset", "dst_space", "dst_offset", "row_bytes", "rows", "src_stride", "dst_stride", "reserved_zero"]},
+    "FENCE": {"opcode": 48, "flags": {}, "payload": []},
+    "END": {"opcode": 49, "flags": {}, "payload": []}
+  },
+  "mmio": {
+    "ID": 0, "ABI": 4, "CAPABILITIES": 8, "STATE": 12,
+    "FIFO_FREE": 16, "LAST_ACCEPTED": 20, "LAST_COMPLETED": 24, "LAST_END": 28,
+    "ERROR_CODE": 32, "ERROR_SEQ": 36, "ERROR_SPACE": 40, "ERROR_OFFSET": 44, "ERROR_FIELD": 48,
+    "CONTROL": 52, "RESET_GENERATION": 56, "EXT_BYTES": 60, "SUBMIT_RESULT": 64, "COMMIT": 68,
+    "CYCLES_LO": 72, "CYCLES_HI": 76, "INPUT_BYTES": 80, "WEIGHT_BYTES": 84,
+    "ACC_BYTES": 88, "OUTPUT_BYTES": 92, "PARAM_BYTES": 96, "CMD_STAGING_BASE": 256
+  }
+}

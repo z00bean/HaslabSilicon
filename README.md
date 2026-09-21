@@ -20,15 +20,18 @@ HASLAB is being designed in public from the numerical contract upward. The proje
 
 ## Current status
 
-**Stage: numerical reference model and functional command simulation.**
+**Stage: v0 contract candidate reviewed; independent conformance vectors next.**
 
 The repository currently contains an architecture specification, an executable Python golden model, and a byte-level simulator for the proposed v0 accelerator commands. It does not yet contain tensor-accelerator RTL, an ONNX compiler, a runtime, an FPGA bitstream, an ASIC implementation, or demonstrated YOLO execution.
 
 | Component | Status | What that means |
 |---|---|---|
-| Architecture and v0 contract | Proposed | Detailed enough for review, still open to evidence-driven revision |
+| Architecture and v0 contract | Freeze candidate | Document revision 0.2 reviewed against the software models; independent evidence still required |
 | Python numerical model | Implemented and unit-tested | Defines FP8/INT8 conversion, accumulation, tensor operations, layouts, and edge cases |
 | Functional command simulator | Implemented and unit-tested | Executes the proposed 128-byte command ABI over modeled memory spaces |
+| v0 contract freeze | Active | ABI 0.1 candidate and compatibility/reset/fault decisions recorded; stable freeze awaits independent review and conformance vectors |
+| v0 conformance package | Next | Independent reusable command, memory, completion, and error fixtures do not exist yet |
+| Pinned YOLO-class workload | Next | Proposed target exists, but model/export hashes, operator audit, baseline, and INT8 budget are not frozen |
 | ONNX importer and compiler | Planned | No model can be compiled to HASLAB yet |
 | Runtime | Planned | No application-facing device API exists yet |
 | RTL and RTL testbenches | Planned | No hardware implementation exists yet |
@@ -43,6 +46,26 @@ make test
 ```
 
 The current test suite covers the numerical model and functional command simulator. Passing it establishes consistency with the Python specification; it is not an FPGA or silicon performance result.
+
+### Progress at a glance
+
+- [x] Establish the repository structure, documentation, licensing, and development checks.
+- [x] Implement and test the numerical golden model.
+- [x] Implement and test the functional command simulator.
+- [x] Review the v0 contract against the software models, fix discrepancies, and record the ABI candidate decisions.
+- [ ] Freeze the stable v0 ABI after independent review and conformance evidence.
+- [ ] Build and publish independent v0 conformance vectors. **Next implementation step.**
+- [ ] Pin and audit the first YOLO-class ONNX workload.
+- [ ] Implement the minimal compiler and simulated runtime path.
+- [ ] Implement and differentially verify the first RTL vertical slice.
+- [ ] Expand RTL operation coverage one conformance-gated operation at a time.
+- [ ] Select an FPGA from measured resource probes and complete v0 bring-up.
+- [ ] Evaluate RISC-V control and native FP8 for v1 using measured v0 evidence.
+- [ ] Begin ASIC feasibility only after the FPGA design is stable and measured.
+
+The detailed [development plan](docs/development-plan.md) is the status record for dependencies, checklists, exit criteria, and evidence. The README checklist is updated when milestone status changes.
+
+The [contract review record](docs/reviews/v0-contract-review.md) explains the corrected simulator defects and remaining workload, package, and transport gates. The current candidate is **command ABI 0.1 / contract document revision 0.2**; these are separate versions. No RTL has been written.
 
 ## Why physical AI?
 
@@ -139,15 +162,7 @@ The basic test core should favor portability and observability over headline per
 
 ## FPGA-to-silicon roadmap
 
-1. **Numerical foundation — current.** Maintain exact reference behavior and edge-case tests.
-2. **Command-level behavior — current.** Validate byte-level commands, memory rules, state transitions, and error behavior.
-3. **Workload audit.** Pin the initial ONNX export, classify every operator, establish floating-point output and accuracy baselines, and calibrate the INT8 profile.
-4. **Compiler and runtime.** Lower the supported ONNX graph to target-specific HASLAB packages without hidden fallback.
-5. **RTL simulation.** Implement small modules against independent golden vectors, then integrate the complete serialized v0 path.
-6. **v0 FPGA.** Publish reproducible board files, timing, resources, accuracy, transfers, and complete pipeline latency.
-7. **v1 FPGA.** Add only the RISC-V, FP8, concurrency, and vector features justified by measurements.
-8. **ASIC feasibility.** Select an actual process and memory macros, run synthesis/place-and-route, and close IO, clock, power, DFT, and packaging gaps.
-9. **Test chip and silicon.** Publish fabrication collateral, bring-up results, measured behavior, and errata.
+The implementation order is contract candidate → independent conformance vectors and final ABI freeze → pinned workload → compiler/runtime execution → narrow RTL slice → incremental RTL coverage → measured FPGA → evidence-driven v1 → ASIC feasibility and test silicon. See the [development plan](docs/development-plan.md) for the current status and completion gates for each stage.
 
 No stage is considered complete solely because a demo produces plausible boxes. Numerical agreement, declared partitions, reproducible builds, and measured hardware results are required.
 

@@ -3,7 +3,7 @@
 Copyright (C) 2026 Zubin Bhuyan.
 SPDX-License-Identifier: CERN-OHL-S-2.0
 
-**Status:** proposed specification, revision 0.1, September 20, 2026. This defines an intended hardware/software interface, not existing accelerator functionality. The release profile is `haslab-v0-int8`. The [revised architecture](haslab-v0-revised-architecture.md) supplies its rationale; this document takes precedence for interface details. The executable [Python numerical reference model](../reference/numerical-semantics.md) defines the arithmetic subset, and the [functional command simulator](../simulation/command-simulator.md) exercises the byte-level ABI and state behavior. No compiler, runtime, model export, cycle model, or RTL is implemented here.
+**Status:** freeze candidate, document revision 0.2, September 20, 2026; command ABI remains experimental **0.1**. This defines an intended hardware/software interface, not existing accelerator functionality. The release profile is `haslab-v0-int8`. The [revised architecture](haslab-v0-revised-architecture.md) supplies its rationale; this document takes precedence for interface details. The executable [Python numerical reference model](../reference/numerical-semantics.md) defines the arithmetic subset, and the [functional command simulator](../simulation/command-simulator.md) exercises the byte-level ABI and state behavior. No compiler, runtime, model export, cycle model, or RTL is implemented here. The [contract review](reviews/v0-contract-review.md) records corrections, evidence, and remaining freeze gates.
 
 The intended workflow is:
 
@@ -11,7 +11,7 @@ The intended workflow is:
 
 A package includes the accelerator schedule and an explicit host detection tail. v0 is a complete host+FPGA detector pipeline, not a standalone FPGA detector. The initial workload remains a pinned YOLOv8n, batch one, 320×320. All backbone, neck, and learned detection-head convolutions run on the accelerator; image preparation and the specified final decoding/DFL/NMS stage run on the host.
 
-“MUST” denotes a requirement of the proposed profile. Fields and IDs below are draft allocations to validate before ABI freeze. A future target may reuse the frontend and public API without accepting v0 binaries.
+“MUST” denotes a requirement of the candidate profile. Fields and IDs below are candidate allocations to validate with independent conformance evidence before ABI freeze. A future target may reuse the frontend and public API without accepting v0 binaries. The document revision, command ABI, numerical profile, and `.hxb` file format are separate versions.
 
 | Boundary | Producer → consumer | Representation |
 |---|---|---|
@@ -52,7 +52,7 @@ References are `(space:u32, offset:u32)`, where offset is a byte offset into a b
 
 | Space ID | Name | Logical capacity | Role |
 |---:|---|---:|---|
-| 0 | EXT | Runtime-reported, maximum representable 32-bit byte capacity | Board DRAM aperture: weights, live activations, scratch |
+| 0 | EXT | Runtime-reported, 1…4,294,967,295 bytes | Board DRAM aperture: weights, live activations, scratch |
 | 1 | INPUT | 16,384 bytes | Dense patches and utility sources |
 | 2 | WEIGHT | 16,384 bytes | Packed INT8 weight tiles |
 | 3 | ACC | 8,192 bytes | INT32 partial sums; only convolution writes |
@@ -65,6 +65,8 @@ PARAM plus FIFO implements the earlier 4 KiB metadata budget, keeping **52 KiB t
 All DMA row starts, strides, and lengths are multiples of eight bytes. All local tensor/parameter bases are eight-byte aligned. EXT allocations start at 64-byte boundaries. Runtime allocation lengths include channel/tile padding. Hardware does not handle arbitrary byte tails or perform read-modify-write on neighboring allocations. This intentionally narrows the earlier architecture's open question about unaligned DMA.
 
 Address arithmetic MUST use widened intermediates to detect overflow. For a 2-D transfer with positive `rows`, check `offset + (rows-1)×stride + row_bytes ≤ capacity` before issuing a bus access. Check source and destination independently. Zero-size hardware operations are invalid; the compiler removes them.
+
+`EXT_BYTES` holds the literal u32 capacity: zero is invalid and does not encode 4 GiB. The exclusive upper extent may equal capacity; no address calculation may wrap to fit. Alignment applies to accessed spans, not the capacity itself, so a nonaligned capacity may have an unusable final fragment.
 
 Only one execution context exists. Tensor, utility, and DMA operations are serialized. Live branch tensors reside in EXT until their last consumer; a two-buffer whole-model allocation is insufficient. A trusted compiler proves object-level liveness and nonaliasing; hardware validates region bounds and legal spaces, not a per-tensor protection table.
 
@@ -108,11 +110,15 @@ The proposed board adapter presents a 64-bit data path, aligned incrementing bur
 
 A separate `COPY2D` utility command uses the same payload for local copies between INPUT/OUTPUT. Source/destination ranges MUST not overlap; it is not `memmove`. PARAM and ACC are inaccessible to this utility copy. Rescaled copies use `MAP_I8` instead. These restrictions remove hidden coherence and port-arbitration requirements.
 
+For both copy commands, `rows=1` requires both strides to equal `row_bytes`, even though no second row is accessed. COPY2D overlap means an intersection between any source row and any destination row in the same space; interleaved disjoint rows are legal even if their enclosing spans overlap. Distinct spaces cannot alias. DMA/fill/copy preserve the supplied bytes; tensor padding invariants are the compiler's responsibility for these byte operations.
+
 ## 5. Accelerator commands
 
 ### Framing and compatibility
 
 A command is 128 bytes: 32 little-endian u32 words, no native-language structure padding. Word zero contains ABI major in bits 31:24, ABI minor in bits 23:16, opcode in bits 15:0. This draft uses ABI **0.1**. Word one contains flags, word two a nonzero sequence number, and word three is reserved zero. Words 4–31 are payload words P0–P27. Unused payload words and reserved flag bits MUST be zero.
+
+Both ABI bytes MUST match exactly; a higher or lower minor is not automatically compatible. During experimental 0.x development, a semantic or encoding change after this candidate receives a new minor and decision record. Editorial changes only change the document revision. A stable release ABI is allocated only after independent conformance review; experimental packages never acquire compatibility merely by changing their version field. Packages and fixture manifests must pin a contract revision or hash in addition to ABI 0.1 while it remains experimental. See [ADR 0001](decisions/0001-v0-abi-freeze-candidate.md).
 
 Sequence numbers increase by one from 1 after reset, without wraparound. Before exhausting u32 sequence numbers, drain and reset; runtime tokens also include a reset generation. A command with the wrong version, invalid flag, or sequence gap MUST not execute.
 
@@ -146,6 +152,8 @@ Flag bit 0 is FIRST; bit 1 is LAST. FIRST requires chunk start zero and no open 
 
 DMA/fill commands may replace inputs, weights, and parameters between chunks. Another tile cannot interleave its convolution or epilogue. Utility operations are rejected while an accumulator context exists. EPILOGUE requires a ready context, consumes it, and releases ACC. FENCE may observe an open context; END must reject one. This small context tracker prevents missing chunks and accidental double finalization without a general dependency scheduler.
 
+Here "utility" means MAP_I8, ADD_I8, MAXPOOL5_I8, UPSAMPLE2_I8, and COPY2D. FILL8 is explicitly allowed while a context is open. CONV ignores input padding channels and invalid output lanes during reduction and writes zero to invalid ACC lanes; zero-packed weights remain a compiler requirement. Read-only ADD source ranges and parameter records may alias each other. There is no destination alias because INPUT, OUTPUT, ACC, and PARAM are distinct spaces.
+
 ### Epilogue and utility payloads
 
 All operations below use one group of eight physical channels and 1–8 valid lanes. Sources/destinations are dense local HWC8, not general-strided views. Every output padding lane is zeroed. Integer dimensions are positive; memory extents must fit their spaces.
@@ -173,17 +181,21 @@ v0 has one queue and one model execution in flight. The runtime has exclusive de
 
 The host writes a complete 128-byte staging command, executes the platform's MMIO write barrier, then writes COMMIT with the same sequence number. If FIFO space exists, hardware atomically snapshots the staging words and increments LAST_ACCEPTED. If full, COMMIT is rejected without side effects and SUBMIT_RESULT reports BUSY; the runtime retries after checking capacity. There is no partial command in the execution FIFO. MMIO reads must flush posted writes according to the platform backend.
 
+Submission checks have this precedence: FAULT/RESETTING → BLOCKED; full FIFO → BUSY; invalid framing, COMMIT/word-two mismatch, version, flags, or sequence → INVALID; otherwise ACCEPTED. Rejection changes only SUBMIT_RESULT, not accepted work or execution-fault registers. Unknown opcodes require zero flags and are rejected at execution with BAD_OPCODE. A successful snapshot is immutable even if staging is later rewritten. FIFO_FREE excludes the executing command; no software may depend on the timing of slot release.
+
 A staging command must not be overwritten until its commit result has been observed. Submitted external constants and inputs remain immutable until END or a completed abort/reset. Local memory is modified only by serialized commands. Writes to PARAM do not retroactively alter previous commands; hardware consumes parameters when a command executes.
 
 Before submission, the runtime synchronizes host-written EXT buffers for device access. After successful END and DMA write completion, it synchronizes device-written buffers for CPU access. FENCE is not a replacement for host cache maintenance. A CPU host pointer is never placed into a device descriptor.
 
-Polling is the required completion mechanism; interrupts are optional later. Waiting with a timeout does not cancel work or transfer buffer ownership. To abort, the runtime requests reset and waits for RESET_DONE. The board adapter must drain or safely terminate outstanding transactions before reuse; software must never free a buffer merely because a timeout occurred.
+Polling is the required completion mechanism; interrupts are optional later. Waiting with a timeout does not cancel work or transfer buffer ownership. To abort, the runtime captures RESET_GENERATION, requests reset, flushes posted writes, and polls until the generation has advanced by one modulo 2^32 and STATE is IDLE. There is no RESET_DONE register. An ordinary IDLE observation alone does not acknowledge reset. The board adapter must drain or safely terminate outstanding transactions before reuse; software must never free a buffer merely because a timeout occurred.
+
+An accepted reset enters RESETTING before another COMMIT or command retirement can succeed; reset wins if they coincide. Further reset requests while RESETTING are ignored. Queued work is discarded, active work is aborted, and all bus activity must become quiescent before generation advances and IDLE is exposed. Already completed writes are not rolled back; after reset, local data is invalid and EXT destinations touched by aborted work are invalid. Reset does not clear the whole EXT aperture. If draining encounters a bus error, remain RESETTING until quiescence is known; if quiescence cannot be proved, require a platform reset. Reset generation begins at zero on device initialization and wraps modulo 2^32. The runtime must invalidate all old tokens after reset and include a session identity and software reset epoch so hardware generation wrap or device reconnection cannot revive a stale token.
 
 ## 7. Status and error reporting
 
-### Proposed MMIO map
+### Candidate MMIO map
 
-Registers are aligned 32-bit words; unknown/reserved writes are rejected or ignored as documented by the platform, never interpreted as commands. The portable register window uses these byte offsets:
+Registers are aligned 32-bit words. Reserved addresses and write-only registers read as zero; writes to read-only or reserved addresses have no effect. CONTROL=0 has no effect; CONTROL with any reserved bit set is ignored entirely. Only full 32-bit writes are supported; unaligned or partial accesses are rejected by the board adapter without changing architectural state. Every staging word must be written before each COMMIT; software cannot rely on unwritten or prior staging contents. The portable register window uses these byte offsets:
 
 | Offset | Register | Access / semantics |
 |---:|---|---|
@@ -216,7 +228,13 @@ Registers are aligned 32-bit words; unknown/reserved writes are rejected or igno
 
 RUNNING means an inference has begun and has not reached END, even if the FIFO temporarily empties while the host refills it. The first accepted work command after IDLE starts RUNNING. END returns to IDLE only after its effects are complete; queued work may start the next invocation. The v0 runtime does not queue a second invocation before the first completes. The cycle counter counts RUNNING cycles, including host-refill stalls, and resets on device reset. Measure submission/transfer/wall time separately.
 
+FENCE and END also count as work for this state rule; an empty invocation consisting of END is valid. Immediately after END retires, STATE is IDLE; dequeue of the following record starts RUNNING even if no new submission occurs. Sequence numbers do not restart at END. LAST_END records device-command success, not completion of the runtime's host detection tail. A failed command never advances LAST_COMPLETED or LAST_END. The 64-bit cycle counter increments once per device clock whose pre-edge STATE is RUNNING, including the edge that retires END or reports a fault; reset takes precedence, and the counter wraps modulo 2^64. Its read latch resets to zero. These timing rules await a bus/cycle model and are not claims about functional simulator timing.
+
 COMMIT framing/version/sequence checks occur before enqueue and can reject a submission without poisoning earlier work. LAST_ACCEPTED advances only on accepted commands. Opcode-specific validation occurs before that command's effects; invalid payloads create a sticky execution fault. After an execution fault, no later command executes and COMMIT is blocked until reset. An unknown opcode may be accepted as framed data but faults before execution.
+
+All structural validation (including parameter records, LUT alignment/disjointness, and complete read/write extents) precedes arithmetic or DMA access. A structural rejection has no destination writes or accumulator changes. If several structural rules are violated, an implementation may report any applicable structural error; portable fixtures should isolate one violation or declare the allowed error set. ARITH_OVERFLOW and DMA_BUS occur only after structural validation. Arithmetic or bus faults may leave partial destinations; these bytes must not be compared as valid results. Later queued commands have no effects after a fault.
+
+ERROR_FIELD is a global command-word index 0…31 or 0xFFFFFFFF when no single field is identified (including invalid PARAM contents). ERROR_SPACE is an implicated space ID, an invalid supplied space value, or 0xFFFFFFFF when not identified. ERROR_OFFSET is an implicated byte offset, or zero if unavailable or not representable as u32; widened failing addresses MUST NOT be truncated. These three diagnostic fields are optional detail and do not change ERROR_CODE/ERROR_SEQ requirements. After reset ERROR_CODE/ERROR_SEQ/ERROR_OFFSET are zero and ERROR_SPACE/ERROR_FIELD are 0xFFFFFFFF. Fixtures must explicitly mask optional diagnostics unless a narrower target profile requires them; the simulator's free-text message is never part of the binary ABI.
 
 | Code | Execution fault | Meaning |
 |---:|---|---|
@@ -426,7 +444,7 @@ The following are still unmeasured or intentionally pending. They must not be co
 | Physical memory mapping | 52 KiB logical stores, serial accesses | Check BRAM widths/depth rounding, synchronous latency, utilization, clock crossing and parameter/LUT access timing |
 | Throughput versus command traffic | Serialized 128-byte FIFO commands | Estimate per-frame commands, host refill time, patch copies, accumulator spill cycles; decide if adequate for a useful v0 |
 | Convolution chunking | 8-lane output group, ≤32 input channels/chunk | Verify all layer bounds, tail layouts, and tile halos; first-layer RGB padding must match weight packing |
-| ABI/register allocations | Draft 0.1 tables in this document | Review command encodings, invalid-field behavior, reset/commit races, and test vectors together before freezing |
+| ABI/register allocations | ABI 0.1 candidate, document revision 0.2 | Review independent conformance vectors before freeze; MMIO/reset/bus timing still needs a transport model and platform evidence |
 | Package/preprocessing schema | Sectioned `.hxb`, explicit manifest | Freeze manifest required keys, per-section size limits, constants placement, and exact image/box semantics before compiler/runtime implementation |
 | Future FP8 | E4M3FN + FP32 accumulation | Separate v1 numerical contract and arithmetic feasibility; does not block INT8 v0 RTL |
 | ASIC SRAM/PHY | No FPGA-IP portability assumption | Resolve at ASIC feasibility stage, not by adding speculative v0 features |
@@ -440,3 +458,5 @@ Future tests must cover independent numeric reference agreement; positive/negati
 A representative byte-layout test should show that pixel (0,1), logical channel 2 in an HWC8 tensor with C=3 is at byte offset 10, while the next row begins at W×8. A 3×3, 32-input-channel, eight-output-lane weight tile occupies 2,304 bytes. An 8×8 output tile uses 2,048 ACC bytes and 512 INT8 OUTPUT bytes. These examples are specification checks, not test implementation.
 
 The Python golden model and functional command simulator now accompany the numerical and byte-level portions of this contract. Remaining pre-RTL work includes resolving the pinned workload and quantization-accuracy gates and generating independent conformance vectors for a future RTL implementation. No RTL has been written.
+
+The revision 0.2 review fixes simulator snapshot, extent-reporting, aperture, stride, and epilogue-validation discrepancies and defines the previously ambiguous control rules. M3 remains a freeze candidate until independent command/transition review and M4 conformance evidence close the gate. M4 fixture work may begin against this pinned candidate; it must not silently bless simulator output as expected results. Workload, package schema, and physical transport gates remain separate and are assigned in the [review record](reviews/v0-contract-review.md).

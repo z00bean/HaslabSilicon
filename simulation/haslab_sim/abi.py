@@ -58,6 +58,9 @@ class Command:
     reserved: int = 0
 
     def __post_init__(self) -> None:
+        # Snapshot caller-owned iterables before enqueue; frozen dataclasses alone
+        # do not make a supplied list immutable.
+        object.__setattr__(self, "payload", tuple(self.payload))
         scalar_fields = {
             "opcode": self.opcode,
             "sequence": self.sequence,
@@ -94,7 +97,7 @@ class Command:
         *,
         flags: int = 0,
     ) -> "Command":
-        return cls(int(opcode), sequence, tuple(int(word) for word in payload), flags)
+        return cls(opcode, sequence, tuple(payload), flags)
 
     @property
     def padded_payload(self) -> tuple[int, ...]:

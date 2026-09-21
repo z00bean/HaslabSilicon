@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from .abi import MemorySpace
+from .abi import UINT32_MAX, MemorySpace
 from .errors import ErrorCode, ExecutionFault
 
 LOCAL_CAPACITIES: Mapping[MemorySpace, int] = {
@@ -21,8 +21,8 @@ LOCAL_CAPACITIES: Mapping[MemorySpace, int] = {
 
 class MemoryMap:
     def __init__(self, ext_bytes: int) -> None:
-        if not isinstance(ext_bytes, int) or not 0 < ext_bytes <= (1 << 32):
-            raise ValueError("EXT capacity must be in the range 1..2^32")
+        if not isinstance(ext_bytes, int) or not 0 < ext_bytes <= UINT32_MAX:
+            raise ValueError("EXT capacity must be in the range 1..2^32-1")
         self._regions: dict[MemorySpace, bytearray] = {
             MemorySpace.EXT: bytearray(ext_bytes),
             **{space: bytearray(size) for space, size in LOCAL_CAPACITIES.items()},
@@ -45,7 +45,7 @@ class MemoryMap:
                 ErrorCode.BOUNDS,
                 "memory access is outside its region",
                 space=int(space),
-                offset=max(0, offset),
+                offset=offset if 0 <= offset <= UINT32_MAX else 0,
             )
 
     def read(self, space: MemorySpace | int, offset: int, length: int) -> bytes:

@@ -3,7 +3,7 @@
 Copyright (C) 2026 Zubin Bhuyan.
 SPDX-License-Identifier: CERN-OHL-S-2.0
 
-`haslab_sim` executes the proposed v0 128-byte command records against byte-addressed memory regions. It is the behavioral bridge between the arithmetic golden model and future RTL. The simulator follows revision 0.1 of `docs/haslab-v0-contract.md`; that ABI remains proposed until review and freeze.
+`haslab_sim` executes the proposed v0 128-byte command records against byte-addressed memory regions. It is the behavioral bridge between the arithmetic golden model and future RTL. The simulator follows document revision 0.2 of `docs/haslab-v0-contract.md`, using experimental command ABI 0.1. This is a freeze candidate awaiting independent conformance evidence; document and ABI versions are distinct.
 
 ## Modeled behavior
 
@@ -16,6 +16,20 @@ SPDX-License-Identifier: CERN-OHL-S-2.0
 - EPILOGUE validates eight 16-byte parameter records and supports raw biased INT32, linear INT8, and SiLU-LUT INT8 output modes.
 - MAP, ADD, MAXPOOL5, UPSAMPLE2, FILL, FENCE, and END implement their bounded v0 rules. Utilities are rejected while an accumulator context is open.
 - END rejects an unfinished accumulator, records `LAST_END`, and returns the device to IDLE. If already queued work follows END, execution of the next record starts a new RUNNING interval.
+
+## Contract-review corrections
+
+The [revision 0.2 review](../docs/reviews/v0-contract-review.md) adds regressions for these rules:
+
+- Command payloads are copied to immutable tuples, including when constructed from caller-owned lists. Builder methods reject fractional or string-valued fields instead of silently coercing them.
+- EXT capacity is limited to 2^32−1 bytes so its literal value fits EXT_BYTES. Wide failed-address calculations do not wrap into valid addresses or leak oversized values into ERROR_OFFSET.
+- Single-row DMA/COPY2D requires both strides to equal row length.
+- Structural output/LUT checks precede arithmetic. Malformed epilogues cannot hide an invalid destination behind a bias-overflow result.
+- Submission precedence is BLOCKED, BUSY, INVALID, ACCEPTED. Rejected framing never poisons already accepted work.
+- Sequences cannot wrap; hardware reset generation does wrap modulo 2^32. Runtime session/token protection is still future work.
+- COPY2D checks actual row intersections rather than rejecting every overlapping bounding span.
+
+`test_contract_review.py` is regression evidence, not the independently serialized M4 conformance package. Fixtures for portable targets must mask optional fault diagnostics and unspecified post-arithmetic/bus-fault memory. The simulator retains queued records after an execution fault, but hardware queue contents in FAULT are not a portable result.
 
 ## Deliberately unmodeled behavior
 

@@ -6,12 +6,13 @@ Architecture and interface specifications live here. They are proposed contracts
 |---|---|
 | [architecture-plan.md](architecture-plan.md) | Original broad architecture exploration |
 | [haslab-v0-revised-architecture.md](haslab-v0-revised-architecture.md) | Small-team v0/v1/ASIC architecture decision |
-| [haslab-v0-contract.md](haslab-v0-contract.md) | Proposed v0 software/hardware contract |
+| [haslab-v0-contract.md](haslab-v0-contract.md) | v0 software/hardware contract freeze candidate, document revision 0.2 / experimental ABI 0.1 |
+| [reviews/v0-contract-review.md](reviews/v0-contract-review.md) | Contract review results, corrected defects, evidence, and outstanding freeze gates |
+| [development-plan.md](development-plan.md) | Tracked milestones, dependencies, checklists, completion gates, and progress log |
 | [../reference/numerical-semantics.md](../reference/numerical-semantics.md) | Executable reference-model numerical behavior |
 | [../simulation/command-simulator.md](../simulation/command-simulator.md) | Functional command/memory simulator behavior |
-| [website-content-brief.md](website-content-brief.md) | Proposed sitemap, audience paths, visual system, and website-generation prompt |
 | [hardware/](hardware/) | Hardware design documentation skeleton |
-| [decisions/](decisions/) | Future architecture decision records |
+| [decisions/](decisions/) | Architecture decisions, starting with the v0 ABI candidate and compatibility boundary |
 | [contributing.md](contributing.md) | Contribution-process placeholder |
 
 No document implies hardware or software support until the project publishes implementation and verification evidence.

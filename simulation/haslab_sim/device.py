@@ -254,6 +254,8 @@ class HaslabDevice:
             self._require_alignment(value, field)
         if row_bytes == 0 or rows == 0 or source_stride < row_bytes or destination_stride < row_bytes:
             raise ExecutionFault(ErrorCode.BAD_FIELD, "invalid DMA dimensions or strides")
+        if rows == 1 and (source_stride != row_bytes or destination_stride != row_bytes):
+            raise ExecutionFault(ErrorCode.BAD_FIELD, "single-row DMA strides must equal row length")
         self.memory.check(source_space, source_offset + (rows - 1) * source_stride, row_bytes)
         self.memory.check(
             destination_space, destination_offset + (rows - 1) * destination_stride, row_bytes
@@ -425,6 +427,15 @@ class HaslabDevice:
             raise ExecutionFault(ErrorCode.BAD_FIELD, "linear EPILOGUE requires zero LUT offset")
 
         count = context.output_h * context.output_w * 8
+        self.memory.check(MemorySpace.OUTPUT, output_offset, count * (4 if mode == 0 else 1))
+        lut = None
+        if mode == 2:
+            self._require_alignment(lut_offset, 8)
+            if max(parameter_offset, lut_offset) < min(parameter_offset + 128, lut_offset + 1024):
+                raise ExecutionFault(ErrorCode.BAD_FIELD, "LUT overlaps parameter records")
+            lut = np.frombuffer(
+                self.memory.read(MemorySpace.PARAM, lut_offset, 1024), dtype=np.int8
+            ).copy()
         acc = np.frombuffer(
             self.memory.read(MemorySpace.ACC, acc_offset, count * 4), dtype="<i4"
         ).copy().reshape(context.output_h, context.output_w, 1, 8)
@@ -441,14 +452,6 @@ class HaslabDevice:
             output[..., context.valid_lanes :] = 0
             output = output.tobytes()
         else:
-            self._require_alignment(lut_offset, 8)
-            parameter_end = parameter_offset + 128
-            lut_end = lut_offset + 1024
-            if max(parameter_offset, lut_offset) < min(parameter_end, lut_end):
-                raise ExecutionFault(ErrorCode.BAD_FIELD, "LUT overlaps parameter records")
-            lut = np.frombuffer(
-                self.memory.read(MemorySpace.PARAM, lut_offset, 1024), dtype=np.int8
-            ).copy()
             output_array = silu_lut_i32(biased32, multipliers, shifts, lut)
             output_array[..., context.valid_lanes :] = 0
             output = output_array.tobytes()
@@ -472,6 +475,7 @@ class HaslabDevice:
             raise ExecutionFault(ErrorCode.BAD_FIELD, "MAP parameter bias must be zero")
         self._validate_padding_parameters(lanes, bias, multipliers, shifts)
         count = h * w * 8
+        self.memory.check(MemorySpace.OUTPUT, output_offset, count)
         source = np.frombuffer(
             self.memory.read(MemorySpace.INPUT, input_offset, count), dtype=np.int8
         ).copy().reshape(h, w, 1, 8)
@@ -496,6 +500,7 @@ class HaslabDevice:
         if np.any(shift_a[:lanes] != shift_b[:lanes]):
             raise ExecutionFault(ErrorCode.BAD_FIELD, "ADD inputs must share each lane shift")
         count = h * w * 8
+        self.memory.check(MemorySpace.OUTPUT, output_offset, count)
         a = np.frombuffer(self.memory.read(MemorySpace.INPUT, a_offset, count), dtype=np.int8).copy()
         b = np.frombuffer(self.memory.read(MemorySpace.INPUT, b_offset, count), dtype=np.int8).copy()
         output = add_i8(
@@ -517,6 +522,7 @@ class HaslabDevice:
         self._require_alignment(output_offset, 5)
         self._utility_shape(h, w, lanes)
         input_count = (h + 4) * (w + 4) * 8
+        self.memory.check(MemorySpace.OUTPUT, output_offset, h * w * 8)
         source = np.frombuffer(
             self.memory.read(MemorySpace.INPUT, input_offset, input_count), dtype=np.int8
         ).copy().reshape(h + 4, w + 4, 1, 8)
@@ -531,6 +537,7 @@ class HaslabDevice:
         self._require_alignment(input_offset, 4)
         self._require_alignment(output_offset, 5)
         self._utility_shape(h, w, lanes)
+        self.memory.check(MemorySpace.OUTPUT, output_offset, h * w * 4 * 8)
         source = np.frombuffer(
             self.memory.read(MemorySpace.INPUT, input_offset, h * w * 8), dtype=np.int8
         ).copy().reshape(h, w, 1, 8)
@@ -562,6 +569,8 @@ class HaslabDevice:
             self._require_alignment(value, field)
         if row_bytes == 0 or rows == 0 or source_stride < row_bytes or destination_stride < row_bytes:
             raise ExecutionFault(ErrorCode.BAD_FIELD, "invalid COPY2D dimensions or strides")
+        if rows == 1 and (source_stride != row_bytes or destination_stride != row_bytes):
+            raise ExecutionFault(ErrorCode.BAD_FIELD, "single-row COPY2D strides must equal row length")
         self.memory.check(source_space, source_offset + (rows - 1) * source_stride, row_bytes)
         self.memory.check(destination_space, destination_offset + (rows - 1) * destination_stride, row_bytes)
         if source_space is destination_space:

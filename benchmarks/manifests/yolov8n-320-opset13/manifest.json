@@ -1,0 +1,252 @@
+{
+  "schema_version": 1,
+  "workload_id": "yolov8n-320-opset13",
+  "status": "float_baseline_complete_quantization_and_schedule_pending",
+  "model": {
+    "family": "Ultralytics YOLOv8",
+    "variant": "YOLOv8n detection",
+    "task": "object_detection",
+    "class_count": 80,
+    "class_order": "COCO 80-class order embedded in the upstream weight artifact",
+    "upstream_repository": "https://github.com/ultralytics/ultralytics",
+    "weight_url": "https://github.com/ultralytics/assets/releases/download/v8.3.0/yolov8n.pt",
+    "weight_release": "v8.3.0",
+    "weight_filename": "yolov8n.pt",
+    "weight_bytes": 6549796,
+    "weight_sha256": "f59b3d833e2ff32e194b5bb8e08d211dc7c5bdf144b90d2c8412c47ccfc83b36",
+    "redistributed_by_haslab": false,
+    "license": {
+      "default": "AGPL-3.0-only as published in the pinned upstream source; separate Ultralytics Enterprise terms may be available from the vendor",
+      "upstream_license": "https://github.com/ultralytics/ultralytics/blob/21162bd870444550286983a601afbfb142f4c198/LICENSE",
+      "note": "The weight and exporter are third-party materials and are not relicensed by HASLAB. Confirm terms for the intended use before downloading or redistributing them."
+    }
+  },
+  "export": {
+    "input_shape_nchw": [1, 3, 320, 320],
+    "input_dtype": "FLOAT",
+    "static_shapes": true,
+    "opset": 13,
+    "onnx_ir_version": 7,
+    "simplify": false,
+    "dynamic": false,
+    "embedded_nms": false,
+    "half": false,
+    "device": "cpu",
+    "onnx_filename": "yolov8n-320-opset13.onnx",
+    "onnx_bytes": 12697560,
+    "onnx_sha256": "5b232bf21720cac4264463896ace02b919d8bec3f3fd1e4b9d36695493fa1718",
+    "canonicalization": {
+      "tool": "benchmarks/tools/canonicalize_onnx.py",
+      "profile": "ultralytics-onnx-metadata-v1",
+      "operation": "remove volatile export date, normalize the filename-derived description, sort metadata properties, and serialize the unchanged checked graph deterministically",
+      "raw_export_hash_is_stable": false,
+      "observed_raw_export_sha256": "7e4e66d350c73c0adf8b2710f84b877c0b308bea53c8f31b46c8b470f0ef9564",
+      "observed_raw_export_bytes": 12697539
+    },
+    "output_name": "output0",
+    "output_shape": [1, 84, 2100],
+    "command": "YOLO('models/downloads/yolov8n.pt').export(format='onnx', imgsz=320, batch=1, dynamic=False, simplify=False, opset=13, nms=False, half=False, device='cpu'), then canonicalize_onnx.py",
+    "environment": {
+      "python": "3.11.10",
+      "platform": "macOS arm64",
+      "ultralytics_version": "8.3.40",
+      "ultralytics_commit": "21162bd870444550286983a601afbfb142f4c198",
+      "ultralytics_tree_clean_for_tracked_package_source": true,
+      "torch": "2.5.1",
+      "torchvision": "0.20.1",
+      "onnx": "1.17.0",
+      "onnxruntime": "1.20.1",
+      "numpy": "1.26.4",
+      "opencv_python": "4.10.0.84"
+    }
+  },
+  "preprocessing": {
+    "source": {
+      "dtype": "UINT8",
+      "layout": "HWC",
+      "channel_order": "RGB",
+      "range": [0, 255]
+    },
+    "letterbox": {
+      "target_height": 320,
+      "target_width": 320,
+      "preserve_aspect_ratio": true,
+      "scale": "min(320/source_height, 320/source_width, 1.0)",
+      "scale_up": false,
+      "resized_width": "int(round(source_width * scale)) using Python 3 round",
+      "resized_height": "int(round(source_height * scale)) using Python 3 round",
+      "interpolation": "OpenCV INTER_LINEAR 4.10.0",
+      "center": true,
+      "automatic_stride_crop": false,
+      "padding_value_rgb": [114, 114, 114],
+      "top": "int(round((320-resized_height)/2 - 0.1))",
+      "bottom": "int(round((320-resized_height)/2 + 0.1))",
+      "left": "int(round((320-resized_width)/2 - 0.1))",
+      "right": "int(round((320-resized_width)/2 + 0.1))"
+    },
+    "float_model_input": {
+      "channel_order": "RGB",
+      "layout": "NCHW",
+      "dtype": "FLOAT32",
+      "operation": "convert UINT8 exactly to FLOAT32 and divide by FLOAT32(255.0)",
+      "mean_subtraction": null,
+      "standard_deviation_division": null
+    },
+    "haslab_device_input": {
+      "layout": "HWC8",
+      "logical_channels": 3,
+      "physical_channels": 8,
+      "padding_lanes": "zero",
+      "dtype": "INT8",
+      "zero_point": 0,
+      "scale": "pending calibration; must be positive finite binary32 and recorded in the quantized package"
+    }
+  },
+  "partition": {
+    "accelerator_nodes": [0, 217],
+    "accelerator_scope": "backbone, neck, and all learned regression/classification head convolutions",
+    "boundary_payload": {
+      "dtype": "INT32",
+      "layout": "HWC8",
+      "dequantization": "one positive binary32 scale per logical channel, equal to input activation scale times weight scale",
+      "reason": "preserve final learned logits until M5 calibration demonstrates that requantized INT8 is acceptable"
+    },
+    "boundary_tensors": [
+      {
+        "name": "/model.22/Concat_output_0",
+        "shape_nchw": [1, 144, 40, 40],
+        "stride": 8,
+        "candidate_order": "row-major y then x",
+        "int32_transfer_bytes": 921600
+      },
+      {
+        "name": "/model.22/Concat_1_output_0",
+        "shape_nchw": [1, 144, 20, 20],
+        "stride": 16,
+        "candidate_order": "row-major y then x",
+        "int32_transfer_bytes": 230400
+      },
+      {
+        "name": "/model.22/Concat_2_output_0",
+        "shape_nchw": [1, 144, 10, 10],
+        "stride": 32,
+        "candidate_order": "row-major y then x",
+        "int32_transfer_bytes": 57600
+      }
+    ],
+    "boundary_channel_order": {
+      "0_to_63": "four box sides times 16 DFL bins",
+      "64_to_143": "80 COCO class logits"
+    },
+    "host_tail_nodes": [218, 260],
+    "host_tail": [
+      "reshape and concatenate candidates in stride 8, 16, 32 order",
+      "DFL softmax over 16 bins for each of four sides",
+      "DFL expectation and anchor/grid box decode",
+      "sigmoid of 80 class logits",
+      "map boxes back through the recorded letterbox transform",
+      "threshold and class-aware non-maximum suppression"
+    ],
+    "decoded_output": {
+      "box_format_before_nms": "center_x, center_y, width, height in 320x320 letterboxed input pixels",
+      "objectness_channel": false,
+      "class_probability": "sigmoid(class_logit)",
+      "candidate_count": 2100,
+      "scale_order": [8, 16, 32]
+    },
+    "operational_nms_defaults": {
+      "confidence_threshold": 0.25,
+      "iou_threshold": 0.7,
+      "class_agnostic": false,
+      "maximum_detections": 300
+    }
+  },
+  "audit": {
+    "graph_inventory": "graph-audit.json",
+    "float_smoke_baseline": "float-smoke-baseline.json",
+    "float_coco_baseline": "float-coco-baseline.json",
+    "accelerator_node_count": 218,
+    "host_tail_node_count": 43,
+    "accelerator_convolution_count": 63,
+    "unsupported_accelerator_node_count": 0,
+    "all_convolution_tiles_fit_local_memory": true,
+    "reference_tiling_command_subtotal_per_frame": 38696,
+    "command_estimate_scope": "CONV and EPILOGUE for the 8x8x32 reference tiling; larger legal tiles may reduce this subtotal, while DMA, FILL, utility, concat, synchronization, and END increase total traffic",
+    "int32_boundary_transfer_bytes_per_frame": 1209600
+  },
+  "evaluation": {
+    "status": "complete",
+    "result": "float-coco-baseline.json",
+    "dataset": "COCO 2017 validation, all 5,000 images",
+    "dataset_url": "https://cocodataset.org/#download",
+    "dataset_terms": "https://cocodataset.org/#termsofuse",
+    "image_archive": {
+      "bytes": 815585330,
+      "sha256": "4f7e2ccb2866ec5041993c9cf2a952bbed69647b115d0f74da7ce8f4bef82f05"
+    },
+    "annotation_archive": {
+      "bytes": 252907541,
+      "sha256": "113a836d90195ee1f884e704da6304dfaaecff1f023f49b6ca93c4aaae470268"
+    },
+    "instances_annotation_sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f",
+    "image_count": 5000,
+    "non_crowd_box_count": 36335,
+    "ignored_crowd_annotations": 446,
+    "image_tree_sha256": "2249a79ccc3aafc674a2cc83a50dc78af73987235a0fd89d3696be1250e764e1",
+    "label_tree_sha256": "d010384bd614d51d5d68c039ea43bc1d623bf79074ba963156c7cf2bf7f45c07",
+    "validation_list_sha256": "871449eca4739d5561af5998320883b132fc565aff00ad6fc383458e8d4b4c73",
+    "image_size": 320,
+    "batch": 1,
+    "metric": "COCO bbox mAP50-95",
+    "backend": "ONNX Runtime CPUExecutionProvider",
+    "precision": "FLOAT32",
+    "nms": {
+      "confidence_threshold": 0.001,
+      "iou_threshold": 0.7,
+      "maximum_detections": 300
+    },
+    "coco_ap_maximum_detections": 100,
+    "metrics": {
+      "mAP50_95": 0.2849691921994466,
+      "mAP50": 0.41359477836317016,
+      "precision": 0.5715859845333805,
+      "recall": 0.38576294121880456
+    },
+    "predictions_bytes": 79449100,
+    "predictions_sha256": "4272b93765f6d6a7000d28193f9219ba56e48eb8842ba716000c90965a5a3ed3",
+    "evaluator": {
+      "tool": "benchmarks/tools/evaluate_yolov8n_coco.py",
+      "ultralytics": "8.3.40",
+      "onnxruntime": "1.20.1",
+      "pycocotools": "2.0.8"
+    },
+    "reproducibility": "two complete evaluations produced identical aggregate metrics, all 80 per-class AP pairs, and prediction-file SHA256"
+  },
+  "quantization": {
+    "status": "pending",
+    "weights": "symmetric signed INT8, zero point 0, per-output-channel scale",
+    "activations": "symmetric signed INT8, zero point 0, per-tensor scale",
+    "accumulation": "signed INT32 with overflow rejected",
+    "calibration_dataset": "512 images from COCO 2017 train, selected by lexicographically smallest SHA256(image filename), with no validation images",
+    "acceptance_budget": {
+      "metric": "COCO bbox mAP50-95",
+      "maximum_absolute_loss": 1.0,
+      "comparison": "against this pinned FLOAT export at 320x320 with identical preprocessing and host-tail settings"
+    },
+    "required_records": [
+      "dataset archive and annotation hashes",
+      "ordered calibration image list and its hash",
+      "observer/calibration algorithm and version",
+      "every activation/weight scale",
+      "SiLU LUT grids and hashes",
+      "clipping and saturation counts",
+      "layerwise FLOAT versus quantized error",
+      "final accuracy metrics"
+    ]
+  },
+  "open_gates": [
+    "Implement calibration and measure the candidate INT8 profile against the one-point mAP50-95 budget.",
+    "Generate an optimized whole-graph liveness/allocation and total command/DMA traffic report in M6.",
+    "Measure whether the eight-entry command FIFO and host refill path can sustain the required command rate."
+  ]
+}

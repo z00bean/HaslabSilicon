@@ -20,9 +20,9 @@ HASLAB is being designed in public from the numerical contract upward. The proje
 
 ## Current status
 
-**Stage: v0 contract candidate and conformance corpus implemented; pinned workload audit next.**
+**Stage: v0 contract candidate and conformance corpus implemented; first workload audit active.**
 
-The repository currently contains an architecture specification, an executable Python golden model, a byte-level command simulator, and 46 independently authored binary conformance fixtures with a strict runner. It does not yet contain tensor-accelerator RTL, an ONNX compiler, a runtime, an FPGA bitstream, an ASIC implementation, or demonstrated YOLO execution.
+The repository currently contains an architecture specification, an executable Python golden model, a byte-level command simulator, 46 independently authored binary conformance fixtures with a strict runner, and a pinned YOLOv8n workload with a reproducible full-dataset FLOAT baseline. It does not yet contain tensor-accelerator RTL, an ONNX compiler, a runtime, an FPGA bitstream, an ASIC implementation, calibrated INT8 accuracy, or demonstrated YOLO execution on HASLAB hardware.
 
 | Component | Status | What that means |
 |---|---|---|
@@ -31,7 +31,7 @@ The repository currently contains an architecture specification, an executable P
 | Functional command simulator | Implemented and unit-tested | Executes the proposed 128-byte command ABI over modeled memory spaces |
 | v0 contract freeze | Active | ABI 0.1 candidate has conformance evidence; stable freeze awaits independent review |
 | v0 conformance package | Candidate implemented and tested | 46 stored command/memory/status fixtures, machine-readable ABI registry, integrity checks, and CI runner; final release tied to ABI freeze |
-| Pinned YOLO-class workload | Next | Proposed target exists, but model/export hashes, operator audit, baseline, and INT8 budget are not frozen |
+| Pinned YOLO-class workload | Active | Exact weight/export, graph inventory, preprocessing, learned-head partition, local-memory audit, and reproducible 5,000-image COCO FLOAT accuracy are tracked; INT8 calibration and complete scheduling remain open |
 | ONNX importer and compiler | Planned | No model can be compiled to HASLAB yet |
 | Runtime | Planned | No application-facing device API exists yet |
 | RTL and RTL testbenches | Planned | No hardware implementation exists yet |
@@ -45,7 +45,7 @@ make check
 make test
 ```
 
-The current test suite covers the numerical model, functional command simulator, conformance infrastructure, and stored independent expectations. Run `make conformance` for the corpus alone. Passing establishes agreement for the tested cases; it is not an FPGA or silicon performance result. See the [conformance guide](conformance/README.md) for coverage and derivations.
+The current test suite covers the numerical model, functional command simulator, conformance infrastructure, stored independent expectations, and workload-manifest consistency. Run `make conformance` for the corpus alone. Passing establishes agreement for the tested cases; it is not an FPGA or silicon performance result. See the [conformance guide](conformance/README.md) for coverage and derivations.
 
 ### Progress at a glance
 
@@ -56,7 +56,7 @@ The current test suite covers the numerical model, functional command simulator,
 - [ ] Freeze the stable v0 ABI after independent review and conformance evidence.
 - [x] Build the candidate independent conformance corpus, ABI registry, and CI runner.
 - [ ] Release the final conformance corpus after stable ABI freeze and independent review.
-- [ ] Pin and audit the first YOLO-class ONNX workload. **Next implementation step.**
+- [ ] Complete the first YOLO-class workload audit. Artifact, export, graph partition, static memory checks, and the COCO FLOAT baseline are pinned; INT8 calibration and complete scheduling are next.
 - [ ] Implement the minimal compiler and simulated runtime path.
 - [ ] Implement and differentially verify the first RTL vertical slice.
 - [ ] Expand RTL operation coverage one conformance-gated operation at a time.
@@ -96,7 +96,7 @@ The primary target is batch-one edge vision:
 
 Compact vision transformers and edge transformers are later research targets where operator coverage and memory traffic prove practical. Large-model training and datacenter LLM inference are outside the initial scope.
 
-The proposed first end-to-end workload is a pinned YOLOv8n detector at 320×320. The FPGA would eventually execute the quantized backbone, neck, and learned detection head, while the host performs declared image preparation and final box decoding/DFL/NMS. This is a validation target, not an implemented feature or real-time claim.
+The first end-to-end workload candidate is a pinned YOLOv8n detector at 320×320. Its exact third-party weight, FLOAT ONNX export, preprocessing, complete graph inventory, and learned-head/host-tail boundary are recorded in the [workload manifest](benchmarks/manifests/yolov8n-320-opset13/README.md). The proposed FPGA path executes the quantized backbone, neck, and learned detection head, while the host performs declared image preparation and final box decoding/DFL/NMS. The structural audit found no unsupported accelerator nodes and all proposed convolution tiles fit local memory. Two full FLOAT evaluations over COCO val2017 produced identical predictions and measured 0.28497 bbox mAP50–95 and 0.41359 mAP50. INT8 calibration, command generation, and hardware execution remain unimplemented.
 
 ## Architecture direction
 
@@ -182,7 +182,7 @@ No stage is considered complete solely because a demo produces plausible boxes. 
 | [`onnx/`](onnx/) | Supported ONNX profile, export recipes, and operator coverage |
 | [`runtime/`](runtime/) | Future public runtime API and platform backends |
 | [`software/`](software/) | Future host utilities and RISC-V firmware support |
-| [`benchmarks/`](benchmarks/) | Workload manifests, evaluation methods, and machine-readable results |
+| [`benchmarks/`](benchmarks/) | Pinned workload manifests, audit tools, evaluation methods, and machine-readable results |
 | [`docs/`](docs/) | Architecture, interface contracts, design decisions, and project guidance |
 | [`scripts/`](scripts/) | Reproducible development and CI helpers |
 

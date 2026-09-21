@@ -1,0 +1,10 @@
+# Export and audit environment. The torch wheel is platform-specific; verify its
+# resolved artifact in the environment lock used for a release-quality rerun.
+numpy==1.26.4
+onnx==1.17.0
+onnxruntime==1.20.1
+opencv-python==4.10.0.84
+pycocotools==2.0.8
+torch==2.5.1
+torchvision==0.20.1
+ultralytics @ git+https://github.com/ultralytics/ultralytics.git@21162bd870444550286983a601afbfb142f4c198

@@ -2,7 +2,7 @@
 
 This is the tracked source of truth for HASLAB implementation progress. The top-level README contains a short public snapshot; this document contains the work order, dependencies, and evidence required to call a milestone complete.
 
-Last reviewed: 2026-09-20
+Last reviewed: 2026-09-21
 
 ## Status vocabulary
 
@@ -22,7 +22,7 @@ The M3 implementation review is complete and documented in the [contract review 
 
 M4's candidate package is implemented in [conformance/](../conformance/README.md): 46 independently authored binary fixtures, schema version 1, ABI registry with consistency checks, strict artifact validation, simulator runner, and CI integration. These expectations are independent of implementation helpers, but have not received independent external review. M3 freeze and final M4 release remain open.
 
-Next implementation task: M5, pin and audit the first YOLO-class workload against this candidate. Record model/export hashes, operator coverage, preprocessing/host-tail boundaries, baseline accuracy, calibration, and memory/tiling feasibility before committing to full RTL. Independent review of the candidate contract and corpus can proceed alongside that audit.
+M5 is active. The first YOLOv8n weight and FLOAT ONNX export are pinned, the complete graph is inventoried, the accelerator/host-tail boundary is explicit, and every proposed convolution tile fits the v0 local memories. A deterministic PyTorch/ONNX smoke comparison passes. Two complete evaluations over all 5,000 COCO 2017 validation images produced identical predictions, with 0.28497 bbox mAP50–95 and 0.41359 mAP50. INT8 calibration, optimized liveness, and measured command feasibility remain open; those results are required before M5 can close. Independent review of the candidate contract and corpus can proceed alongside this work.
 
 ## Milestone plan
 
@@ -33,7 +33,7 @@ Next implementation task: M5, pin and audit the first YOLO-class workload agains
 | M2 | Functional command simulator | `DONE` | M1 | Versioned 128-byte command encoding, memory/device behavior, architectural errors, and passing simulator tests |
 | M3 | Freeze the v0 contract | `ACTIVE` | M1, M2; independent M4 review for closure | Candidate and conformance evidence available; final freeze awaits independent command/transition review |
 | M4 | v0 conformance package | `ACTIVE` | Candidate implemented; frozen M3 for final corpus release | 46 binary fixtures, hashes/schema, ABI consistency, simulator runner, and CI implemented; final release awaits independent review and stable ABI |
-| M5 | Pin the first YOLO workload | `NEXT` | M3 candidate (ready) | Exact model/export hashes, license, ONNX profile, preprocessing, operator inventory, host partition, floating baseline, and INT8 acceptance budget are tracked |
+| M5 | Pin the first YOLO workload | `ACTIVE` | M3 candidate (ready) | Exact artifact, export, preprocessing, graph inventory, host partition, structural audit, and COCO FLOAT evidence are tracked; INT8 and complete schedule evidence remain open |
 | M6 | Minimal compiler and simulated runtime | `BLOCKED` | M4, M5 | Deterministic model package generation and complete execution through the simulator with layerwise comparisons |
 | M7 | First RTL vertical slice | `BLOCKED` | Frozen M3, M4 | Command decode through one INT8 MAC path, INT32 accumulation, requantization, completion/error behavior, and differential tests |
 | M8 | Incremental RTL operation coverage | `BLOCKED` | M7 | Each added DMA, convolution, or utility operation passes its conformance and assertion gates |
@@ -85,16 +85,16 @@ Exit criterion: another implementation can consume the fixture specification wit
 
 ## M5 — pin the first YOLO-class workload
 
-- [ ] Select the exact model revision and confirm redistribution and weight licenses.
-- [ ] Pin input shape, exporter version, ONNX IR version, opset, export command, and graph/weight hashes.
-- [ ] Freeze preprocessing: color order, resize/letterbox, interpolation, padding, normalization, layout, and input quantization.
-- [ ] Inventory every graph node, shape, attribute, and constant.
-- [ ] Classify each node as native HASLAB, compiler-fused, declared host-tail, or unsupported.
-- [ ] Freeze the learned-head/host-tail boundary and output coordinate/order conventions.
-- [ ] Record a reproducible floating-point output and accuracy baseline.
+- [x] Select the exact model revision and confirm redistribution and weight licenses.
+- [x] Pin input shape, exporter version and commit, ONNX IR version, opset, export command, and graph/weight hashes.
+- [ ] Freeze preprocessing: the UINT8-to-FLOAT path, letterbox, normalization, and layouts are pinned; the device INT8 input scale remains pending calibration.
+- [x] Inventory every graph node, shape, attribute, initializer, and graph constant.
+- [x] Classify each node as native HASLAB, compiler-fused, compiler view/fold, declared host-tail, or unsupported.
+- [x] Freeze the learned-head/host-tail boundary and output coordinate/order conventions. The boundary uses three INT32 HWC8 tensors with per-channel dequantization scales.
+- [x] Record a reproducible floating-point output and accuracy baseline. The synthetic PyTorch/ONNX output comparison passes, and two full COCO 2017 validation runs produced identical aggregate metrics, all 80 per-class AP pairs, and prediction JSON hash.
 - [ ] Calibrate INT8 and agree the accuracy-loss budget before treating quantization as acceptable.
-- [ ] Check every layer against local-memory, tiling, channel-group, convolution-chunk, and command-traffic limits.
-- [ ] Publish a machine-readable workload manifest under `benchmarks/manifests/`.
+- [ ] Check every layer against local-memory, tiling, channel-group, convolution-chunk, and command-traffic limits. All 63 learned convolutions and graph alignment constraints pass the static audit; the 38,696-command CONV/EPILOGUE subtotal for the reference tiling requires schedule optimization, a generated full traffic count, and host-refill measurement.
+- [x] Publish a machine-readable workload manifest under `benchmarks/manifests/`.
 
 Exit criterion: no operator, preprocessing step, fallback, or accuracy comparison is implicit.
 
@@ -164,3 +164,5 @@ When work changes status:
 | 2026-09-20 | Review validation passed: 43 numerical tests + 42 simulator tests = 85 total; repository and whitespace checks passed | `make test`, `make check`, `git diff --check`; details in the [review record](reviews/v0-contract-review.md) |
 | 2026-09-20 | Implemented M4 candidate package: 46 independently authored binary fixtures, schema v1, pinned contract/registry hashes, strict loader, simulator runner, and ABI consistency checks. Added 19 infrastructure tests and integrated the corpus into CI. Stable M3/M4 release remains pending independent review; next implementation task is M5 workload pinning/audit. | [Package](../conformance/README.md), [format](../conformance/FORMAT.md), [ADR 0002](decisions/0002-conformance-corpus-format.md) |
 | 2026-09-20 | M4 candidate validation passed: 104 unit tests (43 numerical + 42 simulator + 19 conformance infrastructure), all 46 binary fixture cases, byte-for-byte corpus reproduction, repository checks, and whitespace checks. | `make test`, `make check`, `git diff --check` |
+| 2026-09-21 | Activated M5 with a pinned YOLOv8n v8.3.0 weight, reproducible 320×320 opset-13 export, complete 261-node/149-constant inventory, explicit learned-head boundary, deterministic FLOAT smoke baseline, and per-convolution v0 memory audit. Structural coverage passes; full COCO FLOAT accuracy, INT8 calibration, and total schedule/traffic remain open. | [Manifest and report](../benchmarks/manifests/yolov8n-320-opset13/README.md), [audit tool](../benchmarks/tools/audit_yolov8n.py) |
+| 2026-09-21 | Completed the pinned FLOAT accuracy baseline over all 5,000 COCO val2017 images: bbox mAP50–95 0.284969 and mAP50 0.413595. A second full run reproduced the aggregate metrics, every per-class AP pair, and the 79,449,100-byte prediction JSON hash exactly. INT8 calibration is the next M5 step. | [Evaluation report](../benchmarks/manifests/yolov8n-320-opset13/float-coco-baseline.json), [reproduction guide](../benchmarks/manifests/yolov8n-320-opset13/README.md) |

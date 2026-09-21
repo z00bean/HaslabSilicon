@@ -1,0 +1,725 @@
+{
+  "dataset": {
+    "annotation_archive": {
+      "bytes": 252907541,
+      "filename": "annotations_trainval2017.zip",
+      "sha256": "113a836d90195ee1f884e704da6304dfaaecff1f023f49b6ca93c4aaae470268"
+    },
+    "category_ids": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      27,
+      28,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      46,
+      47,
+      48,
+      49,
+      50,
+      51,
+      52,
+      53,
+      54,
+      55,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63,
+      64,
+      65,
+      67,
+      70,
+      72,
+      73,
+      74,
+      75,
+      76,
+      77,
+      78,
+      79,
+      80,
+      81,
+      82,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90
+    ],
+    "category_names": [
+      "person",
+      "bicycle",
+      "car",
+      "motorcycle",
+      "airplane",
+      "bus",
+      "train",
+      "truck",
+      "boat",
+      "traffic light",
+      "fire hydrant",
+      "stop sign",
+      "parking meter",
+      "bench",
+      "bird",
+      "cat",
+      "dog",
+      "horse",
+      "sheep",
+      "cow",
+      "elephant",
+      "bear",
+      "zebra",
+      "giraffe",
+      "backpack",
+      "umbrella",
+      "handbag",
+      "tie",
+      "suitcase",
+      "frisbee",
+      "skis",
+      "snowboard",
+      "sports ball",
+      "kite",
+      "baseball bat",
+      "baseball glove",
+      "skateboard",
+      "surfboard",
+      "tennis racket",
+      "bottle",
+      "wine glass",
+      "cup",
+      "fork",
+      "knife",
+      "spoon",
+      "bowl",
+      "banana",
+      "apple",
+      "sandwich",
+      "orange",
+      "broccoli",
+      "carrot",
+      "hot dog",
+      "pizza",
+      "donut",
+      "cake",
+      "chair",
+      "couch",
+      "potted plant",
+      "bed",
+      "dining table",
+      "toilet",
+      "tv",
+      "laptop",
+      "mouse",
+      "remote",
+      "keyboard",
+      "cell phone",
+      "microwave",
+      "oven",
+      "toaster",
+      "sink",
+      "refrigerator",
+      "book",
+      "clock",
+      "vase",
+      "scissors",
+      "teddy bear",
+      "hair drier",
+      "toothbrush"
+    ],
+    "conversion": "COCO xywh top-left pixels to YOLO class,cx,cy,w,h normalized; iscrowd ignored; duplicate records removed",
+    "ignored_crowd_annotations": 446,
+    "ignored_duplicate_boxes": 0,
+    "image_archive": {
+      "bytes": 815585330,
+      "filename": "val2017.zip",
+      "sha256": "4f7e2ccb2866ec5041993c9cf2a952bbed69647b115d0f74da7ce8f4bef82f05"
+    },
+    "image_count": 5000,
+    "image_tree_sha256": "2249a79ccc3aafc674a2cc83a50dc78af73987235a0fd89d3696be1250e764e1",
+    "instances_annotation": {
+      "bytes": 19987840,
+      "filename": "instances_val2017.json",
+      "sha256": "e8c7f7908f1d7278341fae127d0da654f102f11bd7b21d8aeefa635b8c810b6f"
+    },
+    "kept_non_crowd_boxes": 36335,
+    "label_file_count": 5000,
+    "label_tree_sha256": "d010384bd614d51d5d68c039ea43bc1d623bf79074ba963156c7cf2bf7f45c07",
+    "schema_version": 1,
+    "source": "COCO 2017 validation images and instances_val2017 annotations",
+    "val_list_sha256": "871449eca4739d5561af5998320883b132fc565aff00ad6fc383458e8d4b4c73"
+  },
+  "environment": {
+    "numpy": "1.26.4",
+    "onnx": "1.17.0",
+    "onnxruntime": "1.20.1",
+    "platform": "macOS-26.6.2-arm64-arm-64bit",
+    "pycocotools": "2.0.8",
+    "python": "3.11.10",
+    "torch": "2.5.1",
+    "ultralytics": "8.3.40"
+  },
+  "evaluation": {
+    "batch": 1,
+    "coco_ap_maximum_detections": 100,
+    "command_profile": "static ONNX, CPUExecutionProvider, batch 1, 320x320, conf 0.001, NMS IoU 0.7, max_det 300, square validation batches",
+    "confidence_threshold": 0.001,
+    "deterministic": true,
+    "half_precision": false,
+    "image_size": 320,
+    "images": 5000,
+    "iou_threshold": 0.7,
+    "metrics": {
+      "fitness": 0.29783175081581903,
+      "metrics/mAP50(B)": 0.41359477836317016,
+      "metrics/mAP50-95(B)": 0.2849691921994466,
+      "metrics/precision(B)": 0.5715859845333805,
+      "metrics/recall(B)": 0.38576294121880456
+    },
+    "nms_maximum_detections": 300,
+    "overall_ap_source": "pycocotools COCOeval bbox, with mAP50-95 and mAP50 copied into the Ultralytics result dictionary",
+    "per_class": [
+      {
+        "ap50": 0.6159676785392525,
+        "ap50_95": 0.4050636847768678,
+        "class_id": 0,
+        "name": "person"
+      },
+      {
+        "ap50": 0.30056990092893016,
+        "ap50_95": 0.17118776776599448,
+        "class_id": 1,
+        "name": "bicycle"
+      },
+      {
+        "ap50": 0.3835489872722154,
+        "ap50_95": 0.22676853139803663,
+        "class_id": 2,
+        "name": "car"
+      },
+      {
+        "ap50": 0.5253105762056427,
+        "ap50_95": 0.3342908714318241,
+        "class_id": 3,
+        "name": "motorcycle"
+      },
+      {
+        "ap50": 0.7650919063961322,
+        "ap50_95": 0.568500030319455,
+        "class_id": 4,
+        "name": "airplane"
+      },
+      {
+        "ap50": 0.65241329109588,
+        "ap50_95": 0.5317604060234492,
+        "class_id": 5,
+        "name": "bus"
+      },
+      {
+        "ap50": 0.7883533682019579,
+        "ap50_95": 0.6066502075463336,
+        "class_id": 6,
+        "name": "train"
+      },
+      {
+        "ap50": 0.3544299653321632,
+        "ap50_95": 0.2326501099899308,
+        "class_id": 7,
+        "name": "truck"
+      },
+      {
+        "ap50": 0.2845101362553389,
+        "ap50_95": 0.14195047343167025,
+        "class_id": 8,
+        "name": "boat"
+      },
+      {
+        "ap50": 0.23533422935148918,
+        "ap50_95": 0.11235223318953405,
+        "class_id": 9,
+        "name": "traffic light"
+      },
+      {
+        "ap50": 0.7092373895732127,
+        "ap50_95": 0.5444172879771043,
+        "class_id": 10,
+        "name": "fire hydrant"
+      },
+      {
+        "ap50": 0.581821488777981,
+        "ap50_95": 0.5254706302710086,
+        "class_id": 11,
+        "name": "stop sign"
+      },
+      {
+        "ap50": 0.4888909222673096,
+        "ap50_95": 0.3677175263348606,
+        "class_id": 12,
+        "name": "parking meter"
+      },
+      {
+        "ap50": 0.25215931338229336,
+        "ap50_95": 0.16230987205014283,
+        "class_id": 13,
+        "name": "bench"
+      },
+      {
+        "ap50": 0.28512718027202727,
+        "ap50_95": 0.18115539946621345,
+        "class_id": 14,
+        "name": "bird"
+      },
+      {
+        "ap50": 0.776416874974206,
+        "ap50_95": 0.6044720153894818,
+        "class_id": 15,
+        "name": "cat"
+      },
+      {
+        "ap50": 0.6312083340111577,
+        "ap50_95": 0.4976524402675964,
+        "class_id": 16,
+        "name": "dog"
+      },
+      {
+        "ap50": 0.5952136366675798,
+        "ap50_95": 0.41957589888817515,
+        "class_id": 17,
+        "name": "horse"
+      },
+      {
+        "ap50": 0.5078406105152138,
+        "ap50_95": 0.32861937374434225,
+        "class_id": 18,
+        "name": "sheep"
+      },
+      {
+        "ap50": 0.5128657341546106,
+        "ap50_95": 0.34879072679482015,
+        "class_id": 19,
+        "name": "cow"
+      },
+      {
+        "ap50": 0.7441481195156978,
+        "ap50_95": 0.544346940985293,
+        "class_id": 20,
+        "name": "elephant"
+      },
+      {
+        "ap50": 0.7693066224123397,
+        "ap50_95": 0.6346189518264935,
+        "class_id": 21,
+        "name": "bear"
+      },
+      {
+        "ap50": 0.7632452314154005,
+        "ap50_95": 0.5546409036074371,
+        "class_id": 22,
+        "name": "zebra"
+      },
+      {
+        "ap50": 0.8048567115015852,
+        "ap50_95": 0.6098468671151921,
+        "class_id": 23,
+        "name": "giraffe"
+      },
+      {
+        "ap50": 0.10920922187096826,
+        "ap50_95": 0.05509129135179146,
+        "class_id": 24,
+        "name": "backpack"
+      },
+      {
+        "ap50": 0.45167122661511,
+        "ap50_95": 0.2881546087041924,
+        "class_id": 25,
+        "name": "umbrella"
+      },
+      {
+        "ap50": 0.09112942987517364,
+        "ap50_95": 0.042186359082319,
+        "class_id": 26,
+        "name": "handbag"
+      },
+      {
+        "ap50": 0.3199105798601352,
+        "ap50_95": 0.20482576964302085,
+        "class_id": 27,
+        "name": "tie"
+      },
+      {
+        "ap50": 0.33654728297541636,
+        "ap50_95": 0.2139529730274646,
+        "class_id": 28,
+        "name": "suitcase"
+      },
+      {
+        "ap50": 0.5382338211352338,
+        "ap50_95": 0.3895301967525748,
+        "class_id": 29,
+        "name": "frisbee"
+      },
+      {
+        "ap50": 0.2667850009406241,
+        "ap50_95": 0.14461891697415724,
+        "class_id": 30,
+        "name": "skis"
+      },
+      {
+        "ap50": 0.26458803659500907,
+        "ap50_95": 0.15398144077824677,
+        "class_id": 31,
+        "name": "snowboard"
+      },
+      {
+        "ap50": 0.29096581425468054,
+        "ap50_95": 0.17447468669507074,
+        "class_id": 32,
+        "name": "sports ball"
+      },
+      {
+        "ap50": 0.40181426112473245,
+        "ap50_95": 0.243859884726704,
+        "class_id": 33,
+        "name": "kite"
+      },
+      {
+        "ap50": 0.26182607175450323,
+        "ap50_95": 0.12417610453273276,
+        "class_id": 34,
+        "name": "baseball bat"
+      },
+      {
+        "ap50": 0.3582229242496232,
+        "ap50_95": 0.18358840057980502,
+        "class_id": 35,
+        "name": "baseball glove"
+      },
+      {
+        "ap50": 0.4907594073675632,
+        "ap50_95": 0.30042973252336463,
+        "class_id": 36,
+        "name": "skateboard"
+      },
+      {
+        "ap50": 0.3843809389109894,
+        "ap50_95": 0.22135543387647294,
+        "class_id": 37,
+        "name": "surfboard"
+      },
+      {
+        "ap50": 0.49531599619567507,
+        "ap50_95": 0.26895215309877424,
+        "class_id": 38,
+        "name": "tennis racket"
+      },
+      {
+        "ap50": 0.2714721136389429,
+        "ap50_95": 0.16634310725297935,
+        "class_id": 39,
+        "name": "bottle"
+      },
+      {
+        "ap50": 0.2387618144483482,
+        "ap50_95": 0.15357896138560642,
+        "class_id": 40,
+        "name": "wine glass"
+      },
+      {
+        "ap50": 0.3073667493784034,
+        "ap50_95": 0.20179763921715038,
+        "class_id": 41,
+        "name": "cup"
+      },
+      {
+        "ap50": 0.26668037031120645,
+        "ap50_95": 0.17176166961098957,
+        "class_id": 42,
+        "name": "fork"
+      },
+      {
+        "ap50": 0.09229355227618866,
+        "ap50_95": 0.05237966204852621,
+        "class_id": 43,
+        "name": "knife"
+      },
+      {
+        "ap50": 0.08056612956713273,
+        "ap50_95": 0.04994642495122602,
+        "class_id": 44,
+        "name": "spoon"
+      },
+      {
+        "ap50": 0.37560655142254296,
+        "ap50_95": 0.27910925935165476,
+        "class_id": 45,
+        "name": "bowl"
+      },
+      {
+        "ap50": 0.2801348514919532,
+        "ap50_95": 0.16882414637307713,
+        "class_id": 46,
+        "name": "banana"
+      },
+      {
+        "ap50": 0.18018537736611737,
+        "ap50_95": 0.12465258826909446,
+        "class_id": 47,
+        "name": "apple"
+      },
+      {
+        "ap50": 0.4105178220623277,
+        "ap50_95": 0.2878356429772821,
+        "class_id": 48,
+        "name": "sandwich"
+      },
+      {
+        "ap50": 0.3046072538182802,
+        "ap50_95": 0.23406123118647573,
+        "class_id": 49,
+        "name": "orange"
+      },
+      {
+        "ap50": 0.32027400687048735,
+        "ap50_95": 0.16814415256036705,
+        "class_id": 50,
+        "name": "broccoli"
+      },
+      {
+        "ap50": 0.2545693452978053,
+        "ap50_95": 0.13799484373523957,
+        "class_id": 51,
+        "name": "carrot"
+      },
+      {
+        "ap50": 0.3672487391488942,
+        "ap50_95": 0.23363006976308895,
+        "class_id": 52,
+        "name": "hot dog"
+      },
+      {
+        "ap50": 0.5887787146114509,
+        "ap50_95": 0.43778064310617026,
+        "class_id": 53,
+        "name": "pizza"
+      },
+      {
+        "ap50": 0.3566388505354237,
+        "ap50_95": 0.26261621418571185,
+        "class_id": 54,
+        "name": "donut"
+      },
+      {
+        "ap50": 0.32562720905582204,
+        "ap50_95": 0.21515910431546134,
+        "class_id": 55,
+        "name": "cake"
+      },
+      {
+        "ap50": 0.27864673773834864,
+        "ap50_95": 0.16332644739152266,
+        "class_id": 56,
+        "name": "chair"
+      },
+      {
+        "ap50": 0.5075585922461888,
+        "ap50_95": 0.3758152518051884,
+        "class_id": 57,
+        "name": "couch"
+      },
+      {
+        "ap50": 0.2683777670025061,
+        "ap50_95": 0.1471766201188572,
+        "class_id": 58,
+        "name": "potted plant"
+      },
+      {
+        "ap50": 0.6155483926246775,
+        "ap50_95": 0.4384278328130904,
+        "class_id": 59,
+        "name": "bed"
+      },
+      {
+        "ap50": 0.3941817125867567,
+        "ap50_95": 0.28355210609995246,
+        "class_id": 60,
+        "name": "dining table"
+      },
+      {
+        "ap50": 0.7279204774382944,
+        "ap50_95": 0.5876879105780676,
+        "class_id": 61,
+        "name": "toilet"
+      },
+      {
+        "ap50": 0.6353275166721466,
+        "ap50_95": 0.4805111000647673,
+        "class_id": 62,
+        "name": "tv"
+      },
+      {
+        "ap50": 0.6058963925325245,
+        "ap50_95": 0.47005136367382266,
+        "class_id": 63,
+        "name": "laptop"
+      },
+      {
+        "ap50": 0.5510645367756832,
+        "ap50_95": 0.3901845176457167,
+        "class_id": 64,
+        "name": "mouse"
+      },
+      {
+        "ap50": 0.16263903271132196,
+        "ap50_95": 0.09316143959320526,
+        "class_id": 65,
+        "name": "remote"
+      },
+      {
+        "ap50": 0.5471075568389334,
+        "ap50_95": 0.3789703783828844,
+        "class_id": 66,
+        "name": "keyboard"
+      },
+      {
+        "ap50": 0.2934676249179496,
+        "ap50_95": 0.20845903483166034,
+        "class_id": 67,
+        "name": "cell phone"
+      },
+      {
+        "ap50": 0.5637701664938309,
+        "ap50_95": 0.39269982633838635,
+        "class_id": 68,
+        "name": "microwave"
+      },
+      {
+        "ap50": 0.407576592780895,
+        "ap50_95": 0.2651675781102548,
+        "class_id": 69,
+        "name": "oven"
+      },
+      {
+        "ap50": 0.07089534426925731,
+        "ap50_95": 0.03840733357222487,
+        "class_id": 70,
+        "name": "toaster"
+      },
+      {
+        "ap50": 0.39696762512031614,
+        "ap50_95": 0.24605144932095618,
+        "class_id": 71,
+        "name": "sink"
+      },
+      {
+        "ap50": 0.6225021830828928,
+        "ap50_95": 0.48004421327047797,
+        "class_id": 72,
+        "name": "refrigerator"
+      },
+      {
+        "ap50": 0.09642288552954933,
+        "ap50_95": 0.04227294466902435,
+        "class_id": 73,
+        "name": "book"
+      },
+      {
+        "ap50": 0.522613740414337,
+        "ap50_95": 0.33125989278569556,
+        "class_id": 74,
+        "name": "clock"
+      },
+      {
+        "ap50": 0.3171223282714684,
+        "ap50_95": 0.21581745106227396,
+        "class_id": 75,
+        "name": "vase"
+      },
+      {
+        "ap50": 0.3272157993145783,
+        "ap50_95": 0.24982461965918001,
+        "class_id": 76,
+        "name": "scissors"
+      },
+      {
+        "ap50": 0.5165082420270171,
+        "ap50_95": 0.358753995377917,
+        "class_id": 77,
+        "name": "teddy bear"
+      },
+      {
+        "ap50": 0.019169738395291097,
+        "ap50_95": 0.014517629634788306,
+        "class_id": 78,
+        "name": "hair drier"
+      },
+      {
+        "ap50": 0.22852360922246337,
+        "ap50_95": 0.13579197592776251,
+        "class_id": 79,
+        "name": "toothbrush"
+      }
+    ],
+    "per_class_source": "Ultralytics detection validator AP arrays",
+    "precision_recall_source": "Ultralytics detection validator matching",
+    "predictions_bytes": 79449100,
+    "predictions_sha256": "4272b93765f6d6a7000d28193f9219ba56e48eb8842ba716000c90965a5a3ed3",
+    "rectangular_batches": false,
+    "seed": 0,
+    "speed_ms_per_image": {
+      "inference": 10.690153884887696,
+      "loss": 0.00044875144958496095,
+      "postprocess": 0.7969190597534179,
+      "preprocess": 0.12196807861328124
+    }
+  },
+  "model": {
+    "backend": "ONNX Runtime CPUExecutionProvider via Ultralytics AutoBackend",
+    "filename": "yolov8n-320-opset13.onnx",
+    "sha256": "5b232bf21720cac4264463896ace02b919d8bec3f3fd1e4b9d36695493fa1718"
+  },
+  "schema_version": 1,
+  "status": "complete"
+}

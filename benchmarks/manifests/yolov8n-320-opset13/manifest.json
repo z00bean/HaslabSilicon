@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "workload_id": "yolov8n-320-opset13",
-  "status": "int8_calibration_and_proxy_accuracy_complete_exact_execution_and_schedule_pending",
+  "status": "int8_calibration_complete_first_two_layers_exact_remaining_schedule_pending",
   "model": {
     "family": "Ultralytics YOLOv8",
     "variant": "YOLOv8n detection",
@@ -315,8 +315,20 @@
     "mismatches": 0,
     "scope": "complete 16x160x160 output of nodes 0-2"
   },
+  "m6_first_two_layers": {
+    "status": "first_two_conv_silu_layers_pass",
+    "result": "m6-first-two-conv-silu-layers.json",
+    "package_schema": "haslab.conv-silu-pipeline.v1",
+    "package_sha256": "2178e93d7d5277b0cdce00a3c1ae5f0712f4be46ec0b2621266ef26e906ec9d8",
+    "retained_tensor_bytes": [409600, 204800],
+    "commands": 16245,
+    "dma_bytes": 1999320,
+    "exact_values_compared": 614400,
+    "mismatches": 0,
+    "scope": "complete retained outputs of nodes 0-5"
+  },
   "open_gates": [
-    "Generalize the passing first-layer scheduler to the remaining calibrated accelerator graph, including input-channel chunks, residual scaling, concat liveness, and the INT32 learned-head boundary; repeat the accuracy comparison.",
+    "Extend the passing sequential scheduler through the remaining calibrated accelerator graph, beginning with 1x1 convolution, split/view aliases, residual scaling, concat liveness, and then the INT32 learned-head boundary; repeat layerwise comparisons.",
     "Generate an optimized whole-graph liveness/allocation and total command/DMA traffic report in M6.",
     "Measure whether a real transport can sustain the generated command rate; the functional runtime records refill counts but has no cycle or bus timing."
   ]

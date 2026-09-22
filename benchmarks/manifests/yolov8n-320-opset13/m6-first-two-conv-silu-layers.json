@@ -1,0 +1,266 @@
+{
+  "allocation": {
+    "external_buffers": {
+      "constants": {
+        "alignment": 64,
+        "bytes": 8576,
+        "role": "constant"
+      },
+      "input": {
+        "alignment": 64,
+        "bytes": 819200,
+        "role": "input"
+      },
+      "output": {
+        "alignment": 64,
+        "bytes": 614400,
+        "role": "output"
+      }
+    },
+    "external_bytes": 1442176,
+    "local_peak_bytes": {
+      "accumulator": 2048,
+      "input": 4624,
+      "output": 512,
+      "parameter": 1536,
+      "weight": 4608
+    },
+    "retained_tensors": [
+      {
+        "addend": 0,
+        "bytes": 409600,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          16,
+          160,
+          160
+        ],
+        "name": "model.0",
+        "physical_shape": [
+          160,
+          160,
+          2,
+          8
+        ],
+        "scale_binary32": 0.2907410264015198
+      },
+      {
+        "addend": 409600,
+        "bytes": 204800,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          80,
+          80
+        ],
+        "name": "model.1",
+        "physical_shape": [
+          80,
+          80,
+          4,
+          8
+        ],
+        "scale_binary32": 0.7698827385902405
+      }
+    ]
+  },
+  "calibration_sha256": "d27fe25a304c633e44b226e81fc23c4ba707690f257ce99ce0204c41db3e44b7",
+  "environment": {
+    "numpy": "1.26.4",
+    "onnx": "1.17.0",
+    "onnxruntime": "1.20.1",
+    "python": "3.11.10"
+  },
+  "exact_integer_comparisons": [
+    {
+      "compared_values": 409600,
+      "mismatch_count": 0,
+      "name": "model.0",
+      "output_sha256": "fe8d76d32d17f2ad005e4fd366ee6908c652a6c0a67a633158dd6716fd3de0ed",
+      "pass": true,
+      "reference": "haslab_ref conv2d_i8 + per-group silu_lut_i32"
+    },
+    {
+      "compared_values": 204800,
+      "mismatch_count": 0,
+      "name": "model.1",
+      "output_sha256": "bf84e4cac552336d0da0e0b09cc41d51bcd57ec988472b358797aa9dedb29616",
+      "pass": true,
+      "reference": "haslab_ref conv2d_i8 + per-group silu_lut_i32"
+    }
+  ],
+  "exact_integer_totals": {
+    "compared_values": 614400,
+    "mismatch_count": 0,
+    "pass": true
+  },
+  "input": {
+    "generator": "((channel*37 + y*3 + x*5) mod 256) / FLOAT32(255)",
+    "physical_bytes": 819200,
+    "physical_sha256": "4c306d68402716c4aea823fed0d673911f38cfc30cab3fc29ba4d8cf61909e06"
+  },
+  "lut_binary_sha256": "78dbd09a7389d23cc517ca6930075d5bb53dc152eb9c4248de7e8235f6c4caf4",
+  "onnx_float_comparisons": [
+    {
+      "compared_values": 409600,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 0.38719677925109863,
+      "mean_absolute_error": 0.07102784709540005,
+      "name": "model.0",
+      "reference": "ONNX Runtime output of /model.0/act/Mul for the same input",
+      "root_mean_square_error": 0.09061412843912629
+    },
+    {
+      "compared_values": 204800,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 1.6789932250976562,
+      "mean_absolute_error": 0.19739909243996887,
+      "name": "model.1",
+      "reference": "ONNX Runtime output of /model.1/act/Mul for the same input",
+      "root_mean_square_error": 0.2749505871332625
+    }
+  ],
+  "package": {
+    "bytes": 3083456,
+    "commands_bytes": 2079360,
+    "constant_bytes": 8576,
+    "repeated_compilation_byte_identical": true,
+    "schema": "haslab.conv-silu-pipeline.v1",
+    "sha256": "2178e93d7d5277b0cdce00a3c1ae5f0712f4be46ec0b2621266ef26e906ec9d8"
+  },
+  "runtime": {
+    "backend": "haslab_sim functional command simulator",
+    "completion": "success",
+    "fifo": {
+      "accepted_commands": 16245,
+      "busy_responses": 16237,
+      "commands_retired_during_refill": 16237,
+      "fifo_high_watermark": 8,
+      "final_drain_commands": 8,
+      "submission_attempts": 32482
+    },
+    "final_sequence": 16245,
+    "reset_generation": 0
+  },
+  "schedule": {
+    "dma_bytes": {
+      "constants": 8576,
+      "input": 1376344,
+      "output": 614400,
+      "total": 1999320
+    },
+    "layers": [
+      {
+        "boundary_fill_bytes": 90168,
+        "boundary_fill_commands": 39,
+        "channel_groups": 2,
+        "command_count": 8442,
+        "command_range": [
+          1,
+          8442
+        ],
+        "dma_bytes": {
+          "constants": 2432,
+          "input": 919368,
+          "output": 409600,
+          "total": 1331400
+        },
+        "input_channel_chunks": 1,
+        "macs": 11059200,
+        "name": "model.0",
+        "opcode_counts": {
+          "CONV_I8": 800,
+          "DMA_COPY2D": 6803,
+          "EPILOGUE": 800,
+          "FILL8": 39
+        },
+        "spatial_tiles": 400,
+        "tile_executions": 800,
+        "tile_shape": [
+          8,
+          8
+        ]
+      },
+      {
+        "boundary_fill_bytes": 87856,
+        "boundary_fill_commands": 19,
+        "channel_groups": 4,
+        "command_count": 7802,
+        "command_range": [
+          8443,
+          16244
+        ],
+        "dma_bytes": {
+          "constants": 6144,
+          "input": 456976,
+          "output": 204800,
+          "total": 667920
+        },
+        "input_channel_chunks": 2,
+        "macs": 29491200,
+        "name": "model.1",
+        "opcode_counts": {
+          "CONV_I8": 800,
+          "DMA_COPY2D": 6583,
+          "EPILOGUE": 400,
+          "FILL8": 19
+        },
+        "spatial_tiles": 100,
+        "tile_executions": 400,
+        "tile_shape": [
+          8,
+          8
+        ]
+      }
+    ],
+    "macs": 40550400,
+    "opcode_counts": {
+      "CONV_I8": 1600,
+      "DMA_COPY2D": 13386,
+      "END": 1,
+      "EPILOGUE": 1200,
+      "FILL8": 58
+    }
+  },
+  "schema_version": 1,
+  "scope": {
+    "limitation": "This executes the first two Conv-SiLU blocks, not the remaining accelerator graph or host tail.",
+    "logical_input_shape": [
+      1,
+      3,
+      320,
+      320
+    ],
+    "nodes": [
+      "/model.0/conv/Conv",
+      "/model.0/act/Sigmoid",
+      "/model.0/act/Mul",
+      "/model.1/conv/Conv",
+      "/model.1/act/Sigmoid",
+      "/model.1/act/Mul"
+    ],
+    "retained_logical_shapes": [
+      [
+        1,
+        16,
+        160,
+        160
+      ],
+      [
+        1,
+        32,
+        80,
+        80
+      ]
+    ]
+  },
+  "source_model": {
+    "filename": "yolov8n-320-opset13.onnx",
+    "sha256": "5b232bf21720cac4264463896ace02b919d8bec3f3fd1e4b9d36695493fa1718"
+  },
+  "status": "passing_first_two_conv_silu_layers"
+}

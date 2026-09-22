@@ -5,6 +5,12 @@
 
 from .hxb import Section, SectionType, build_hxb
 from .first_layer import compile_conv_silu_first_layer, compile_pinned_first_layer
+from .pipeline import (
+    ConvSiluLayerSpec,
+    compile_conv_silu_pipeline,
+    compile_pinned_first_two_layers,
+    load_pinned_first_two_layers,
+)
 from .vertical_slice import (
     CompileError,
     compile_conv_silu_slice,
@@ -14,12 +20,16 @@ from .vertical_slice import (
 
 __all__ = [
     "CompileError",
+    "ConvSiluLayerSpec",
     "Section",
     "SectionType",
     "build_hxb",
     "compile_conv_silu_first_layer",
+    "compile_conv_silu_pipeline",
     "compile_conv_silu_slice",
     "compile_pinned_first_block",
     "compile_pinned_first_layer",
+    "compile_pinned_first_two_layers",
     "extract_input_patch",
+    "load_pinned_first_two_layers",
 ]

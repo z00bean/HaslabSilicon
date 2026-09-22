@@ -1,6 +1,6 @@
 # YOLOv8n 320×320 workload candidate
 
-This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The complete first Conv-SiLU layer now compiles to exact HASLAB commands and all 409,600 outputs execute bit exactly in the functional simulator. The remaining model, RTL, and hardware remain unimplemented.
+This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. A reusable scheduler now compiles the first two Conv-SiLU blocks, retains both outputs, and matches all 614,400 INT8 values exactly in the functional simulator. The remaining model, RTL, and hardware remain unimplemented.
 
 ## Third-party artifact and license
 
@@ -197,4 +197,31 @@ The tool compiles all 400 spatial tiles and both output-channel groups, generate
 
 The checked-in [`m6-first-conv-silu-layer.json`](m6-first-conv-silu-layer.json) contains the exact command mix, byte traffic, hashes, comparison, and runtime FIFO counts. These FIFO counts describe the synchronous functional runtime; they are not cycle timing or FPGA throughput.
 
-The next implementation step is a reusable multi-layer scheduler and the second Conv-SiLU block. It must consume the checked first-layer HWC8 tensor, lower 16 input channels and 32 output channels into the 80×80 second-layer result, compare both intermediate boundaries, and report cumulative allocation and traffic.
+## Reproduce the first two layers
+
+```sh
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/compile_yolov8n_first_two_layers.py
+```
+
+The reusable scheduler validates nodes 0–5, retains the first `16×160×160` tensor, gathers its two HWC8 input groups into separate eight-channel reduction chunks, and produces the second `32×80×80` tensor across four output groups. The integration compares both boundaries independently with `haslab_ref` and with ONNX Runtime.
+
+| Two-layer measurement | Result |
+|---|---:|
+| Package bytes | 3,083,456 |
+| Package SHA-256 | `2178e93d7d5277b0cdce00a3c1ae5f0712f4be46ec0b2621266ef26e906ec9d8` |
+| Retained external tensors | 409,600 + 204,800 bytes |
+| Total declared external allocation | 1,442,176 bytes |
+| Commands | 16,245 |
+| DMA bytes | 1,999,320 |
+| INT8 MACs | 40,550,400 |
+| Exact integer values compared | 614,400 |
+| Integer mismatches | 0 |
+| Second-layer FLOAT-reference mean absolute error | 0.197399 |
+| Second-layer INT8 saturation count | 0 |
+| FIFO `BUSY`/refill events | 16,237 |
+| FIFO high-water mark | 8 |
+
+The checked-in [`m6-first-two-conv-silu-layers.json`](m6-first-two-conv-silu-layers.json) records per-layer and cumulative allocation, command mix, traffic, numerical comparisons, hashes, and FIFO behavior. The command reduction relative to concatenating two first-layer-style schedules comes from loading each spatial input tile once and reusing it across output groups.
+
+The next implementation step is the first C2f block beginning at model node 6. It requires 1×1 convolution lowering, split/view handling, concat liveness, residual addition with explicit scales, and cumulative allocation across a branched subgraph.

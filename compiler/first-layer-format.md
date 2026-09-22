@@ -38,8 +38,8 @@ Weights and epilogue records are loaded once per output group. The shared 1,024-
 
 The functional runtime submits into the modeled eight-entry FIFO and retires one command whenever submission returns `BUSY`. Execution of this package records 8,884 accepted commands, 8,876 `BUSY` responses, 8,876 commands retired during refill, and eight commands in the final drain. These are exact host/simulator interactions, not cycle counts or a throughput measurement.
 
-## Remaining work
+## Follow-on work
 
-The next compiler step should replace first-layer constants with a reusable layer plan and lower the second Conv-SiLU block while preserving the first-layer tensor as a checked intermediate. That step must handle 16 logical input channels, 32 outputs, four output groups, the 80×80 result, and cumulative external-memory liveness and traffic.
+The [sequential Conv-SiLU package](multi-layer-format.md) now generalizes this proof, lowers the second block, exercises input-channel accumulation chunks, and retains both outputs. This document remains the record of the original complete-first-layer package and its less optimized schedule.
 
 Before a stable package release, define required manifest keys, size limits, unknown-field behavior, buffer alias/lifetime rules, complete tensor descriptors, host-tail metadata, and negative relocation/parser cases.

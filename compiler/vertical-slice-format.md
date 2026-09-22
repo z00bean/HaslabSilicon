@@ -45,4 +45,4 @@ The runtime API is synchronous. Submission tokens contain a session, reset gener
 
 ## Required replacement
 
-Before a stable M6 package release, define and test required manifest keys, unknown-field handling, per-section limits, buffer lifetime and alias rules, complete tensor descriptors, host-tail metadata, all constant types, relocation coverage, and malformed-package cases. The full first-layer compiler must replace fixed tile assumptions with generated boundary halos, both output groups, assembled output storage, and measured schedule traffic.
+The [complete first-layer package](first-layer-format.md) now replaces the fixed tile assumptions with generated boundary halos, both output groups, assembled output storage, and measured schedule traffic. Before a stable M6 package release, define and test required manifest keys, unknown-field handling, per-section limits, buffer lifetime and alias rules, complete tensor descriptors, host-tail metadata, all constant types, relocation coverage, and malformed-package cases.

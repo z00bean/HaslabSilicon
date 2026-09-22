@@ -2,7 +2,7 @@
 
 This is the tracked source of truth for HASLAB implementation progress. The top-level README contains a short public snapshot; this document contains the work order, dependencies, and evidence required to call a milestone complete.
 
-Last reviewed: 2026-09-21
+Last reviewed: 2026-09-22
 
 ## Status vocabulary
 
@@ -24,7 +24,7 @@ M4's candidate package is implemented in [conformance/](../conformance/README.md
 
 M5 is complete as a workload-pinning milestone. The exact YOLOv8n artifact, graph, preprocessing, host boundary, FLOAT baseline, deterministic 512-image calibration set, all candidate INT8 scales, 57 SiLU tables, and layerwise diagnostics are recorded. The signed-symmetric INT8 software proxy measured 0.27610 bbox mAP50–95, a 0.887-point loss from FLOAT and inside the one-point budget. This proxy uses ONNX Runtime QLinear sigmoid/multiply operations and requantized learned-head outputs, so it does not claim whole-model HASLAB command or hardware agreement.
 
-M6 is active. Its first vertical slice consumes the pinned graph and calibration package, lowers one interior 8×8 tile and output channels 0–7 of the first Conv-SiLU block, emits a deterministic `.hxb`, validates and relocates it through a minimal runtime, and executes eight commands in the simulator. All 512 output bytes match the independent integer golden path, and the same intermediate is compared with ONNX Runtime. The next slice must schedule the complete first layer, including border padding and both channel groups, and derive command/DMA/FIFO counts from that schedule. Independent M3/M4 review remains required before a stable ABI/corpus or package release.
+M6 is active. The compiler now schedules the complete first Conv-SiLU layer: 400 spatial tiles across two output groups, explicit top/left halos, canonical HWC8 output assembly, 8,884 commands, and 2,250,768 DMA bytes. All 409,600 INT8 outputs match the independent golden path, and runtime submission records the exact eight-entry FIFO refill behavior. The next slice must generalize the scheduler and add the second Conv-SiLU layer while preserving both checked intermediate boundaries. Independent M3/M4 review remains required before a stable ABI/corpus or package release.
 
 ## Milestone plan
 
@@ -36,7 +36,7 @@ M6 is active. Its first vertical slice consumes the pinned graph and calibration
 | M3 | Freeze the v0 contract | `ACTIVE` | M1, M2; independent M4 review for closure | Candidate and conformance evidence available; final freeze awaits independent command/transition review |
 | M4 | v0 conformance package | `ACTIVE` | Candidate implemented; frozen M3 for final corpus release | 46 binary fixtures, hashes/schema, ABI consistency, simulator runner, and CI implemented; final release awaits independent review and stable ABI |
 | M5 | Pin the first YOLO workload | `DONE` | M3 candidate | Exact artifact, graph, preprocessing, partition, FLOAT baseline, deterministic INT8 calibration package, proxy accuracy, and diagnostic evidence are tracked; exact target execution belongs to M6 |
-| M6 | Minimal compiler and simulated runtime | `ACTIVE` | M5 complete; M3/M4 candidate usable, stable release still gated by independent review | First Conv-SiLU tile passes exactly; completion still requires deterministic whole-model packaging, execution, host tail, and layerwise comparisons |
+| M6 | Minimal compiler and simulated runtime | `ACTIVE` | M5 complete; M3/M4 candidate usable, stable release still gated by independent review | Complete first Conv-SiLU layer passes exactly; completion still requires reusable whole-model lowering, host tail, and layerwise comparisons |
 | M7 | First RTL vertical slice | `BLOCKED` | Frozen M3, M4 | Command decode through one INT8 MAC path, INT32 accumulation, requantization, completion/error behavior, and differential tests |
 | M8 | Incremental RTL operation coverage | `BLOCKED` | M7 | Each added DMA, convolution, or utility operation passes its conformance and assertion gates |
 | M9 | FPGA selection and v0 bring-up | `BLOCKED` | M5, M6, M8 | Measured resource probes inform board selection; reproducible build, timing, utilization, accuracy, transfer, and end-to-end latency reports are published |
@@ -118,7 +118,9 @@ First vertical-slice evidence:
 - [x] Recompile the same inputs to a byte-identical 5,056-byte package.
 - [x] Strictly load, bind, submit, wait, reset, reject corruption/invalid binding, and invalidate stale tokens through the simulator backend.
 - [x] Match all 512 tile output bytes against `haslab_ref` and compare the dequantized intermediate with ONNX Runtime.
-- [ ] Schedule the full first layer: boundary halos, 400 spatial tiles, two output groups, output assembly, and generated command/DMA/FIFO accounting.
+- [x] Schedule the full first layer: boundary halos, 400 spatial tiles, two output groups, output assembly, and generated command/DMA/FIFO accounting.
+- [x] Match all 409,600 first-layer outputs exactly; record 8,884 commands, 2,250,768 DMA bytes, 11,059,200 MACs, and actual eight-entry FIFO refill behavior.
+- [ ] Replace the first-layer-specific scheduler with a reusable layer plan and execute the second Conv-SiLU block, preserving comparisons at both layer boundaries.
 - [ ] Generalize from the first layer to every accelerator-region node and the declared host tail before closing M6.
 
 ## M7–M9 — RTL and FPGA rules
@@ -181,3 +183,4 @@ When work changes status:
 | 2026-09-21 | Completed the pinned FLOAT accuracy baseline over all 5,000 COCO val2017 images: bbox mAP50–95 0.284969 and mAP50 0.413595. A second full run reproduced the aggregate metrics, every per-class AP pair, and the 79,449,100-byte prediction JSON hash exactly. INT8 calibration is the next M5 step. | [Evaluation report](../benchmarks/manifests/yolov8n-320-opset13/float-coco-baseline.json), [reproduction guide](../benchmarks/manifests/yolov8n-320-opset13/README.md) |
 | 2026-09-21 | Completed M5 calibration evidence with a deterministic 512-image train2017 subset, 205 activation scales, 63 per-output-channel weight-scale vectors, 57 SiLU tables, and diagnostics over 6.93 billion activation values. The INT8 QOperator proxy measured 0.276098 mAP50–95, a 0.887-point loss that passes the one-point budget. Calibration artifacts and two full evaluations reproduced exactly. Exact HASLAB command semantics remain the first M6 differential target. | [Calibration](../benchmarks/manifests/yolov8n-320-opset13/int8-calibration.json), [diagnostics](../benchmarks/manifests/yolov8n-320-opset13/int8-diagnostics.json), [accuracy](../benchmarks/manifests/yolov8n-320-opset13/int8-coco-baseline.json) |
 | 2026-09-21 | Activated M6 with a strict first-block compiler/runtime slice. One 8×8 tile and output channels 0–7 compile to a deterministic 5,056-byte `.hxb`, execute as eight ABI commands, and match all 512 integer golden values; the dequantized tile is also compared with ONNX Runtime. Package binaries remain ignored because they contain derived third-party weights. | [Slice report](../benchmarks/manifests/yolov8n-320-opset13/m6-first-conv-silu-slice.json), [compiler](../compiler/README.md), [runtime](../runtime/README.md) |
+| 2026-09-22 | Completed the full first-layer M6 schedule: 400 spatial tiles, two channel groups, explicit boundary halos, canonical HWC8 assembly, 8,884 commands, and 2,250,768 DMA bytes. All 409,600 outputs match the integer golden model; the runtime records 8,876 FIFO `BUSY`/refill events and an eight-command final drain. | [First-layer report](../benchmarks/manifests/yolov8n-320-opset13/m6-first-conv-silu-layer.json), [schedule format](../compiler/first-layer-format.md) |

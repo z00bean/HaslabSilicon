@@ -1,6 +1,6 @@
 # YOLOv8n 320×320 workload candidate
 
-This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. One interior 8×8 tile and eight output channels of the first Conv-SiLU block now compile to exact HASLAB commands and execute bit exactly in the functional simulator. The complete first layer, model, RTL, and hardware remain unimplemented.
+This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The complete first Conv-SiLU layer now compiles to exact HASLAB commands and all 409,600 outputs execute bit exactly in the functional simulator. The remaining model, RTL, and hardware remain unimplemented.
 
 ## Third-party artifact and license
 
@@ -86,8 +86,8 @@ The evaluator uses the static FLOAT32 ONNX model through ONNX Runtime's CPU prov
 
 | Measurement | Recorded result |
 |---|---:|
-| COCO bbox mAP50–95 | 0.2849691922 |
-| COCO bbox mAP50 | 0.4135947784 |
+| COCO bbox mAP50–95 | 28.4969 (`0.2849691922`) |
+| COCO bbox mAP50 | 41.3595 (`0.4135947784`) |
 | Ultralytics matched precision | 0.5715859845 |
 | Ultralytics matched recall | 0.3857629412 |
 | Validation images | 5,000 |
@@ -137,8 +137,8 @@ Calibration uses ONNX Runtime 1.20.1 MinMax ranges forced symmetric around zero.
 
 | Measurement | FLOAT | INT8 proxy | Change |
 |---|---:|---:|---:|
-| COCO bbox mAP50–95 | 0.2849691922 | 0.2760981611 | −0.0088710311 |
-| COCO bbox mAP50 | 0.4135947784 | 0.4044438283 | −0.0091509501 |
+| COCO bbox mAP50–95 | 28.4969 | 27.6098 | −0.8871 points |
+| COCO bbox mAP50 | 41.3595 | 40.4444 | −0.9151 points |
 | Ultralytics matched precision | 0.5715859845 | 0.5825443393 | +0.0109583548 |
 | Ultralytics matched recall | 0.3857629412 | 0.3742943314 | −0.0114686098 |
 
@@ -169,4 +169,32 @@ The tool validates the model and calibration hashes, compiles nodes 0–2, emits
 | FLOAT-reference mean absolute error | 0.095207 |
 | INT8 saturation count | 0 |
 
-The checked-in [`m6-first-conv-silu-slice.json`](m6-first-conv-silu-slice.json) is evidence for this narrow slice. It does not establish whole-layer accuracy or package-schema stability. The next implementation step is to schedule the complete first Conv-SiLU layer: all 20×20 spatial tiles, both output-channel groups, and boundary padding, followed by a full 16×160×160 intermediate comparison. That work should produce measured command, DMA-byte, and FIFO-refill counts from the generated schedule.
+The checked-in [`m6-first-conv-silu-slice.json`](m6-first-conv-silu-slice.json) preserves the initial narrow proof. It does not establish package-schema stability.
+
+## Reproduce the complete first layer
+
+```sh
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/compile_yolov8n_first_layer.py
+```
+
+The tool compiles all 400 spatial tiles and both output-channel groups, generates top/left zero halos, assembles the complete canonical 160×160×2×8 HWC8 output, and compares all 409,600 values with the independent integer model. It separately compares the dequantized layer with ONNX Runtime. Model-derived package, input, and output binaries remain under ignored `artifacts/m6/`.
+
+| Complete first-layer measurement | Result |
+|---|---:|
+| Package bytes | 1,671,680 |
+| Package SHA-256 | `2984ff498715f4430bc63f2585c68e0465b5b4b83643c18fb5b509c0b1aba0c6` |
+| Commands | 8,884 |
+| DMA bytes | 2,250,768 |
+| INT8 MACs | 11,059,200 |
+| Boundary fill commands | 78 |
+| Exact integer values compared | 409,600 |
+| Integer mismatches | 0 |
+| FLOAT-reference mean absolute error | 0.071028 |
+| INT8 saturation count | 0 |
+| FIFO `BUSY`/refill events | 8,876 |
+| FIFO high-water mark | 8 |
+
+The checked-in [`m6-first-conv-silu-layer.json`](m6-first-conv-silu-layer.json) contains the exact command mix, byte traffic, hashes, comparison, and runtime FIFO counts. These FIFO counts describe the synchronous functional runtime; they are not cycle timing or FPGA throughput.
+
+The next implementation step is a reusable multi-layer scheduler and the second Conv-SiLU block. It must consume the checked first-layer HWC8 tensor, lower 16 input channels and 32 output channels into the 80×80 second-layer result, compare both intermediate boundaries, and report cumulative allocation and traffic.

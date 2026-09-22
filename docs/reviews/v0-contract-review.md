@@ -13,6 +13,8 @@ Follow-up, 2026-09-21: [M5's pinned workload](../../benchmarks/manifests/yolov8n
 
 Follow-up, 2026-09-21: [M6's first vertical slice](../../benchmarks/manifests/yolov8n-320-opset13/m6-first-conv-silu-slice.json) now compiles one first-block tile into the proposed `.hxb` framing, loads and relocates it through the simulator runtime, and matches all 512 output bytes against the independent integer model. This validates a narrow package/command path; full-layer scheduling, whole-graph allocation, stable manifest limits, host-tail execution, and independent M3/M4 review remain open.
 
+Follow-up, 2026-09-22: [M6's complete first-layer schedule](../../benchmarks/manifests/yolov8n-320-opset13/m6-first-conv-silu-layer.json) now covers all 400 spatial tiles, both output groups, boundary halos, and canonical HWC8 output assembly. All 409,600 values match the integer model. The generated 8,884-command schedule and actual simulator-runtime FIFO refill counts provide first measured traffic evidence; they are not transport timing or whole-model throughput evidence.
+
 ## Scope and review results
 
 | Area | Reviewed behavior | Outcome / evidence |
@@ -55,7 +57,7 @@ Validation on 2026-09-20: `make test` passed 43 numerical-model tests and 42 sim
 | Scale approximation and reproducible coefficient/LUT bytes | M5/M6 coefficient-generation policy and accuracy/error report | Candidate bytes and approximation errors recorded; M6 must execute them exactly |
 | Residual/concat scales, split boundaries, chunk/halo layouts | M5 every-layer audit, then M6 lowering tests | Pending |
 | Package schema, limits, relocations, parser behavior | M6 schema freeze before compiler/runtime implementation | Pending |
-| Commands per frame, host refill, patch copies, spill traffic | M5/M6 schedule estimates; M9 measurements | Pending |
+| Commands per frame, host refill, patch copies, spill traffic | M5/M6 schedule estimates; M9 measurements | First-layer counts measured in the functional runtime; whole-model and transport timing pending |
 | Board, aperture, bus ordering, cache maintenance, reset quiescence | M9 transport adapter and fault-injection evidence before integrated RTL freeze | Pending |
 | Physical SRAM mapping and synchronous read timing | M7 prototypes/M9 target probes | Pending |
 | Native FP8 | M10 separate numeric contract and arithmetic feasibility | Deferred; does not block v0 |
@@ -65,6 +67,6 @@ Small isolated RTL experiments may follow reviewed independent vectors, but full
 
 ## Next action and closure criteria
 
-The M4 fixture schema and first independently derived corpus now exist against **ABI 0.1 / contract revision 0.2**, and the M5 workload package is pinned. The next implementation action is the narrow M6 compiler/runtime path that consumes those two artifacts and performs layerwise differential execution through the command simulator.
+The M4 fixture schema and first independently derived corpus now exist against **ABI 0.1 / contract revision 0.2**, and the M5 workload package is pinned. M6 now executes the complete first layer differentially. The next implementation action is to generalize that scheduler for the second Conv-SiLU layer, retain both intermediate comparisons, and begin multi-layer external-memory liveness accounting.
 
 Before marking M3 complete, independently review the command tables and transitions, run the fixtures against another implementation or derivation, resolve discrepancies with a decision record, and explicitly allocate the frozen ABI. M6 candidate work may proceed, but a stable compiler/package release and full RTL commitment still depend on that independent review.

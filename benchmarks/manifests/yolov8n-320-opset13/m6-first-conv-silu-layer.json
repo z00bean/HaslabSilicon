@@ -1,0 +1,109 @@
+{
+  "calibration_sha256": "d27fe25a304c633e44b226e81fc23c4ba707690f257ce99ce0204c41db3e44b7",
+  "environment": {
+    "numpy": "1.26.4",
+    "onnx": "1.17.0",
+    "onnxruntime": "1.20.1",
+    "python": "3.11.10"
+  },
+  "exact_integer_comparison": {
+    "compared_values": 409600,
+    "mismatch_count": 0,
+    "output_sha256": "fe8d76d32d17f2ad005e4fd366ee6908c652a6c0a67a633158dd6716fd3de0ed",
+    "pass": true,
+    "reference": "haslab_ref conv2d_i8 + per-group silu_lut_i32"
+  },
+  "input": {
+    "generator": "((channel*37 + y*3 + x*5) mod 256) / FLOAT32(255)",
+    "physical_bytes": 819200,
+    "physical_sha256": "4c306d68402716c4aea823fed0d673911f38cfc30cab3fc29ba4d8cf61909e06"
+  },
+  "lut_binary_sha256": "78dbd09a7389d23cc517ca6930075d5bb53dc152eb9c4248de7e8235f6c4caf4",
+  "onnx_float_comparison": {
+    "compared_values": 409600,
+    "int8_saturation_count": 0,
+    "maximum_absolute_error": 0.38719677925109863,
+    "mean_absolute_error": 0.07102784709540005,
+    "reference": "ONNX Runtime output of node 2 for the same deterministic input",
+    "root_mean_square_error": 0.09061412843912629
+  },
+  "package": {
+    "bytes": 1671680,
+    "commands_bytes": 1137152,
+    "constant_bytes": 2432,
+    "repeated_compilation_byte_identical": true,
+    "schema": "haslab.first-layer.v1",
+    "sha256": "2984ff498715f4430bc63f2585c68e0465b5b4b83643c18fb5b509c0b1aba0c6"
+  },
+  "runtime": {
+    "backend": "haslab_sim functional command simulator",
+    "completion": "success",
+    "fifo": {
+      "accepted_commands": 8884,
+      "busy_responses": 8876,
+      "commands_retired_during_refill": 8876,
+      "fifo_high_watermark": 8,
+      "final_drain_commands": 8,
+      "submission_attempts": 17760
+    },
+    "final_sequence": 8884,
+    "reset_generation": 0
+  },
+  "schedule": {
+    "boundary_fill_bytes": 180336,
+    "boundary_fill_commands": 78,
+    "channel_groups": 2,
+    "dma_bytes": {
+      "constants": 2432,
+      "input": 1838736,
+      "output": 409600,
+      "total": 2250768
+    },
+    "macs": 11059200,
+    "opcode_counts": {
+      "CONV_I8": 800,
+      "DMA_COPY2D": 7205,
+      "END": 1,
+      "EPILOGUE": 800,
+      "FILL8": 78
+    },
+    "spatial_tiles": 400,
+    "tile_executions": 800,
+    "tile_shape": [
+      8,
+      8
+    ]
+  },
+  "schema_version": 1,
+  "scope": {
+    "limitation": "This executes the complete first Conv-SiLU layer, not the remaining accelerator graph or host tail.",
+    "logical_input_shape": [
+      1,
+      3,
+      320,
+      320
+    ],
+    "logical_output_shape": [
+      1,
+      16,
+      160,
+      160
+    ],
+    "nodes": [
+      "/model.0/conv/Conv",
+      "/model.0/act/Sigmoid",
+      "/model.0/act/Mul"
+    ],
+    "physical_output_shape": [
+      160,
+      160,
+      2,
+      8
+    ]
+  },
+  "source_model": {
+    "filename": "yolov8n-320-opset13.onnx",
+    "sha256": "5b232bf21720cac4264463896ace02b919d8bec3f3fd1e4b9d36695493fa1718"
+  },
+  "status": "passing_complete_first_layer"
+}

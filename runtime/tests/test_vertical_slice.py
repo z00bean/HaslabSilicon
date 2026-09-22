@@ -61,6 +61,10 @@ class VerticalSliceRuntimeTests(unittest.TestCase):
         self.assertEqual(completion.status, RuntimeStatus.SUCCESS)
         self.assertIsNone(completion.error)
         self.assertEqual(loaded.manifest["commands"]["count"], 8)
+        self.assertEqual(runtime.last_submission_stats.accepted_commands, 8)
+        self.assertEqual(runtime.last_submission_stats.busy_responses, 0)
+        self.assertEqual(runtime.last_submission_stats.final_drain_commands, 8)
+        self.assertEqual(runtime.last_submission_stats.fifo_high_watermark, 8)
 
         quantized_weights = quantize_int8(weights[:8], np.ones((8, 1, 1, 1), dtype=np.float32))
         quantized_bias = np.rint(bias[:8]).astype(np.int32)

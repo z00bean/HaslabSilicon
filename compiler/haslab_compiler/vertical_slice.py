@@ -222,12 +222,12 @@ def compile_conv_silu_slice(
     )
 
 
-def compile_pinned_first_block(
+def _load_pinned_first_block_data(
     model_path: str | Path,
     calibration_path: str | Path,
     lut_path: str | Path,
-) -> bytes:
-    """Validate and compile the first block of the pinned YOLOv8n ONNX graph."""
+) -> dict[str, object]:
+    """Validate and return the pinned first-block tensors and numeric records."""
 
     try:
         import onnx
@@ -277,15 +277,27 @@ def compile_pinned_first_block(
     lut = np.frombuffer(lut_blob[offset : offset + length], dtype=np.int8).copy()
     if _sha256(lut.tobytes()) != record["table_sha256"]:
         raise CompileError("first SiLU LUT table hash mismatch")
+    return {
+        "weights": weights,
+        "bias": bias,
+        "input_scale": input_scale,
+        "weight_scales": weight_scales,
+        "output_scale": record["output_scale_binary32"],
+        "multipliers": record["accumulator_to_grid"]["multipliers"],
+        "shifts": record["accumulator_to_grid"]["shifts"],
+        "lut": lut,
+        "source_model_sha256": model_hash,
+        "node_names": (conv.name, sigmoid.name, mul.name),
+    }
+
+
+def compile_pinned_first_block(
+    model_path: str | Path,
+    calibration_path: str | Path,
+    lut_path: str | Path,
+) -> bytes:
+    """Validate and compile one tile of the pinned YOLOv8n first block."""
+
     return compile_conv_silu_slice(
-        weights=weights,
-        bias=bias,
-        input_scale=input_scale,
-        weight_scales=weight_scales,
-        output_scale=record["output_scale_binary32"],
-        multipliers=record["accumulator_to_grid"]["multipliers"],
-        shifts=record["accumulator_to_grid"]["shifts"],
-        lut=lut,
-        source_model_sha256=model_hash,
-        node_names=(conv.name, sigmoid.name, mul.name),
+        **_load_pinned_first_block_data(model_path, calibration_path, lut_path)
     )

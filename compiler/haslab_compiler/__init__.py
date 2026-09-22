@@ -4,6 +4,7 @@
 # Copyright (C) 2026 Zubin Bhuyan
 
 from .hxb import Section, SectionType, build_hxb
+from .first_layer import compile_conv_silu_first_layer, compile_pinned_first_layer
 from .vertical_slice import (
     CompileError,
     compile_conv_silu_slice,
@@ -16,7 +17,9 @@ __all__ = [
     "Section",
     "SectionType",
     "build_hxb",
+    "compile_conv_silu_first_layer",
     "compile_conv_silu_slice",
     "compile_pinned_first_block",
+    "compile_pinned_first_layer",
     "extract_input_patch",
 ]

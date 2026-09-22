@@ -4177,7 +4177,7 @@
     }
   ],
   "contract_revision": "0.2",
-  "contract_sha256": "a5578ad48e63250764cf6b51c24721f472459669b521e675d531e306cff3330e",
+  "contract_sha256": "f118b3ad8e529dafa2ad661147f9b0a8453390eb9a65f3af50416adccfaa5a07",
   "profile": "haslab-v0-int8",
   "provenance": "Independent manual contract derivations; serialized by conformance/generate.py; no implementation imports; not external review.",
   "schema_version": 1

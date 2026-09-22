@@ -47,6 +47,16 @@ class Completion:
     error: dict[str, object] | None
 
 
+@dataclass(frozen=True)
+class SubmissionStats:
+    accepted_commands: int
+    busy_responses: int
+    commands_retired_during_refill: int
+    final_drain_commands: int
+    fifo_high_watermark: int
+    submission_attempts: int
+
+
 def _align(value: int, alignment: int) -> int:
     return (value + alignment - 1) // alignment * alignment
 
@@ -54,23 +64,31 @@ def _align(value: int, alignment: int) -> int:
 class SimulatorRuntime:
     """One-model synchronous runtime using the byte-level simulator backend."""
 
-    def __init__(self, ext_bytes: int = 1 << 20) -> None:
+    def __init__(self, ext_bytes: int = 2 << 20) -> None:
         self.device = HaslabDevice(ext_bytes)
         self._package: HxbPackage | None = None
         self._bases: dict[str, int] = {}
         self._bound = False
         self._session = 1
         self._completion: Completion | None = None
+        self._last_submission_stats: SubmissionStats | None = None
 
     @property
     def package(self) -> HxbPackage | None:
         return self._package
 
+    @property
+    def last_submission_stats(self) -> SubmissionStats | None:
+        return self._last_submission_stats
+
     def load_model(self, source: bytes | bytearray | memoryview) -> HxbPackage:
         try:
             package = load_hxb(source)
             manifest = package.manifest
-            if manifest.get("schema") != "haslab.vertical-slice.v1":
+            if manifest.get("schema") not in {
+                "haslab.vertical-slice.v1",
+                "haslab.first-layer.v1",
+            }:
                 raise RuntimeFailure(RuntimeErrorCode.BAD_PACKAGE, "unsupported manifest schema")
             if manifest.get("abi") != {"major": 0, "minor": 1}:
                 raise RuntimeFailure(RuntimeErrorCode.BAD_PACKAGE, "package ABI is incompatible")
@@ -110,6 +128,7 @@ class SimulatorRuntime:
         self._bases = bases
         self._bound = False
         self._completion = None
+        self._last_submission_stats = None
         self.device.memory.write(MemorySpace.EXT, bases["constants"], package.constants)
         return package
 
@@ -190,12 +209,40 @@ class SimulatorRuntime:
         output_size = self._package.manifest["buffers"]["output"]["bytes"]
         self.device.memory.fill(MemorySpace.EXT, self._bases["output"], output_size, 0)
         commands = self._relocated_commands()
+        accepted = 0
+        busy_responses = 0
+        retired_during_refill = 0
+        attempts = 0
+        high_watermark = self.device.queued_commands
         for command in commands:
-            while self.device.submit(command) is SubmitResult.BUSY:
-                self.device.run_next()
-            if self.device.submit_result is not SubmitResult.ACCEPTED:
-                raise RuntimeFailure(RuntimeErrorCode.BAD_STATE, "device rejected a validated command")
-        self.device.run_all()
+            while True:
+                result = self.device.submit(command)
+                attempts += 1
+                high_watermark = max(high_watermark, self.device.queued_commands)
+                if result is SubmitResult.ACCEPTED:
+                    accepted += 1
+                    break
+                if result is not SubmitResult.BUSY:
+                    raise RuntimeFailure(
+                        RuntimeErrorCode.BAD_STATE,
+                        "device rejected a validated command",
+                    )
+                busy_responses += 1
+                if not self.device.run_next():
+                    raise RuntimeFailure(
+                        RuntimeErrorCode.BAD_STATE,
+                        "device faulted while refilling the command FIFO",
+                    )
+                retired_during_refill += 1
+        final_drain = self.device.run_all()
+        self._last_submission_stats = SubmissionStats(
+            accepted_commands=accepted,
+            busy_responses=busy_responses,
+            commands_retired_during_refill=retired_during_refill,
+            final_drain_commands=final_drain,
+            fifo_high_watermark=high_watermark,
+            submission_attempts=attempts,
+        )
         final_sequence = commands[-1].sequence
         token = SubmissionToken(self._session, self.device.reset_generation, final_sequence)
         if self.device.state is DeviceState.FAULT:
@@ -234,6 +281,7 @@ class SimulatorRuntime:
         self.device.reset()
         self._bound = False
         self._completion = None
+        self._last_submission_stats = None
         self._session += 1
         if self._package is not None:
             self.device.memory.write(MemorySpace.EXT, self._bases["constants"], self._package.constants)

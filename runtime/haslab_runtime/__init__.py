@@ -10,6 +10,7 @@ from .simulator import (
     RuntimeFailure,
     RuntimeStatus,
     SimulatorRuntime,
+    SubmissionStats,
     SubmissionToken,
 )
 
@@ -21,6 +22,7 @@ __all__ = [
     "RuntimeFailure",
     "RuntimeStatus",
     "SimulatorRuntime",
+    "SubmissionStats",
     "SubmissionToken",
     "load_hxb",
 ]

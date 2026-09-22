@@ -302,9 +302,22 @@
     "mismatches": 0,
     "scope": "one interior 8x8 tile and output channels 0-7 of nodes 0-2"
   },
+  "m6_first_layer": {
+    "status": "complete_first_conv_silu_layer_passes",
+    "result": "m6-first-conv-silu-layer.json",
+    "package_schema": "haslab.first-layer.v1",
+    "package_sha256": "2984ff498715f4430bc63f2585c68e0465b5b4b83643c18fb5b509c0b1aba0c6",
+    "spatial_tiles": 400,
+    "tile_executions": 800,
+    "commands": 8884,
+    "dma_bytes": 2250768,
+    "exact_values_compared": 409600,
+    "mismatches": 0,
+    "scope": "complete 16x160x160 output of nodes 0-2"
+  },
   "open_gates": [
-    "Extend the passing first tile to the complete first layer and then the calibrated accelerator graph, including boundary halos, fixed-point epilogues, residual scaling, and the INT32 learned-head boundary; repeat the accuracy comparison.",
+    "Generalize the passing first-layer scheduler to the remaining calibrated accelerator graph, including input-channel chunks, residual scaling, concat liveness, and the INT32 learned-head boundary; repeat the accuracy comparison.",
     "Generate an optimized whole-graph liveness/allocation and total command/DMA traffic report in M6.",
-    "Measure whether the eight-entry command FIFO and host refill path can sustain the required command rate."
+    "Measure whether a real transport can sustain the generated command rate; the functional runtime records refill counts but has no cycle or bus timing."
   ]
 }

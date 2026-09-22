@@ -22,6 +22,9 @@ class TestYolov8nManifest(unittest.TestCase):
         cls.int8_diagnostics = json.loads((WORKLOAD / "int8-diagnostics.json").read_text())
         cls.int8_baseline = json.loads((WORKLOAD / "int8-coco-baseline.json").read_text())
         cls.m6_slice = json.loads((WORKLOAD / "m6-first-conv-silu-slice.json").read_text())
+        cls.m6_first_layer = json.loads(
+            (WORKLOAD / "m6-first-conv-silu-layer.json").read_text()
+        )
 
     def test_artifact_identity_is_consistent(self):
         self.assertEqual(
@@ -149,6 +152,25 @@ class TestYolov8nManifest(unittest.TestCase):
         self.assertEqual(result["exact_integer_comparison"]["mismatch_count"], 0)
         self.assertEqual(result["exact_integer_comparison"]["compared_values"], 512)
         self.assertIn("not whole-layer", result["scope"]["limitation"])
+
+    def test_m6_complete_first_layer_has_exact_schedule_and_output(self):
+        result = self.m6_first_layer
+        self.assertEqual(result["source_model"]["sha256"], self.manifest["export"]["onnx_sha256"])
+        self.assertEqual(result["package"]["schema"], "haslab.first-layer.v1")
+        self.assertTrue(result["package"]["repeated_compilation_byte_identical"])
+        self.assertEqual(result["schedule"]["spatial_tiles"], 400)
+        self.assertEqual(result["schedule"]["tile_executions"], 800)
+        self.assertEqual(sum(result["schedule"]["opcode_counts"].values()), 8884)
+        self.assertEqual(result["schedule"]["dma_bytes"]["total"], 2250768)
+        self.assertEqual(result["exact_integer_comparison"]["compared_values"], 409600)
+        self.assertEqual(result["exact_integer_comparison"]["mismatch_count"], 0)
+        self.assertTrue(result["exact_integer_comparison"]["pass"])
+        fifo = result["runtime"]["fifo"]
+        self.assertEqual(fifo["accepted_commands"], 8884)
+        self.assertEqual(fifo["busy_responses"], 8876)
+        self.assertEqual(fifo["fifo_high_watermark"], 8)
+        self.assertEqual(fifo["final_drain_commands"], 8)
+        self.assertIn("not the remaining accelerator graph", result["scope"]["limitation"])
 
 
 if __name__ == "__main__":

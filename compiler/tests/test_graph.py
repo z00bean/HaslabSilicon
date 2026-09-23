@@ -9,13 +9,18 @@ from haslab_compiler import (
     C2fBlockSpec,
     C2fConvSpec,
     C2fStageSpec,
+    ConcatOp,
+    ConvSiluOp,
     ConvSiluLayerSpec,
+    GraphIR,
+    GraphTensor,
     build_two_c2f_graph,
     compile_graph,
     first_stage,
 )
 from haslab_ref import build_silu_lut, nchw_to_hwc8
 from haslab_runtime import RuntimeStatus, SimulatorRuntime, load_hxb
+from haslab_compiler.c2f import _conv_tile_shape
 
 
 def stem(name: str, spatial: int, inputs: int, outputs: int) -> ConvSiluLayerSpec:
@@ -188,6 +193,47 @@ class GraphScheduleTests(unittest.TestCase):
         )
         self.assertEqual([item["name"] for item in self.release.manifest["output"]["tensors"]], ["model.4"])
         self.assertEqual(self.release.manifest["output"]["views"], [])
+
+    def test_tile_selection_handles_twenty_by_twenty_wide_convolution(self) -> None:
+        self.assertEqual(_conv_tile_shape(20, 20, 8, 3, 2), (5, 5))
+        tile_h, tile_w = _conv_tile_shape(20, 20, 8, 3, 2)
+        patch_bytes = 8 * ((tile_h - 1) * 2 + 3) * ((tile_w - 1) * 2 + 3) * 8
+        self.assertLessEqual(patch_bytes, 16_384)
+
+    def test_wide_concat_streams_parameters_and_executes(self) -> None:
+        branch_names = tuple(f"wide.branch{index}" for index in range(4))
+        layers = tuple(conv(name, 16, 32, 64, 1) for name in branch_names)
+        graph = GraphIR(
+            tensors=tuple(
+                GraphTensor(name, 16, 16, 64, 1.0) for name in branch_names
+            )
+            + (GraphTensor("wide.concat", 16, 16, 256, 1.0),),
+            operations=tuple(
+                ConvSiluOp("model.1", name, layer)
+                for name, layer in zip(branch_names, layers)
+            )
+            + (ConcatOp(branch_names, "wide.concat", "wide.concat.node"),),
+            source_nodes=tuple(
+                node for layer in layers for node in layer.node_names
+            )
+            + ("wide.concat.node",),
+            final_outputs=("wide.concat",),
+        )
+        raw = compile_graph(
+            stem_layers=self.stem,
+            graph=graph,
+            source_model_sha256="44" * 32,
+            allocation_mode="release",
+        )
+        package = load_hxb(raw)
+        operation = package.manifest["schedule"]["graph_operations"][-1]
+        self.assertEqual(operation["parameter_residency"], "one concat source at a time")
+        source = np.zeros((1, 3, 64, 64), dtype=np.int8)
+        runtime = SimulatorRuntime()
+        runtime.load_model(raw)
+        runtime.bind_input(np.ascontiguousarray(nchw_to_hwc8(source)).tobytes())
+        completion = runtime.wait(runtime.submit())
+        self.assertIs(completion.status, RuntimeStatus.SUCCESS)
 
 
 if __name__ == "__main__":

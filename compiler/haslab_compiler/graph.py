@@ -85,6 +85,12 @@ class C2fStageSpec:
     concat_node: str
 
 
+@dataclass(frozen=True)
+class C2fExtension:
+    downsample: C2fConvSpec
+    stage: C2fStageSpec
+
+
 def _material(name: str, layer: C2fConvSpec) -> GraphTensor:
     weights = np.asarray(layer.weights)
     output_channels = int(weights.shape[0])
@@ -110,6 +116,17 @@ def build_two_c2f_graph(
     *, first: C2fStageSpec, downsample: C2fConvSpec, second: C2fStageSpec
 ) -> GraphIR:
     """Create the reusable IR for pinned YOLOv8n nodes 6..47."""
+
+    return build_c2f_graph(
+        first=first,
+        extensions=(C2fExtension(downsample=downsample, stage=second),),
+    )
+
+
+def build_c2f_graph(
+    *, first: C2fStageSpec, extensions: Sequence[C2fExtension]
+) -> GraphIR:
+    """Create a reusable stem-following chain of downsample and C2f stages."""
 
     tensors: list[GraphTensor] = []
     operations: list[GraphOp] = []
@@ -191,18 +208,22 @@ def build_two_c2f_graph(
         operations.append(ConvSiluOp(concat_name, output_name, stage.cv2))
         return output_name
 
-    first_output = add_stage(first, "model.1", "model.2")
-    tensors.append(_material("model.3", downsample))
-    operations.append(ConvSiluOp(first_output, "model.3", downsample))
-    second_output = add_stage(second, "model.3", "model.4")
-    source_nodes = [
-        name
-        for stage in (first,)
-        for name in _stage_source_nodes(stage)
-    ]
-    source_nodes.extend(downsample.node_names)
-    source_nodes.extend(_stage_source_nodes(second))
-    return GraphIR(tuple(tensors), tuple(operations), tuple(source_nodes), (second_output,))
+    if not first.cv1.name.endswith(".cv1"):
+        raise CompileError("first C2f stage name must end in .cv1")
+    first_prefix = first.cv1.name.removesuffix(".cv1")
+    output = add_stage(first, "model.1", first_prefix)
+    source_nodes = _stage_source_nodes(first)
+    for extension in extensions:
+        downsample_name = extension.downsample.name
+        tensors.append(_material(downsample_name, extension.downsample))
+        operations.append(ConvSiluOp(output, downsample_name, extension.downsample))
+        source_nodes.extend(extension.downsample.node_names)
+        if not extension.stage.cv1.name.endswith(".cv1"):
+            raise CompileError("C2f stage name must end in .cv1")
+        prefix = extension.stage.cv1.name.removesuffix(".cv1")
+        output = add_stage(extension.stage, downsample_name, prefix)
+        source_nodes.extend(_stage_source_nodes(extension.stage))
+    return GraphIR(tuple(tensors), tuple(operations), tuple(source_nodes), (output,))
 
 
 def _stage_source_nodes(stage: C2fStageSpec) -> list[str]:
@@ -481,6 +502,35 @@ def compile_pinned_through_second_c2f(
     )
     graph = build_two_c2f_graph(
         first=first_stage(first), downsample=downsample, second=second
+    )
+    return compile_graph(
+        stem_layers=stem,
+        graph=graph,
+        source_model_sha256=model_hash,
+        allocation_mode=allocation_mode,
+    )
+
+
+def compile_pinned_through_third_c2f(
+    model_path: str,
+    calibration_path: str,
+    lut_path: str,
+    *,
+    allocation_mode: AllocationMode,
+) -> bytes:
+    """Compile pinned nodes 0..73 with the reusable graph scheduler."""
+
+    from .c2f import load_pinned_through_third_c2f
+
+    stem, first, downsample2, second, downsample3, third, model_hash = (
+        load_pinned_through_third_c2f(model_path, calibration_path, lut_path)
+    )
+    graph = build_c2f_graph(
+        first=first_stage(first),
+        extensions=(
+            C2fExtension(downsample=downsample2, stage=second),
+            C2fExtension(downsample=downsample3, stage=third),
+        ),
     )
     return compile_graph(
         stem_layers=stem,

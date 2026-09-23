@@ -7,7 +7,7 @@ HASLAB welcomes focused reviews, reproducibility reports, failing test cases, an
 | Area | Concrete contribution | Evidence to include |
 |---|---|---|
 | Contract and conformance | Independently review an opcode, state transition, or fixture derivation; add a minimal positive, boundary, or negative case | Contract rule, hand-derived expected bytes/status, and `make conformance` result |
-| Compiler and runtime | Extend the reusable graph path through nodes 48–73, covering the `model.5` downsample and third C2f | Node-level validation, diagnostic versus release allocation report, package determinism, exact boundary comparisons, and `make test` result |
+| Compiler and runtime | Complete the backbone through nodes 74–102, covering `model.7`, the fourth C2f, and SPPF | Native MaxPool lowering, pooled-branch lifetimes, diagnostic versus release allocation, exact boundary comparisons, and `make test` result |
 | Workload reproduction | Repeat the pinned export, calibration, or COCO evaluation on a documented environment | Artifact hashes, versions, commands, accuracy results, and any mismatch from checked-in reports |
 | Hardware preparation | Prototype a small SRAM/MAC/DMA structure or review a board constraint without claiming v0 FPGA support | Source, tool versions, synthesis or simulation output, and limitations |
 | Documentation | Correct a stale status statement or make an experiment easier to reproduce | Link to the implementation or report that supports the change |

@@ -232,9 +232,11 @@ class SimulatorRuntime:
                     )
                 busy_responses += 1
                 if not self.device.run_next():
+                    fault = self.device.fault
                     raise RuntimeFailure(
                         RuntimeErrorCode.BAD_STATE,
-                        "device faulted while refilling the command FIFO",
+                        "device faulted while refilling the command FIFO: "
+                        f"sequence {fault.sequence}, code {int(fault.code)}, {fault.message}",
                     )
                 retired_during_refill += 1
         final_drain = self.device.run_all()

@@ -1,6 +1,6 @@
 # YOLOv8n 320×320 workload candidate
 
-This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes nodes 0–47 through the second C2f block. Diagnostic execution matches 2,764,800 values across 22 materialized or aliased boundaries, and a lifetime-reuse package matches the final 102,400-value tensor. The remaining model, RTL, and hardware remain unimplemented.
+This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes nodes 0–73 through the third C2f block. Diagnostic execution matches 3,225,600 values across 34 materialized or aliased boundaries, and a lifetime-reuse package matches the final 51,200-value tensor. The remaining model, RTL, and hardware remain unimplemented.
 
 ## Third-party artifact and license
 
@@ -273,4 +273,27 @@ The compiler validates and executes nodes 0–47. The existing first C2f produce
 
 The checked-in [`m6-through-second-c2f.json`](m6-through-second-c2f.json) records both package hashes, tensor lifetimes, all operation counts, exact comparisons, FLOAT-reference errors, and FIFO behavior. The [format note](../../../compiler/reusable-graph-format.md) describes the IR, validation, and allocation rules.
 
-The next implementation step is nodes 48–73: the `model.5` downsampling Conv-SiLU and `model.6` third C2f block. It should extend the same graph and lifetime plan, retain every new boundary in diagnostic mode, expose only the declared release result, and report the additional weight-streaming and command pressure before later neck branches are introduced.
+## Reproduce the reusable graph through the third C2f
+
+```sh
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/compile_yolov8n_third_c2f.py
+```
+
+The compiler validates and executes nodes 0–73. The extension adds the stride-two `model.5` convolution and two-bottleneck `model.6` block, ending with a `20×20×128` tensor. The scheduler selects 5×5 output tiles for this region because 8×8 would exceed input SRAM or fail to divide 20 exactly. Wide convolution weights stream one output group per spatial tile, and the 4,096-byte concat mapping table streams one source at a time through the 3 KiB parameter SRAM.
+
+| Nodes 0–73 measurement | Diagnostic | Release |
+|---|---:|---:|
+| Package bytes | 26,651,136 | 26,543,616 |
+| Peak output allocation | 2,867,200 | 614,400 |
+| Declared external bytes | 4,088,960 | 1,836,160 |
+| Commands | 143,156 | 143,156 |
+| DMA bytes | 12,116,376 | 12,116,376 |
+| INT8 MACs | 302,694,400 | 302,694,400 |
+| Exact values compared | 3,225,600 | 51,200 final values |
+| Integer mismatches | 0 | 0 |
+| FIFO `BUSY`/refill events | 143,148 | 143,148 |
+
+The checked-in [`m6-through-third-c2f.json`](m6-through-third-c2f.json) records both package hashes, tensor lifetimes, dynamic tile choices, weight and parameter residency, exact comparisons, FLOAT-reference errors, and FIFO behavior.
+
+The next implementation step is nodes 74–102, completing the backbone through the `model.7` downsample, `model.8` fourth C2f, and `model.9` SPPF. It must add native MaxPool lowering, preserve the three pooled intermediates needed by the SPPF concat, and retain the same diagnostic/release evidence split.

@@ -14,14 +14,17 @@ from .c2f import (
 from .first_layer import compile_conv_silu_first_layer, compile_pinned_first_layer
 from .graph import (
     AddOp,
+    C2fExtension,
     C2fStageSpec,
     ConcatOp,
     ConvSiluOp,
     GraphIR,
     GraphTensor,
     build_two_c2f_graph,
+    build_c2f_graph,
     compile_graph,
     compile_pinned_through_second_c2f,
+    compile_pinned_through_third_c2f,
     first_stage,
 )
 from .pipeline import (
@@ -41,6 +44,7 @@ __all__ = [
     "CompileError",
     "C2fBlockSpec",
     "C2fConvSpec",
+    "C2fExtension",
     "C2fStageSpec",
     "AddOp",
     "ConcatOp",
@@ -51,6 +55,7 @@ __all__ = [
     "Section",
     "SectionType",
     "build_hxb",
+    "build_c2f_graph",
     "build_two_c2f_graph",
     "compile_conv_silu_first_layer",
     "compile_conv_silu_pipeline",
@@ -62,6 +67,7 @@ __all__ = [
     "compile_pinned_first_layer",
     "compile_pinned_first_two_layers",
     "compile_pinned_through_second_c2f",
+    "compile_pinned_through_third_c2f",
     "extract_input_patch",
     "first_stage",
     "load_pinned_first_two_layers",

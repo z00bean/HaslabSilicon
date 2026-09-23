@@ -49,4 +49,4 @@ The pinned integration compares all 614,400 retained INT8 values with the indepe
 
 ## Remaining work
 
-The first two C2f increments and reusable lifetime scheduling are now documented in the [reusable graph format note](reusable-graph-format.md). The remaining accelerator graph and declared host tail remain open.
+The first three C2f increments and reusable lifetime scheduling are now documented in the [reusable graph format note](reusable-graph-format.md). The remaining accelerator graph and declared host tail remain open.

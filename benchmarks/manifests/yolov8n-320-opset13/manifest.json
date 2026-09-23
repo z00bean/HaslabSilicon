@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "workload_id": "yolov8n-320-opset13",
-  "status": "int8_calibration_complete_nodes_0_through_47_exact_remaining_schedule_pending",
+  "status": "int8_calibration_complete_nodes_0_through_73_exact_remaining_schedule_pending",
   "model": {
     "family": "Ultralytics YOLOv8",
     "variant": "YOLOv8n detection",
@@ -358,10 +358,27 @@
     "mismatches": 0,
     "scope": "nodes 0-47 through the model.3 downsample and complete second C2f block"
   },
+  "m6_through_third_c2f": {
+    "status": "nodes_0_through_73_diagnostic_and_release_pass",
+    "result": "m6-through-third-c2f.json",
+    "package_schema": "haslab.graph-schedule.v1",
+    "diagnostic_package_sha256": "44d0d2faa66abfc5b466857e6f54fffc577cef58bbfeb11afd7ff79ec4034030",
+    "release_package_sha256": "eeca5416f9a57834c78b7a5d8c89c2c6ad1f3074f36e7ee2bd52198f3dbf1904",
+    "diagnostic_peak_output_bytes": 2867200,
+    "release_peak_output_bytes": 614400,
+    "reuse_savings_bytes": 2252800,
+    "commands": 143156,
+    "dma_bytes": 12116376,
+    "int8_macs": 302694400,
+    "diagnostic_exact_values_compared": 3225600,
+    "release_final_values_compared": 51200,
+    "mismatches": 0,
+    "scope": "nodes 0-73 through the model.5 downsample and complete third C2f block"
+  },
   "open_gates": [
-    "Extend the reusable graph IR through nodes 48-73 (model.5 downsample and model.6 third C2f), preserving diagnostic comparisons and release-oriented liveness allocation.",
+    "Complete the backbone through nodes 74-102: model.7 downsample, model.8 fourth C2f, and model.9 SPPF. Add native MaxPool lowering and preserve graph liveness across the pooled branches.",
     "Extend the passing graph scheduler through the remaining calibrated accelerator graph and INT32 learned-head boundary; repeat layerwise comparisons.",
-    "Generate an optimized whole-graph command/DMA report and resolve the package-size, weight-streaming, and command-dispatch pressure exposed by the 97,670-command nodes 0-47 package.",
+    "Generate an optimized whole-graph command/DMA report and resolve the package-size, weight/parameter-streaming, and command-dispatch pressure exposed by the 143,156-command nodes 0-73 package.",
     "Measure whether a real transport can sustain the generated command rate; the functional runtime records refill counts but has no cycle or bus timing."
   ]
 }

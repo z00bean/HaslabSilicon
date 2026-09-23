@@ -21,6 +21,8 @@ Follow-up, 2026-09-23: [M6's first C2f schedule](../../benchmarks/manifests/yolo
 
 Follow-up, 2026-09-23: [M6's reusable graph schedule](../../benchmarks/manifests/yolov8n-320-opset13/m6-through-second-c2f.json) now executes nodes 0–47 through the second C2f in diagnostic and release modes. The deterministic lifetime allocator reduces peak output storage from 2,457,600 to 614,400 bytes without changing the final tensor. Diagnostic execution matches all 2,764,800 values across 22 boundaries, and the release result matches all 102,400 final values. Complete graph import, the INT32 learned-head boundary, host-tail execution, transport timing, and independent M3/M4 review remain open.
 
+Follow-up, 2026-09-23: [M6's third-C2f schedule](../../benchmarks/manifests/yolov8n-320-opset13/m6-through-third-c2f.json) now executes nodes 0–73. The real 20×20 region forced deterministic SRAM-fit tile selection and concat-parameter streaming; both behaviors now execute through the command simulator. Diagnostic mode matches 3,225,600 values across 34 boundaries, while release mode retains the 614,400-byte peak and matches all 51,200 final values. Pooling, the remaining graph, transport timing, and independent M3/M4 review remain open.
+
 ## Scope and review results
 
 | Area | Reviewed behavior | Outcome / evidence |
@@ -73,6 +75,6 @@ Small isolated RTL experiments may follow reviewed independent vectors, but full
 
 ## Next action and closure criteria
 
-The M4 fixture schema and first independently derived corpus now exist against **ABI 0.1 / contract revision 0.2**, and the M5 workload package is pinned. M6 now executes nodes 0–47 differentially through the second C2f block with diagnostic and release allocations. The next implementation action is nodes 48–73: the `model.5` downsampling Conv-SiLU and `model.6` third C2f block.
+The M4 fixture schema and first independently derived corpus now exist against **ABI 0.1 / contract revision 0.2**, and the M5 workload package is pinned. M6 now executes nodes 0–73 differentially through the third C2f block with diagnostic and release allocations. The next implementation action is nodes 74–102, completing the backbone through `model.7`, `model.8`, and the `model.9` SPPF.
 
 Before marking M3 complete, independently review the command tables and transitions, run the fixtures against another implementation or derivation, resolve discrepancies with a decision record, and explicitly allocate the frozen ABI. M6 candidate work may proceed, but a stable compiler/package release and full RTL commitment still depend on that independent review.

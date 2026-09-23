@@ -28,6 +28,7 @@ class TestYolov8nManifest(unittest.TestCase):
         cls.m6_first_two_layers = json.loads(
             (WORKLOAD / "m6-first-two-conv-silu-layers.json").read_text()
         )
+        cls.m6_first_c2f = json.loads((WORKLOAD / "m6-first-c2f.json").read_text())
 
     def test_artifact_identity_is_consistent(self):
         self.assertEqual(
@@ -198,6 +199,34 @@ class TestYolov8nManifest(unittest.TestCase):
         fifo = result["runtime"]["fifo"]
         self.assertEqual(fifo["accepted_commands"], 16245)
         self.assertEqual(fifo["busy_responses"], 16237)
+        self.assertEqual(fifo["final_drain_commands"], 8)
+        self.assertIn("not the remaining accelerator graph", result["scope"]["limitation"])
+
+    def test_m6_first_c2f_records_exact_branch_semantics(self):
+        result = self.m6_first_c2f
+        record = self.manifest["m6_first_c2f"]
+        self.assertEqual(result["source_model"]["sha256"], self.manifest["export"]["onnx_sha256"])
+        self.assertEqual(result["package"]["schema"], "haslab.first-c2f.v1")
+        self.assertEqual(result["package"]["sha256"], record["package_sha256"])
+        self.assertTrue(result["package"]["repeated_compilation_byte_identical"])
+        self.assertEqual(result["allocation"]["external_bytes"], 2480256)
+        self.assertEqual(len(result["allocation"]["retained_tensors"]), 8)
+        self.assertEqual(len(result["allocation"]["zero_allocation_views"]), 2)
+        self.assertTrue(
+            all(view["byte_allocation"] == 0 for view in result["allocation"]["zero_allocation_views"])
+        )
+        self.assertEqual(result["schedule"]["opcode_counts"]["ADD_I8"], 200)
+        self.assertEqual(result["schedule"]["opcode_counts"]["MAP_I8"], 600)
+        self.assertEqual(sum(result["schedule"]["opcode_counts"].values()), 59052)
+        self.assertEqual(result["schedule"]["dma_bytes"]["total"], 4368728)
+        self.assertEqual(result["schedule"]["macs"], 86425600)
+        self.assertEqual(result["exact_integer_totals"]["compared_values"], 1843200)
+        self.assertEqual(result["exact_integer_totals"]["mismatch_count"], 0)
+        self.assertTrue(result["exact_integer_totals"]["pass"])
+        self.assertEqual(len(result["exact_integer_comparisons"]), 10)
+        fifo = result["runtime"]["fifo"]
+        self.assertEqual(fifo["accepted_commands"], 59052)
+        self.assertEqual(fifo["busy_responses"], 59044)
         self.assertEqual(fifo["final_drain_commands"], 8)
         self.assertIn("not the remaining accelerator graph", result["scope"]["limitation"])
 

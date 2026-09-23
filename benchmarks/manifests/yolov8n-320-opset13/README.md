@@ -1,6 +1,6 @@
 # YOLOv8n 320×320 workload candidate
 
-This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. A reusable scheduler now compiles the first two Conv-SiLU blocks, retains both outputs, and matches all 614,400 INT8 values exactly in the functional simulator. The remaining model, RTL, and hardware remain unimplemented.
+This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes nodes 0–21 through the complete first C2f block and matches 1,843,200 values across ten materialized or aliased boundaries. The remaining model, RTL, and hardware remain unimplemented.
 
 ## Third-party artifact and license
 
@@ -224,4 +224,30 @@ The reusable scheduler validates nodes 0–5, retains the first `16×160×160` t
 
 The checked-in [`m6-first-two-conv-silu-layers.json`](m6-first-two-conv-silu-layers.json) records per-layer and cumulative allocation, command mix, traffic, numerical comparisons, hashes, and FIFO behavior. The command reduction relative to concatenating two first-layer-style schedules comes from loading each spatial input tile once and reusing it across output groups.
 
-The next implementation step is the first C2f block beginning at model node 6. It requires 1×1 convolution lowering, split/view handling, concat liveness, residual addition with explicit scales, and cumulative allocation across a branched subgraph.
+## Reproduce the first C2f block
+
+```sh
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/compile_yolov8n_first_c2f.py
+```
+
+The compiler validates and executes nodes 0–21. The first C2f increment adds 1×1 and stride-one 3×3 convolutions, two zero-allocation 16-channel split views, a scaled residual add, six-group concat materialization, and a final 48-to-32-channel pointwise convolution. Every operator boundary remains available for differential checking.
+
+| First-C2f measurement | Result |
+|---|---:|
+| Package bytes | 11,295,040 |
+| Package SHA-256 | `c70702182333b77b8a108ff197cd7ed687f66771dfc6288ef27bd989718a9f5c` |
+| Commands | 59,052 |
+| DMA bytes | 4,368,728 |
+| INT8 MACs | 86,425,600 |
+| Materialized output allocation | 1,638,400 bytes |
+| Total declared external allocation | 2,480,256 bytes |
+| Zero-allocation split views | 2 |
+| Exact integer values compared | 1,843,200 |
+| Integer mismatches | 0 |
+| FIFO `BUSY`/refill events | 59,044 |
+| FIFO high-water mark | 8 |
+
+The checked-in [`m6-first-c2f.json`](m6-first-c2f.json) records per-operation command and DMA counts, residual and concat coefficients, allocations, hashes, exact comparisons, and FLOAT-reference errors. The [format note](../../../compiler/first-c2f-format.md) explains the lowering and its current scaling limit.
+
+The next implementation step is a reusable graph IR and liveness scheduler followed by nodes 22–47: the `model.3` downsampling Conv-SiLU and the second C2f block. That increment must support repeated bottlenecks and compare diagnostic retain-all allocation against a release-oriented reuse plan before the compiler expands through the rest of the detector.

@@ -89,6 +89,7 @@ class SimulatorRuntime:
                 "haslab.vertical-slice.v1",
                 "haslab.first-layer.v1",
                 "haslab.conv-silu-pipeline.v1",
+                "haslab.first-c2f.v1",
             }:
                 raise RuntimeFailure(RuntimeErrorCode.BAD_PACKAGE, "unsupported manifest schema")
             if manifest.get("abi") != {"major": 0, "minor": 1}:

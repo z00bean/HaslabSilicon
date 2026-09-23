@@ -17,6 +17,8 @@ Follow-up, 2026-09-22: [M6's complete first-layer schedule](../../benchmarks/man
 
 Follow-up, 2026-09-22: [M6's first multi-layer schedule](../../benchmarks/manifests/yolov8n-320-opset13/m6-first-two-conv-silu-layers.json) now executes nodes 0–5 in one package, preserves both HWC8 intermediates, and exercises two input-channel accumulation chunks in the second convolution. All 614,400 retained values match exactly. The 16,245-command schedule records cumulative allocation, DMA traffic, and FIFO behavior; branched graph liveness and transport timing remain open.
 
+Follow-up, 2026-09-23: [M6's first C2f schedule](../../benchmarks/manifests/yolov8n-320-opset13/m6-first-c2f.json) now executes nodes 0–21 and exercises pointwise and stride-one convolution, two zero-allocation split views, explicit unequal-scale residual addition, and common-scale concat materialization. All 1,843,200 values across ten boundaries match exactly. The 59,052-command retain-all package proves the branch semantics while exposing command-dispatch and allocation pressure that reusable liveness scheduling must address before whole-graph release.
+
 ## Scope and review results
 
 | Area | Reviewed behavior | Outcome / evidence |
@@ -57,9 +59,9 @@ Validation on 2026-09-20: `make test` passed 43 numerical-model tests and 42 sim
 | Detection-tail boundary and preprocessing/output conventions | M5 graph inventory and reproducible baseline | Complete for the pinned workload |
 | INT8 accuracy budget and calibration | M5 evaluation; one-percentage-point mAP50–95 budget | Calibrated proxy passes; exact command-level comparison remains in M6 |
 | Scale approximation and reproducible coefficient/LUT bytes | M5/M6 coefficient-generation policy and accuracy/error report | Candidate bytes and approximation errors recorded; M6 must execute them exactly |
-| Residual/concat scales, split boundaries, chunk/halo layouts | M5 every-layer audit, then M6 lowering tests | Sequential chunk/halo path passes; residual, split, and concat remain pending |
+| Residual/concat scales, split boundaries, chunk/halo layouts | M5 every-layer audit, then M6 lowering tests | First C2f passes with explicit residual/concat coefficients and zero-allocation split views; repeated/general graph forms remain pending |
 | Package schema, limits, relocations, parser behavior | M6 schema freeze before compiler/runtime implementation | Pending |
-| Commands per frame, host refill, patch copies, spill traffic | M5/M6 schedule estimates; M9 measurements | First two layers measured cumulatively in the functional runtime; whole-model and transport timing pending |
+| Commands per frame, host refill, patch copies, spill traffic | M5/M6 schedule estimates; M9 measurements | Nodes 0–21 measured cumulatively in the functional runtime; whole-model, optimized liveness, and transport timing pending |
 | Board, aperture, bus ordering, cache maintenance, reset quiescence | M9 transport adapter and fault-injection evidence before integrated RTL freeze | Pending |
 | Physical SRAM mapping and synchronous read timing | M7 prototypes/M9 target probes | Pending |
 | Native FP8 | M11 separate numeric contract and arithmetic feasibility | Deferred; does not block v0 |
@@ -69,6 +71,6 @@ Small isolated RTL experiments may follow reviewed independent vectors, but full
 
 ## Next action and closure criteria
 
-The M4 fixture schema and first independently derived corpus now exist against **ABI 0.1 / contract revision 0.2**, and the M5 workload package is pinned. M6 now executes the first two Conv-SiLU blocks differentially with both boundaries retained. The next implementation action is the first C2f block: 1×1 convolution, split/view aliases, concat liveness, residual addition, and explicit scale compatibility.
+The M4 fixture schema and first independently derived corpus now exist against **ABI 0.1 / contract revision 0.2**, and the M5 workload package is pinned. M6 now executes nodes 0–21 differentially through the first C2f block. The next implementation action is a reusable graph IR and liveness allocator followed by nodes 22–47: the next downsampling Conv-SiLU and the repeated-bottleneck second C2f block.
 
 Before marking M3 complete, independently review the command tables and transitions, run the fixtures against another implementation or derivation, resolve discrepancies with a decision record, and explicitly allocate the frozen ABI. M6 candidate work may proceed, but a stable compiler/package release and full RTL commitment still depend on that independent review.

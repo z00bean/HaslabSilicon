@@ -1,0 +1,690 @@
+{
+  "schema_version": 1,
+  "status": "passing_first_c2f_nodes_0_through_21",
+  "scope": {
+    "node_indices": [
+      0,
+      21
+    ],
+    "nodes": [
+      "/model.0/conv/Conv",
+      "/model.0/act/Sigmoid",
+      "/model.0/act/Mul",
+      "/model.1/conv/Conv",
+      "/model.1/act/Sigmoid",
+      "/model.1/act/Mul",
+      "/model.2/cv1/conv/Conv",
+      "/model.2/cv1/act/Sigmoid",
+      "/model.2/cv1/act/Mul",
+      "Constant_31",
+      "/model.2/Split",
+      "/model.2/m.0/cv1/conv/Conv",
+      "/model.2/m.0/cv1/act/Sigmoid",
+      "/model.2/m.0/cv1/act/Mul",
+      "/model.2/m.0/cv2/conv/Conv",
+      "/model.2/m.0/cv2/act/Sigmoid",
+      "/model.2/m.0/cv2/act/Mul",
+      "/model.2/m.0/Add",
+      "/model.2/Concat",
+      "/model.2/cv2/conv/Conv",
+      "/model.2/cv2/act/Sigmoid",
+      "/model.2/cv2/act/Mul"
+    ],
+    "logical_input_shape": [
+      1,
+      3,
+      320,
+      320
+    ],
+    "retained_boundaries": [
+      "model.0",
+      "model.1",
+      "model.2.cv1",
+      "model.2.split0",
+      "model.2.split1",
+      "model.2.m.0.cv1",
+      "model.2.m.0.cv2",
+      "model.2.m.0.add",
+      "model.2.concat",
+      "model.2"
+    ],
+    "limitation": "This executes through the first C2f block, not the remaining accelerator graph or host tail."
+  },
+  "source_model": {
+    "filename": "yolov8n-320-opset13.onnx",
+    "sha256": "5b232bf21720cac4264463896ace02b919d8bec3f3fd1e4b9d36695493fa1718"
+  },
+  "calibration_sha256": "d27fe25a304c633e44b226e81fc23c4ba707690f257ce99ce0204c41db3e44b7",
+  "lut_binary_sha256": "78dbd09a7389d23cc517ca6930075d5bb53dc152eb9c4248de7e8235f6c4caf4",
+  "package": {
+    "schema": "haslab.first-c2f.v1",
+    "bytes": 11295040,
+    "sha256": "c70702182333b77b8a108ff197cd7ed687f66771dfc6288ef27bd989718a9f5c",
+    "repeated_compilation_byte_identical": true,
+    "commands_bytes": 7558656,
+    "constant_bytes": 22656
+  },
+  "allocation": {
+    "external_buffers": {
+      "constants": {
+        "alignment": 64,
+        "bytes": 22656,
+        "role": "constant"
+      },
+      "input": {
+        "alignment": 64,
+        "bytes": 819200,
+        "role": "input"
+      },
+      "output": {
+        "alignment": 64,
+        "bytes": 1638400,
+        "role": "output"
+      }
+    },
+    "external_bytes": 2480256,
+    "retained_tensors": [
+      {
+        "addend": 0,
+        "bytes": 409600,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          16,
+          160,
+          160
+        ],
+        "name": "model.0",
+        "physical_shape": [
+          160,
+          160,
+          2,
+          8
+        ],
+        "scale_binary32": 0.2907410264015198
+      },
+      {
+        "addend": 409600,
+        "bytes": 204800,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          80,
+          80
+        ],
+        "name": "model.1",
+        "physical_shape": [
+          80,
+          80,
+          4,
+          8
+        ],
+        "scale_binary32": 0.7698827385902405
+      },
+      {
+        "addend": 614400,
+        "bytes": 204800,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          80,
+          80
+        ],
+        "name": "model.2.cv1",
+        "physical_shape": [
+          80,
+          80,
+          4,
+          8
+        ],
+        "scale_binary32": 0.2113831341266632
+      },
+      {
+        "addend": 819200,
+        "bytes": 102400,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          16,
+          80,
+          80
+        ],
+        "name": "model.2.m.0.cv1",
+        "physical_shape": [
+          80,
+          80,
+          2,
+          8
+        ],
+        "scale_binary32": 0.2406955063343048
+      },
+      {
+        "addend": 921600,
+        "bytes": 102400,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          16,
+          80,
+          80
+        ],
+        "name": "model.2.m.0.cv2",
+        "physical_shape": [
+          80,
+          80,
+          2,
+          8
+        ],
+        "scale_binary32": 0.20917482674121857
+      },
+      {
+        "addend": 1024000,
+        "bytes": 102400,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          16,
+          80,
+          80
+        ],
+        "name": "model.2.m.0.add",
+        "physical_shape": [
+          80,
+          80,
+          2,
+          8
+        ],
+        "scale_binary32": 0.2529996931552887
+      },
+      {
+        "addend": 1126400,
+        "bytes": 307200,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          48,
+          80,
+          80
+        ],
+        "name": "model.2.concat",
+        "physical_shape": [
+          80,
+          80,
+          6,
+          8
+        ],
+        "scale_binary32": 0.2529996931552887
+      },
+      {
+        "addend": 1433600,
+        "bytes": 204800,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          80,
+          80
+        ],
+        "name": "model.2",
+        "physical_shape": [
+          80,
+          80,
+          4,
+          8
+        ],
+        "scale_binary32": 0.06328161805868149
+      }
+    ],
+    "zero_allocation_views": [
+      {
+        "alias_of": "model.2.cv1",
+        "byte_allocation": 0,
+        "channel_group_offset": 0,
+        "dtype": "int8",
+        "layout": "HWC8_VIEW",
+        "logical_shape": [
+          1,
+          16,
+          80,
+          80
+        ],
+        "name": "model.2.split0",
+        "scale_binary32": 0.2113831341266632
+      },
+      {
+        "alias_of": "model.2.cv1",
+        "byte_allocation": 0,
+        "channel_group_offset": 2,
+        "dtype": "int8",
+        "layout": "HWC8_VIEW",
+        "logical_shape": [
+          1,
+          16,
+          80,
+          80
+        ],
+        "name": "model.2.split1",
+        "scale_binary32": 0.2113831341266632
+      }
+    ],
+    "local_capacity_bytes": {
+      "input": 16384,
+      "weight": 16384,
+      "accumulator": 8192,
+      "output": 8192,
+      "parameter": 3072
+    }
+  },
+  "schedule": {
+    "c2f_operations": [
+      {
+        "boundary_fill_commands": 0,
+        "command_count": 8403,
+        "dma_bytes": {
+          "constants": 2560,
+          "input": 204800,
+          "output": 204800,
+          "total": 412160
+        },
+        "input_channel_chunks": 4,
+        "kind": "conv_silu",
+        "macs": 6553600,
+        "name": "model.2.cv1",
+        "opcode_counts": {
+          "CONV_I8": 1600,
+          "DMA_COPY2D": 6403,
+          "EPILOGUE": 400
+        },
+        "output_group_tiles": 400
+      },
+      {
+        "boundary_fill_commands": 36,
+        "command_count": 4199,
+        "dma_bytes": {
+          "constants": 3584,
+          "input": 153664,
+          "output": 102400,
+          "total": 259648
+        },
+        "input_channel_chunks": 2,
+        "kind": "conv_silu",
+        "macs": 14745600,
+        "name": "model.2.m.0.cv1",
+        "opcode_counts": {
+          "CONV_I8": 400,
+          "DMA_COPY2D": 3563,
+          "EPILOGUE": 200,
+          "FILL8": 36
+        },
+        "output_group_tiles": 200
+      },
+      {
+        "boundary_fill_commands": 36,
+        "command_count": 4199,
+        "dma_bytes": {
+          "constants": 3584,
+          "input": 153664,
+          "output": 102400,
+          "total": 259648
+        },
+        "input_channel_chunks": 2,
+        "kind": "conv_silu",
+        "macs": 14745600,
+        "name": "model.2.m.0.cv2",
+        "opcode_counts": {
+          "CONV_I8": 400,
+          "DMA_COPY2D": 3563,
+          "EPILOGUE": 200,
+          "FILL8": 36
+        },
+        "output_group_tiles": 200
+      },
+      {
+        "command_count": 5002,
+        "dma_bytes": {
+          "constants": 512,
+          "input": 204800,
+          "output": 102400,
+          "total": 307712
+        },
+        "fixed_point": {
+          "left_multiplier": 1794238635,
+          "right_multiplier": 1775494327,
+          "shift": 31
+        },
+        "kind": "residual_add",
+        "name": "/model.2/m.0/Add",
+        "opcode_counts": {
+          "ADD_I8": 200,
+          "DMA_COPY2D": 4802
+        }
+      },
+      {
+        "command_count": 10201,
+        "dma_bytes": {
+          "constants": 768,
+          "input": 307200,
+          "output": 307200,
+          "total": 615168
+        },
+        "fixed_point": [
+          {
+            "input_scale_binary32": 0.2113831341266632,
+            "multiplier": 1794238635,
+            "output_scale_binary32": 0.2529996931552887,
+            "shift": 31,
+            "source": "model.2.split0"
+          },
+          {
+            "input_scale_binary32": 0.2113831341266632,
+            "multiplier": 1794238635,
+            "output_scale_binary32": 0.2529996931552887,
+            "shift": 31,
+            "source": "model.2.split1"
+          },
+          {
+            "input_scale_binary32": 0.2529996931552887,
+            "multiplier": 1073741824,
+            "output_scale_binary32": 0.2529996931552887,
+            "shift": 30,
+            "source": "model.2.m.0.add"
+          }
+        ],
+        "kind": "channel_concat",
+        "name": "/model.2/Concat",
+        "opcode_counts": {
+          "DMA_COPY2D": 9601,
+          "MAP_I8": 600
+        }
+      },
+      {
+        "boundary_fill_commands": 0,
+        "command_count": 10803,
+        "dma_bytes": {
+          "constants": 3072,
+          "input": 307200,
+          "output": 204800,
+          "total": 515072
+        },
+        "input_channel_chunks": 6,
+        "kind": "conv_silu",
+        "macs": 9830400,
+        "name": "model.2.cv2",
+        "opcode_counts": {
+          "CONV_I8": 2400,
+          "DMA_COPY2D": 8003,
+          "EPILOGUE": 400
+        },
+        "output_group_tiles": 400
+      }
+    ],
+    "dma_bytes": {
+      "constants": 22656,
+      "input": 2707672,
+      "output": 1638400,
+      "total": 4368728
+    },
+    "layers": [
+      {
+        "boundary_fill_bytes": 90168,
+        "boundary_fill_commands": 39,
+        "channel_groups": 2,
+        "command_count": 8442,
+        "command_range": [
+          1,
+          8442
+        ],
+        "dma_bytes": {
+          "constants": 2432,
+          "input": 919368,
+          "output": 409600,
+          "total": 1331400
+        },
+        "input_channel_chunks": 1,
+        "macs": 11059200,
+        "name": "model.0",
+        "opcode_counts": {
+          "CONV_I8": 800,
+          "DMA_COPY2D": 6803,
+          "EPILOGUE": 800,
+          "FILL8": 39
+        },
+        "spatial_tiles": 400,
+        "tile_executions": 800,
+        "tile_shape": [
+          8,
+          8
+        ]
+      },
+      {
+        "boundary_fill_bytes": 87856,
+        "boundary_fill_commands": 19,
+        "channel_groups": 4,
+        "command_count": 7802,
+        "command_range": [
+          8443,
+          16244
+        ],
+        "dma_bytes": {
+          "constants": 6144,
+          "input": 456976,
+          "output": 204800,
+          "total": 667920
+        },
+        "input_channel_chunks": 2,
+        "macs": 29491200,
+        "name": "model.1",
+        "opcode_counts": {
+          "CONV_I8": 800,
+          "DMA_COPY2D": 6583,
+          "EPILOGUE": 400,
+          "FILL8": 19
+        },
+        "spatial_tiles": 100,
+        "tile_executions": 400,
+        "tile_shape": [
+          8,
+          8
+        ]
+      }
+    ],
+    "macs": 86425600,
+    "opcode_counts": {
+      "ADD_I8": 200,
+      "CONV_I8": 6400,
+      "DMA_COPY2D": 49321,
+      "END": 1,
+      "EPILOGUE": 2400,
+      "FILL8": 130,
+      "MAP_I8": 600
+    }
+  },
+  "input": {
+    "generator": "((channel*37 + y*3 + x*5) mod 256) / FLOAT32(255)",
+    "physical_bytes": 819200,
+    "physical_sha256": "4c306d68402716c4aea823fed0d673911f38cfc30cab3fc29ba4d8cf61909e06"
+  },
+  "exact_integer_comparisons": [
+    {
+      "compared_values": 409600,
+      "mismatch_count": 0,
+      "name": "model.0",
+      "output_sha256": "fe8d76d32d17f2ad005e4fd366ee6908c652a6c0a67a633158dd6716fd3de0ed",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 204800,
+      "mismatch_count": 0,
+      "name": "model.1",
+      "output_sha256": "bf84e4cac552336d0da0e0b09cc41d51bcd57ec988472b358797aa9dedb29616",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 204800,
+      "mismatch_count": 0,
+      "name": "model.2.cv1",
+      "output_sha256": "47b22f75a150fd4ba2975a5a91b2e47496a5755ca3c3a5ff0b06d705f787cc5a",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.2.split0",
+      "output_sha256": "ff4cf793b2b7ee8484fc3e9c2744bb38db7ea30cabc92de7d7d6b72601866b7f",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.2.split1",
+      "output_sha256": "039618a93419e86d1b3693db89489082104d32facc9445fd4dcb946b01fdffdd",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.2.m.0.cv1",
+      "output_sha256": "d98cb49e8374e311c238be37f6b6372a09c34a2897c44faca2647e6192e82615",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.2.m.0.cv2",
+      "output_sha256": "9c8fe796e7fdda9bb9c98f24ffda3b970e44d75ac003283ee219b6b26c1ddba8",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.2.m.0.add",
+      "output_sha256": "b0ecf8a82b7783f3b421246a9b583a0eaaf2ec4e812846b6b652739e47f36fb0",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 307200,
+      "mismatch_count": 0,
+      "name": "model.2.concat",
+      "output_sha256": "9d717359d5c7033013042a2a3bcba2622e854129e609f99e01d1be2e7d1439ab",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 204800,
+      "mismatch_count": 0,
+      "name": "model.2",
+      "output_sha256": "b75047e969c2216669bda24320c0ab0babeddc9d649c192ff0fe4e7c6c0940c6",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    }
+  ],
+  "exact_integer_totals": {
+    "compared_values": 1843200,
+    "mismatch_count": 0,
+    "pass": true
+  },
+  "onnx_float_comparisons": [
+    {
+      "compared_values": 409600,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 0.38719677925109863,
+      "mean_absolute_error": 0.07102784156912445,
+      "name": "model.0",
+      "root_mean_square_error": 0.09061412542717567
+    },
+    {
+      "compared_values": 204800,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 1.6789932250976562,
+      "mean_absolute_error": 0.19739906402411783,
+      "name": "model.1",
+      "root_mean_square_error": 0.27495057143672474
+    },
+    {
+      "compared_values": 204800,
+      "int8_saturation_count": 391,
+      "maximum_absolute_error": 19.034889221191406,
+      "mean_absolute_error": 0.1333181919952127,
+      "name": "model.2.cv1",
+      "root_mean_square_error": 0.6288964545698612
+    },
+    {
+      "compared_values": 102400,
+      "int8_saturation_count": 868,
+      "maximum_absolute_error": 13.169052124023438,
+      "mean_absolute_error": 0.23230218960350768,
+      "name": "model.2.m.0.cv1",
+      "root_mean_square_error": 0.6743076789156418
+    },
+    {
+      "compared_values": 102400,
+      "int8_saturation_count": 677,
+      "maximum_absolute_error": 21.680967330932617,
+      "mean_absolute_error": 0.3502079770855017,
+      "name": "model.2.m.0.cv2",
+      "root_mean_square_error": 1.0936561753136989
+    },
+    {
+      "compared_values": 102400,
+      "int8_saturation_count": 198,
+      "maximum_absolute_error": 22.377338409423828,
+      "mean_absolute_error": 0.3937469595100289,
+      "name": "model.2.m.0.add",
+      "root_mean_square_error": 1.1242008566749042
+    },
+    {
+      "compared_values": 307200,
+      "int8_saturation_count": 198,
+      "maximum_absolute_error": 22.377338409423828,
+      "mean_absolute_error": 0.22694959584905575,
+      "name": "model.2.concat",
+      "root_mean_square_error": 0.8302294177526596
+    },
+    {
+      "compared_values": 204800,
+      "int8_saturation_count": 92,
+      "maximum_absolute_error": 2.306351661682129,
+      "mean_absolute_error": 0.11555776281998822,
+      "name": "model.2",
+      "root_mean_square_error": 0.20933643083965878
+    }
+  ],
+  "runtime": {
+    "backend": "haslab_sim functional command simulator",
+    "completion": "success",
+    "final_sequence": 59052,
+    "fifo": {
+      "accepted_commands": 59052,
+      "busy_responses": 59044,
+      "commands_retired_during_refill": 59044,
+      "final_drain_commands": 8,
+      "fifo_high_watermark": 8,
+      "submission_attempts": 118096
+    }
+  },
+  "environment": {
+    "python": "3.12.4",
+    "numpy": "1.26.4",
+    "onnx": "1.16.2",
+    "onnxruntime": "1.19.2",
+    "platform": "macOS-26.6.2-arm64-arm-64bit"
+  }
+}

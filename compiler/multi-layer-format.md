@@ -49,4 +49,4 @@ The pinned integration compares all 614,400 retained INT8 values with the indepe
 
 ## Remaining work
 
-The next lowering increment should cover the first C2f block beginning at model node 6. It needs 1×1 convolution support, split/view handling without unnecessary tensor copies, concat liveness, and residual addition with explicit scale compatibility. It should retain each new operator boundary during validation and extend cumulative allocation and traffic reporting before adding more graph depth.
+The first C2f increment is now complete and documented in the [first-C2f format note](first-c2f-format.md). Reusable graph IR and liveness scheduling, the remaining accelerator graph, and the declared host tail remain open.

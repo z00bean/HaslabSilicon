@@ -22,7 +22,7 @@ HASLAB is being designed in public from the numerical contract upward. The proje
 
 **Stage: v0 contract candidate and conformance corpus implemented; calibrated workload complete; minimal compiler/runtime active.**
 
-The repository currently contains an architecture specification, an executable Python golden model, a byte-level command simulator, 46 independently authored binary conformance fixtures with a strict runner, and a pinned YOLOv8n workload with reproducible FLOAT and calibrated INT8 software baselines. The compiler/runtime path now executes nodes 0–21 through the complete first C2f block. Its 59,052-command package retains eight tensors, exposes two zero-allocation split views, and matches all 1,843,200 compared INT8 values exactly. The repository does not yet contain a whole-model ONNX compiler, production runtime, tensor-accelerator RTL, FPGA bitstream, ASIC implementation, or end-to-end YOLO execution through HASLAB commands or hardware.
+The repository currently contains an architecture specification, an executable Python golden model, a byte-level command simulator, 46 independently authored binary conformance fixtures with a strict runner, and a pinned YOLOv8n workload with reproducible FLOAT and calibrated INT8 software baselines. The compiler/runtime path now executes nodes 0–47 through the second C2f block. Its reusable graph IR emits diagnostic and release packages; deterministic lifetime reuse reduces peak output storage from 2,457,600 to 614,400 bytes. The diagnostic path matches all 2,764,800 compared INT8 values exactly, and the release package matches the independently evaluated 102,400-value final tensor. The repository does not yet contain a whole-model ONNX compiler, production runtime, tensor-accelerator RTL, FPGA bitstream, ASIC implementation, or end-to-end YOLO execution through HASLAB commands or hardware.
 
 | Component | Status | What that means |
 |---|---|---|
@@ -32,8 +32,8 @@ The repository currently contains an architecture specification, an executable P
 | v0 contract freeze | Active | ABI 0.1 candidate has conformance evidence; stable freeze awaits independent review |
 | v0 conformance package | Candidate implemented and tested | 46 stored command/memory/status fixtures, machine-readable ABI registry, integrity checks, and CI runner; final release tied to ABI freeze |
 | Pinned YOLO-class workload | Pinned and measured in software | Exact weight/export, graph inventory, preprocessing, partition, FLOAT baseline, deterministic INT8 calibration package, layerwise diagnostics, and proxy COCO accuracy are tracked |
-| ONNX importer and compiler | First C2f block implemented | Nodes 0–21 cover 1×1/3×3 convolution, split views, scaled residual add, concat materialization, retained intermediates, and cumulative traffic; reusable whole-graph lowering remains open |
-| Runtime | Branched simulator backend implemented | Strictly loads the experimental package, binds input, submits 59,052 commands with measured FIFO refills, exposes retained tensors/views, waits, resets, and reports errors; no C/FPGA or host-tail backend yet |
+| ONNX importer and compiler | Reusable graph slice through second C2f | Nodes 0–47 cover stride-one/stride-two convolution, repeated bottlenecks, split views, scaled residual add, concat materialization, and deterministic liveness allocation; remaining graph lowering stays open |
+| Runtime | Graph-package simulator backend implemented | Strictly loads the experimental package, binds input, submits 97,670 commands with measured FIFO refills, exposes diagnostic or release outputs, waits, resets, and reports errors; no C/FPGA or host-tail backend yet |
 | RTL and RTL testbenches | Planned | No hardware implementation exists yet |
 | FPGA target | Planned | No board has been selected or benchmarked |
 | ASIC flow and fabrication kit | Future | No design is currently ready to fabricate |
@@ -59,7 +59,7 @@ The current test suite covers the numerical model, functional command simulator,
 - [x] Build the candidate independent conformance corpus, ABI registry, and CI runner.
 - [ ] Release the final conformance corpus after stable ABI freeze and independent review.
 - [x] Pin and audit the first YOLO-class workload, including reproducible FLOAT accuracy and a calibrated INT8 software proxy inside the one-point mAP50–95 budget.
-- [ ] Implement the minimal compiler and simulated runtime path. **Active: nodes 0–21 through the first C2f pass; reusable graph/liveness scheduling and nodes 22–47 are next.**
+- [ ] Implement the minimal compiler and simulated runtime path. **Active: nodes 0–47 pass with reusable graph/liveness scheduling; nodes 48–73 through the third C2f are next.**
 - [ ] Implement and differentially verify the first RTL vertical slice.
 - [ ] Expand RTL operation coverage one conformance-gated operation at a time.
 - [ ] Select an FPGA from measured resource probes, complete stored-image bring-up, and measure the live camera-to-detection path.
@@ -103,7 +103,7 @@ Compact vision transformers and edge transformers are later research targets whe
 
 The implementation priority is the complete detector and a measured live perception path. A second vision model should then demonstrate reprogramming on the same FPGA image. Small policy or other inference workloads remain valid later experiments when they fit the measured operator and memory envelope without displacing the vision work.
 
-The first end-to-end workload candidate is a pinned YOLOv8n detector at 320×320. Its exact third-party weight, FLOAT ONNX export, preprocessing, complete graph inventory, learned-head/host-tail boundary, and calibration package are recorded in the [workload manifest](benchmarks/manifests/yolov8n-320-opset13/README.md). The proposed FPGA path executes the quantized backbone, neck, and learned detection head, while the host performs declared image preparation and final box decoding/DFL/NMS. The structural audit found no unsupported accelerator nodes and all proposed convolution tiles fit local memory. Repeated full COCO val2017 evaluations measured **28.50 COCO bbox mAP50–95** for FLOAT and **27.61** for the signed-symmetric INT8 software proxy, a 0.887-point loss within the stated one-point budget. Nodes 0–21 now pass exact command-level comparison across convolution, split, residual, and concat boundaries; remaining-layer, whole-model, and hardware execution remain unimplemented.
+The first end-to-end workload candidate is a pinned YOLOv8n detector at 320×320. Its exact third-party weight, FLOAT ONNX export, preprocessing, complete graph inventory, learned-head/host-tail boundary, and calibration package are recorded in the [workload manifest](benchmarks/manifests/yolov8n-320-opset13/README.md). The proposed FPGA path executes the quantized backbone, neck, and learned detection head, while the host performs declared image preparation and final box decoding/DFL/NMS. The structural audit found no unsupported accelerator nodes and all proposed convolution tiles fit local memory. Repeated full COCO val2017 evaluations measured **28.50 COCO bbox mAP50–95** for FLOAT and **27.61** for the signed-symmetric INT8 software proxy, a 0.887-point loss within the stated one-point budget. Nodes 0–47 now pass exact command-level diagnostic comparison across 22 convolution, split, residual, and concat boundaries, while the lifetime-reuse package reproduces the final second-C2f tensor; remaining-layer, whole-model, and hardware execution remain unimplemented.
 
 ## Architecture direction
 
@@ -185,7 +185,7 @@ No stage is considered complete solely because a demo produces plausible boxes. 
 | [`hardware/testbenches/`](hardware/testbenches/) | Future RTL testbenches, assertions, and checked-in vectors |
 | [`hardware/formal/`](hardware/formal/) | Future protocol and state-machine properties |
 | [`fpga/`](fpga/) | Future board wrappers, constraints, and reproducible builds |
-| [`compiler/`](compiler/) | Sequential and first-C2f scheduling through nodes 0–21, retained tensor/view allocation, explicit merge scaling, and experimental `.hxb` generation; reusable whole-graph work remains |
+| [`compiler/`](compiler/) | Reusable graph scheduling through nodes 0–47, diagnostic and lifetime-reuse allocation, explicit merge scaling, and experimental `.hxb` generation; later graph regions remain open |
 | [`onnx/`](onnx/) | Supported ONNX profile, export recipes, and operator coverage |
 | [`runtime/`](runtime/) | Minimal strict package loader and simulator lifecycle; future C and platform backends |
 | [`software/`](software/) | Future host utilities and RISC-V firmware support |

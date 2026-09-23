@@ -29,6 +29,9 @@ class TestYolov8nManifest(unittest.TestCase):
             (WORKLOAD / "m6-first-two-conv-silu-layers.json").read_text()
         )
         cls.m6_first_c2f = json.loads((WORKLOAD / "m6-first-c2f.json").read_text())
+        cls.m6_second_c2f = json.loads(
+            (WORKLOAD / "m6-through-second-c2f.json").read_text()
+        )
 
     def test_artifact_identity_is_consistent(self):
         self.assertEqual(
@@ -229,6 +232,30 @@ class TestYolov8nManifest(unittest.TestCase):
         self.assertEqual(fifo["busy_responses"], 59044)
         self.assertEqual(fifo["final_drain_commands"], 8)
         self.assertIn("not the remaining accelerator graph", result["scope"]["limitation"])
+
+    def test_m6_second_c2f_records_graph_reuse_and_exact_execution(self):
+        result = self.m6_second_c2f
+        record = self.manifest["m6_through_second_c2f"]
+        self.assertEqual(result["source_model"]["sha256"], self.manifest["export"]["onnx_sha256"])
+        self.assertEqual(result["scope"]["node_indices"], [0, 47])
+        self.assertEqual(result["packages"]["release"]["schema"], "haslab.graph-schedule.v1")
+        self.assertEqual(result["packages"]["release"]["sha256"], record["release_package_sha256"])
+        self.assertTrue(result["packages"]["release"]["repeated_compilation_byte_identical"])
+        allocation = result["packages"]["release"]["allocation"]
+        self.assertEqual(allocation["diagnostic_peak_output_bytes"], 2457600)
+        self.assertEqual(allocation["release_peak_output_bytes"], 614400)
+        self.assertEqual(allocation["reuse_savings_bytes"], 1843200)
+        self.assertEqual(sum(result["schedule"]["opcode_counts"].values()), 97670)
+        self.assertEqual(result["schedule"]["dma_bytes"]["total"], 6951768)
+        self.assertEqual(result["schedule"]["macs"], 194560000)
+        self.assertEqual(result["exact_integer_totals"]["compared_values"], 2764800)
+        self.assertEqual(result["exact_integer_totals"]["mismatch_count"], 0)
+        self.assertTrue(result["release_final_comparison"]["pass"])
+        self.assertEqual(result["release_final_comparison"]["compared_values"], 102400)
+        fifo = result["packages"]["release"]["fifo"]
+        self.assertEqual(fifo["accepted_commands"], 97670)
+        self.assertEqual(fifo["busy_responses"], 97662)
+        self.assertEqual(fifo["final_drain_commands"], 8)
 
 
 if __name__ == "__main__":

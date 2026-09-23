@@ -1,6 +1,6 @@
 # YOLOv8n 320×320 workload candidate
 
-This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes nodes 0–21 through the complete first C2f block and matches 1,843,200 values across ten materialized or aliased boundaries. The remaining model, RTL, and hardware remain unimplemented.
+This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes nodes 0–47 through the second C2f block. Diagnostic execution matches 2,764,800 values across 22 materialized or aliased boundaries, and a lifetime-reuse package matches the final 102,400-value tensor. The remaining model, RTL, and hardware remain unimplemented.
 
 ## Third-party artifact and license
 
@@ -250,4 +250,27 @@ The compiler validates and executes nodes 0–21. The first C2f increment adds 1
 
 The checked-in [`m6-first-c2f.json`](m6-first-c2f.json) records per-operation command and DMA counts, residual and concat coefficients, allocations, hashes, exact comparisons, and FLOAT-reference errors. The [format note](../../../compiler/first-c2f-format.md) explains the lowering and its current scaling limit.
 
-The next implementation step is a reusable graph IR and liveness scheduler followed by nodes 22–47: the `model.3` downsampling Conv-SiLU and the second C2f block. That increment must support repeated bottlenecks and compare diagnostic retain-all allocation against a release-oriented reuse plan before the compiler expands through the rest of the detector.
+## Reproduce the reusable graph through the second C2f
+
+```sh
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/compile_yolov8n_second_c2f.py
+```
+
+The compiler validates and executes nodes 0–47. The existing first C2f produces an `80×80×32` tensor in NCHW notation; the reusable extension adds the stride-two `model.3` convolution and the two-bottleneck `model.4` block, ending with a `40×40×64` tensor. Diagnostic mode retains every boundary. Release mode uses an auditable deterministic lifetime plan and exposes only `model.4`.
+
+| Nodes 0–47 measurement | Diagnostic | Release |
+|---|---:|---:|
+| Package bytes | 18,596,288 | 18,530,880 |
+| Peak output allocation | 2,457,600 | 614,400 |
+| Declared external bytes | 3,383,424 | 1,540,224 |
+| Commands | 97,670 | 97,670 |
+| DMA bytes | 6,951,768 | 6,951,768 |
+| INT8 MACs | 194,560,000 | 194,560,000 |
+| Exact values compared | 2,764,800 | 102,400 final values |
+| Integer mismatches | 0 | 0 |
+| FIFO `BUSY`/refill events | 97,662 | 97,662 |
+
+The checked-in [`m6-through-second-c2f.json`](m6-through-second-c2f.json) records both package hashes, tensor lifetimes, all operation counts, exact comparisons, FLOAT-reference errors, and FIFO behavior. The [format note](../../../compiler/reusable-graph-format.md) describes the IR, validation, and allocation rules.
+
+The next implementation step is nodes 48–73: the `model.5` downsampling Conv-SiLU and `model.6` third C2f block. It should extend the same graph and lifetime plan, retain every new boundary in diagnostic mode, expose only the declared release result, and report the additional weight-streaming and command pressure before later neck branches are introduced.

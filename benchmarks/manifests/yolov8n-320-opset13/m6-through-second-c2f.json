@@ -1,0 +1,1568 @@
+{
+  "schema_version": 1,
+  "status": "passing_nodes_0_through_47_diagnostic_and_release",
+  "scope": {
+    "node_indices": [
+      0,
+      47
+    ],
+    "nodes": [
+      "/model.0/conv/Conv",
+      "/model.0/act/Sigmoid",
+      "/model.0/act/Mul",
+      "/model.1/conv/Conv",
+      "/model.1/act/Sigmoid",
+      "/model.1/act/Mul",
+      "/model.2/cv1/conv/Conv",
+      "/model.2/cv1/act/Sigmoid",
+      "/model.2/cv1/act/Mul",
+      "Constant_31",
+      "/model.2/Split",
+      "/model.2/m.0/cv1/conv/Conv",
+      "/model.2/m.0/cv1/act/Sigmoid",
+      "/model.2/m.0/cv1/act/Mul",
+      "/model.2/m.0/cv2/conv/Conv",
+      "/model.2/m.0/cv2/act/Sigmoid",
+      "/model.2/m.0/cv2/act/Mul",
+      "/model.2/m.0/Add",
+      "/model.2/Concat",
+      "/model.2/cv2/conv/Conv",
+      "/model.2/cv2/act/Sigmoid",
+      "/model.2/cv2/act/Mul",
+      "/model.3/conv/Conv",
+      "/model.3/act/Sigmoid",
+      "/model.3/act/Mul",
+      "/model.4/cv1/conv/Conv",
+      "/model.4/cv1/act/Sigmoid",
+      "/model.4/cv1/act/Mul",
+      "Constant_50",
+      "/model.4/Split",
+      "/model.4/m.0/cv1/conv/Conv",
+      "/model.4/m.0/cv1/act/Sigmoid",
+      "/model.4/m.0/cv1/act/Mul",
+      "/model.4/m.0/cv2/conv/Conv",
+      "/model.4/m.0/cv2/act/Sigmoid",
+      "/model.4/m.0/cv2/act/Mul",
+      "/model.4/m.0/Add",
+      "/model.4/m.1/cv1/conv/Conv",
+      "/model.4/m.1/cv1/act/Sigmoid",
+      "/model.4/m.1/cv1/act/Mul",
+      "/model.4/m.1/cv2/conv/Conv",
+      "/model.4/m.1/cv2/act/Sigmoid",
+      "/model.4/m.1/cv2/act/Mul",
+      "/model.4/m.1/Add",
+      "/model.4/Concat",
+      "/model.4/cv2/conv/Conv",
+      "/model.4/cv2/act/Sigmoid",
+      "/model.4/cv2/act/Mul"
+    ],
+    "logical_input_shape": [
+      1,
+      3,
+      320,
+      320
+    ],
+    "compared_boundaries": [
+      "model.0",
+      "model.1",
+      "model.2.cv1",
+      "model.2.split0",
+      "model.2.split1",
+      "model.2.m.0.cv1",
+      "model.2.m.0.cv2",
+      "model.2.m.0.add",
+      "model.2.concat",
+      "model.2",
+      "model.3",
+      "model.4.cv1",
+      "model.4.split0",
+      "model.4.split1",
+      "model.4.m.0.cv1",
+      "model.4.m.0.cv2",
+      "model.4.m.0.add",
+      "model.4.m.1.cv1",
+      "model.4.m.1.cv2",
+      "model.4.m.1.add",
+      "model.4.concat",
+      "model.4"
+    ],
+    "limitation": "This executes through the second C2f block, not the remaining accelerator graph or host tail."
+  },
+  "source_model": {
+    "filename": "yolov8n-320-opset13.onnx",
+    "sha256": "5b232bf21720cac4264463896ace02b919d8bec3f3fd1e4b9d36695493fa1718"
+  },
+  "calibration_sha256": "d27fe25a304c633e44b226e81fc23c4ba707690f257ce99ce0204c41db3e44b7",
+  "lut_binary_sha256": "78dbd09a7389d23cc517ca6930075d5bb53dc152eb9c4248de7e8235f6c4caf4",
+  "packages": {
+    "diagnostic": {
+      "allocation": {
+        "diagnostic_peak_output_bytes": 2457600,
+        "logical_materialized_tensor_bytes": 2457600,
+        "mode": "diagnostic",
+        "release_peak_output_bytes": 614400,
+        "reuse_savings_bytes": 1843200,
+        "selected_peak_output_bytes": 2457600
+      },
+      "bytes": 18596288,
+      "commands_bytes": 12501760,
+      "constant_bytes": 106624,
+      "external_buffers": {
+        "constants": {
+          "alignment": 64,
+          "bytes": 106624,
+          "role": "constant"
+        },
+        "input": {
+          "alignment": 64,
+          "bytes": 819200,
+          "role": "input"
+        },
+        "output": {
+          "alignment": 64,
+          "bytes": 2457600,
+          "role": "output"
+        }
+      },
+      "external_bytes": 3383424,
+      "fifo": {
+        "accepted_commands": 97670,
+        "busy_responses": 97662,
+        "commands_retired_during_refill": 97662,
+        "final_drain_commands": 8,
+        "fifo_high_watermark": 8,
+        "submission_attempts": 195332
+      },
+      "output_sha256": "e6aebbd0d4fd4a61320296decf58cf7a492496a356d0bb2388d96bd71a4f5213",
+      "repeated_compilation_byte_identical": true,
+      "schema": "haslab.graph-schedule.v1",
+      "sha256": "38ab0e1f6a5ada6394895af97bc55967c81bb0c3def89cb108103d9270787b9b"
+    },
+    "release": {
+      "allocation": {
+        "diagnostic_peak_output_bytes": 2457600,
+        "logical_materialized_tensor_bytes": 2457600,
+        "mode": "release",
+        "release_peak_output_bytes": 614400,
+        "reuse_savings_bytes": 1843200,
+        "selected_peak_output_bytes": 614400
+      },
+      "bytes": 18530880,
+      "commands_bytes": 12501760,
+      "constant_bytes": 106624,
+      "external_buffers": {
+        "constants": {
+          "alignment": 64,
+          "bytes": 106624,
+          "role": "constant"
+        },
+        "input": {
+          "alignment": 64,
+          "bytes": 819200,
+          "role": "input"
+        },
+        "output": {
+          "alignment": 64,
+          "bytes": 614400,
+          "role": "output"
+        }
+      },
+      "external_bytes": 1540224,
+      "fifo": {
+        "accepted_commands": 97670,
+        "busy_responses": 97662,
+        "commands_retired_during_refill": 97662,
+        "final_drain_commands": 8,
+        "fifo_high_watermark": 8,
+        "submission_attempts": 195332
+      },
+      "output_sha256": "a1c0722820faa2129fb96258c961cc5049e9db066a789ab37f7debfde0177219",
+      "repeated_compilation_byte_identical": true,
+      "schema": "haslab.graph-schedule.v1",
+      "sha256": "5945661fb8da19ea37fdcf0fed2a28594fc7c9ee9d8cb72bbf0074905e3072e2"
+    }
+  },
+  "allocation_plan": {
+    "diagnostic_retained_tensors": [
+      {
+        "addend": 0,
+        "bytes": 409600,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          16,
+          160,
+          160
+        ],
+        "name": "model.0",
+        "physical_shape": [
+          160,
+          160,
+          2,
+          8
+        ],
+        "scale_binary32": 0.2907410264015198
+      },
+      {
+        "addend": 409600,
+        "bytes": 204800,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          80,
+          80
+        ],
+        "name": "model.1",
+        "physical_shape": [
+          80,
+          80,
+          4,
+          8
+        ],
+        "scale_binary32": 0.7698827385902405
+      },
+      {
+        "addend": 614400,
+        "bytes": 204800,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          80,
+          80
+        ],
+        "name": "model.2.cv1",
+        "physical_shape": [
+          80,
+          80,
+          4,
+          8
+        ],
+        "scale_binary32": 0.2113831341266632
+      },
+      {
+        "addend": 819200,
+        "bytes": 102400,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          16,
+          80,
+          80
+        ],
+        "name": "model.2.m.0.cv1",
+        "physical_shape": [
+          80,
+          80,
+          2,
+          8
+        ],
+        "scale_binary32": 0.2406955063343048
+      },
+      {
+        "addend": 921600,
+        "bytes": 102400,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          16,
+          80,
+          80
+        ],
+        "name": "model.2.m.0.cv2",
+        "physical_shape": [
+          80,
+          80,
+          2,
+          8
+        ],
+        "scale_binary32": 0.20917482674121857
+      },
+      {
+        "addend": 1024000,
+        "bytes": 102400,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          16,
+          80,
+          80
+        ],
+        "name": "model.2.m.0.add",
+        "physical_shape": [
+          80,
+          80,
+          2,
+          8
+        ],
+        "scale_binary32": 0.2529996931552887
+      },
+      {
+        "addend": 1126400,
+        "bytes": 307200,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          48,
+          80,
+          80
+        ],
+        "name": "model.2.concat",
+        "physical_shape": [
+          80,
+          80,
+          6,
+          8
+        ],
+        "scale_binary32": 0.2529996931552887
+      },
+      {
+        "addend": 1433600,
+        "bytes": 204800,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          80,
+          80
+        ],
+        "name": "model.2",
+        "physical_shape": [
+          80,
+          80,
+          4,
+          8
+        ],
+        "scale_binary32": 0.06328161805868149
+      },
+      {
+        "addend": 1638400,
+        "bytes": 102400,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          64,
+          40,
+          40
+        ],
+        "name": "model.3",
+        "physical_shape": [
+          40,
+          40,
+          8,
+          8
+        ],
+        "scale_binary32": 0.06051267310976982
+      },
+      {
+        "addend": 1740800,
+        "bytes": 102400,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          64,
+          40,
+          40
+        ],
+        "name": "model.4.cv1",
+        "physical_shape": [
+          40,
+          40,
+          8,
+          8
+        ],
+        "scale_binary32": 0.045478034764528275
+      },
+      {
+        "addend": 1843200,
+        "bytes": 51200,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          40,
+          40
+        ],
+        "name": "model.4.m.0.cv1",
+        "physical_shape": [
+          40,
+          40,
+          4,
+          8
+        ],
+        "scale_binary32": 0.03164263442158699
+      },
+      {
+        "addend": 1894400,
+        "bytes": 51200,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          40,
+          40
+        ],
+        "name": "model.4.m.0.cv2",
+        "physical_shape": [
+          40,
+          40,
+          4,
+          8
+        ],
+        "scale_binary32": 0.041536200791597366
+      },
+      {
+        "addend": 1945600,
+        "bytes": 51200,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          40,
+          40
+        ],
+        "name": "model.4.m.0.add",
+        "physical_shape": [
+          40,
+          40,
+          4,
+          8
+        ],
+        "scale_binary32": 0.051559656858444214
+      },
+      {
+        "addend": 1996800,
+        "bytes": 51200,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          40,
+          40
+        ],
+        "name": "model.4.m.1.cv1",
+        "physical_shape": [
+          40,
+          40,
+          4,
+          8
+        ],
+        "scale_binary32": 0.025747917592525482
+      },
+      {
+        "addend": 2048000,
+        "bytes": 51200,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          40,
+          40
+        ],
+        "name": "model.4.m.1.cv2",
+        "physical_shape": [
+          40,
+          40,
+          4,
+          8
+        ],
+        "scale_binary32": 0.0686204582452774
+      },
+      {
+        "addend": 2099200,
+        "bytes": 51200,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          32,
+          40,
+          40
+        ],
+        "name": "model.4.m.1.add",
+        "physical_shape": [
+          40,
+          40,
+          4,
+          8
+        ],
+        "scale_binary32": 0.07069803774356842
+      },
+      {
+        "addend": 2150400,
+        "bytes": 204800,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          128,
+          40,
+          40
+        ],
+        "name": "model.4.concat",
+        "physical_shape": [
+          40,
+          40,
+          16,
+          8
+        ],
+        "scale_binary32": 0.07069803774356842
+      },
+      {
+        "addend": 2355200,
+        "bytes": 102400,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          64,
+          40,
+          40
+        ],
+        "name": "model.4",
+        "physical_shape": [
+          40,
+          40,
+          8,
+          8
+        ],
+        "scale_binary32": 0.03984694182872772
+      }
+    ],
+    "diagnostic_views": [
+      {
+        "alias_of": "model.2.cv1",
+        "byte_allocation": 0,
+        "channel_group_offset": 0,
+        "dtype": "int8",
+        "layout": "HWC8_VIEW",
+        "logical_shape": [
+          1,
+          16,
+          80,
+          80
+        ],
+        "name": "model.2.split0",
+        "scale_binary32": 0.2113831341266632
+      },
+      {
+        "alias_of": "model.2.cv1",
+        "byte_allocation": 0,
+        "channel_group_offset": 2,
+        "dtype": "int8",
+        "layout": "HWC8_VIEW",
+        "logical_shape": [
+          1,
+          16,
+          80,
+          80
+        ],
+        "name": "model.2.split1",
+        "scale_binary32": 0.2113831341266632
+      },
+      {
+        "alias_of": "model.4.cv1",
+        "byte_allocation": 0,
+        "channel_group_offset": 0,
+        "dtype": "int8",
+        "layout": "HWC8_VIEW",
+        "logical_shape": [
+          1,
+          32,
+          40,
+          40
+        ],
+        "name": "model.4.split0",
+        "scale_binary32": 0.045478034764528275
+      },
+      {
+        "alias_of": "model.4.cv1",
+        "byte_allocation": 0,
+        "channel_group_offset": 4,
+        "dtype": "int8",
+        "layout": "HWC8_VIEW",
+        "logical_shape": [
+          1,
+          32,
+          40,
+          40
+        ],
+        "name": "model.4.split1",
+        "scale_binary32": 0.045478034764528275
+      }
+    ],
+    "release_final_tensors": [
+      {
+        "addend": 0,
+        "bytes": 102400,
+        "dtype": "int8",
+        "layout": "HWC8",
+        "logical_shape": [
+          1,
+          64,
+          40,
+          40
+        ],
+        "name": "model.4",
+        "physical_shape": [
+          40,
+          40,
+          8,
+          8
+        ],
+        "scale_binary32": 0.03984694182872772
+      }
+    ],
+    "release_lifetimes": [
+      {
+        "addend": 0,
+        "bytes": 409600,
+        "first_operation": -2,
+        "last_operation": -1,
+        "name": "model.0"
+      },
+      {
+        "addend": 409600,
+        "bytes": 204800,
+        "first_operation": -1,
+        "last_operation": 0,
+        "name": "model.1"
+      },
+      {
+        "addend": 0,
+        "bytes": 204800,
+        "first_operation": 0,
+        "last_operation": 4,
+        "name": "model.2.cv1"
+      },
+      {
+        "addend": 204800,
+        "bytes": 102400,
+        "first_operation": 1,
+        "last_operation": 2,
+        "name": "model.2.m.0.cv1"
+      },
+      {
+        "addend": 307200,
+        "bytes": 102400,
+        "first_operation": 2,
+        "last_operation": 3,
+        "name": "model.2.m.0.cv2"
+      },
+      {
+        "addend": 204800,
+        "bytes": 102400,
+        "first_operation": 3,
+        "last_operation": 4,
+        "name": "model.2.m.0.add"
+      },
+      {
+        "addend": 307200,
+        "bytes": 307200,
+        "first_operation": 4,
+        "last_operation": 5,
+        "name": "model.2.concat"
+      },
+      {
+        "addend": 0,
+        "bytes": 204800,
+        "first_operation": 5,
+        "last_operation": 6,
+        "name": "model.2"
+      },
+      {
+        "addend": 204800,
+        "bytes": 102400,
+        "first_operation": 6,
+        "last_operation": 7,
+        "name": "model.3"
+      },
+      {
+        "addend": 0,
+        "bytes": 102400,
+        "first_operation": 7,
+        "last_operation": 14,
+        "name": "model.4.cv1"
+      },
+      {
+        "addend": 102400,
+        "bytes": 51200,
+        "first_operation": 8,
+        "last_operation": 9,
+        "name": "model.4.m.0.cv1"
+      },
+      {
+        "addend": 153600,
+        "bytes": 51200,
+        "first_operation": 9,
+        "last_operation": 10,
+        "name": "model.4.m.0.cv2"
+      },
+      {
+        "addend": 102400,
+        "bytes": 51200,
+        "first_operation": 10,
+        "last_operation": 14,
+        "name": "model.4.m.0.add"
+      },
+      {
+        "addend": 153600,
+        "bytes": 51200,
+        "first_operation": 11,
+        "last_operation": 12,
+        "name": "model.4.m.1.cv1"
+      },
+      {
+        "addend": 204800,
+        "bytes": 51200,
+        "first_operation": 12,
+        "last_operation": 13,
+        "name": "model.4.m.1.cv2"
+      },
+      {
+        "addend": 153600,
+        "bytes": 51200,
+        "first_operation": 13,
+        "last_operation": 14,
+        "name": "model.4.m.1.add"
+      },
+      {
+        "addend": 204800,
+        "bytes": 204800,
+        "first_operation": 14,
+        "last_operation": 15,
+        "name": "model.4.concat"
+      },
+      {
+        "addend": 0,
+        "bytes": 102400,
+        "first_operation": 15,
+        "last_operation": 16,
+        "name": "model.4"
+      }
+    ]
+  },
+  "schedule": {
+    "allocation": {
+      "diagnostic_peak_output_bytes": 2457600,
+      "logical_materialized_tensor_bytes": 2457600,
+      "mode": "diagnostic",
+      "release_peak_output_bytes": 614400,
+      "reuse_savings_bytes": 1843200,
+      "selected_peak_output_bytes": 2457600
+    },
+    "dma_bytes": {
+      "constants": 548992,
+      "input": 3945176,
+      "output": 2457600,
+      "total": 6951768
+    },
+    "graph_operations": [
+      {
+        "boundary_fill_commands": 0,
+        "command_count": 8403,
+        "dma_bytes": {
+          "constants": 2560,
+          "input": 204800,
+          "output": 204800,
+          "total": 412160
+        },
+        "input_channel_chunks": 4,
+        "kind": "conv_silu",
+        "macs": 6553600,
+        "name": "model.2.cv1",
+        "opcode_counts": {
+          "CONV_I8": 1600,
+          "DMA_COPY2D": 6403,
+          "EPILOGUE": 400
+        },
+        "output_group_tiles": 400
+      },
+      {
+        "boundary_fill_commands": 36,
+        "command_count": 4199,
+        "dma_bytes": {
+          "constants": 3584,
+          "input": 153664,
+          "output": 102400,
+          "total": 259648
+        },
+        "input_channel_chunks": 2,
+        "kind": "conv_silu",
+        "macs": 14745600,
+        "name": "model.2.m.0.cv1",
+        "opcode_counts": {
+          "CONV_I8": 400,
+          "DMA_COPY2D": 3563,
+          "EPILOGUE": 200,
+          "FILL8": 36
+        },
+        "output_group_tiles": 200
+      },
+      {
+        "boundary_fill_commands": 36,
+        "command_count": 4199,
+        "dma_bytes": {
+          "constants": 3584,
+          "input": 153664,
+          "output": 102400,
+          "total": 259648
+        },
+        "input_channel_chunks": 2,
+        "kind": "conv_silu",
+        "macs": 14745600,
+        "name": "model.2.m.0.cv2",
+        "opcode_counts": {
+          "CONV_I8": 400,
+          "DMA_COPY2D": 3563,
+          "EPILOGUE": 200,
+          "FILL8": 36
+        },
+        "output_group_tiles": 200
+      },
+      {
+        "command_count": 5002,
+        "dma_bytes": {
+          "constants": 512,
+          "input": 204800,
+          "output": 102400,
+          "total": 307712
+        },
+        "fixed_point": {
+          "left_multiplier": 1794238635,
+          "right_multiplier": 1775494327,
+          "shift": 31
+        },
+        "kind": "residual_add",
+        "name": "/model.2/m.0/Add",
+        "opcode_counts": {
+          "ADD_I8": 200,
+          "DMA_COPY2D": 4802
+        }
+      },
+      {
+        "command_count": 10201,
+        "dma_bytes": {
+          "constants": 768,
+          "input": 307200,
+          "output": 307200,
+          "total": 615168
+        },
+        "fixed_point": [
+          {
+            "input_scale_binary32": 0.2113831341266632,
+            "multiplier": 1794238635,
+            "output_scale_binary32": 0.2529996931552887,
+            "shift": 31,
+            "source": "model.2.split0"
+          },
+          {
+            "input_scale_binary32": 0.2113831341266632,
+            "multiplier": 1794238635,
+            "output_scale_binary32": 0.2529996931552887,
+            "shift": 31,
+            "source": "model.2.split1"
+          },
+          {
+            "input_scale_binary32": 0.2529996931552887,
+            "multiplier": 1073741824,
+            "output_scale_binary32": 0.2529996931552887,
+            "shift": 30,
+            "source": "model.2.m.0.add"
+          }
+        ],
+        "kind": "channel_concat",
+        "name": "/model.2/Concat",
+        "opcode_counts": {
+          "DMA_COPY2D": 9601,
+          "MAP_I8": 600
+        }
+      },
+      {
+        "boundary_fill_commands": 0,
+        "command_count": 10803,
+        "dma_bytes": {
+          "constants": 3072,
+          "input": 307200,
+          "output": 204800,
+          "total": 515072
+        },
+        "input_channel_chunks": 6,
+        "kind": "conv_silu",
+        "macs": 9830400,
+        "name": "model.2.cv2",
+        "opcode_counts": {
+          "CONV_I8": 2400,
+          "DMA_COPY2D": 8003,
+          "EPILOGUE": 400
+        },
+        "output_group_tiles": 400
+      },
+      {
+        "boundary_fill_commands": 9,
+        "command_count": 4491,
+        "dma_bytes": {
+          "constants": 462848,
+          "input": 225792,
+          "output": 102400,
+          "total": 791040
+        },
+        "input_channel_chunks": 4,
+        "kind": "conv_silu",
+        "macs": 29491200,
+        "name": "model.3",
+        "opcode_counts": {
+          "CONV_I8": 800,
+          "DMA_COPY2D": 3482,
+          "EPILOGUE": 200,
+          "FILL8": 9
+        },
+        "output_group_tiles": 200,
+        "weight_residency": "one output group streamed per spatial tile"
+      },
+      {
+        "boundary_fill_commands": 0,
+        "command_count": 5003,
+        "dma_bytes": {
+          "constants": 6144,
+          "input": 102400,
+          "output": 102400,
+          "total": 210944
+        },
+        "input_channel_chunks": 8,
+        "kind": "conv_silu",
+        "macs": 6553600,
+        "name": "model.4.cv1",
+        "opcode_counts": {
+          "CONV_I8": 1600,
+          "DMA_COPY2D": 3203,
+          "EPILOGUE": 200
+        },
+        "output_group_tiles": 200
+      },
+      {
+        "boundary_fill_commands": 16,
+        "command_count": 2279,
+        "dma_bytes": {
+          "constants": 10752,
+          "input": 73728,
+          "output": 51200,
+          "total": 135680
+        },
+        "input_channel_chunks": 4,
+        "kind": "conv_silu",
+        "macs": 14745600,
+        "name": "model.4.m.0.cv1",
+        "opcode_counts": {
+          "CONV_I8": 400,
+          "DMA_COPY2D": 1763,
+          "EPILOGUE": 100,
+          "FILL8": 16
+        },
+        "output_group_tiles": 100
+      },
+      {
+        "boundary_fill_commands": 16,
+        "command_count": 2279,
+        "dma_bytes": {
+          "constants": 10752,
+          "input": 73728,
+          "output": 51200,
+          "total": 135680
+        },
+        "input_channel_chunks": 4,
+        "kind": "conv_silu",
+        "macs": 14745600,
+        "name": "model.4.m.0.cv2",
+        "opcode_counts": {
+          "CONV_I8": 400,
+          "DMA_COPY2D": 1763,
+          "EPILOGUE": 100,
+          "FILL8": 16
+        },
+        "output_group_tiles": 100
+      },
+      {
+        "command_count": 2502,
+        "dma_bytes": {
+          "constants": 1024,
+          "input": 102400,
+          "output": 51200,
+          "total": 154624
+        },
+        "fixed_point": {
+          "left_multiplier": 1894181264,
+          "right_multiplier": 1730002049,
+          "shift": 31
+        },
+        "kind": "residual_add",
+        "name": "/model.4/m.0/Add",
+        "opcode_counts": {
+          "ADD_I8": 100,
+          "DMA_COPY2D": 2402
+        }
+      },
+      {
+        "boundary_fill_commands": 16,
+        "command_count": 2279,
+        "dma_bytes": {
+          "constants": 10752,
+          "input": 73728,
+          "output": 51200,
+          "total": 135680
+        },
+        "input_channel_chunks": 4,
+        "kind": "conv_silu",
+        "macs": 14745600,
+        "name": "model.4.m.1.cv1",
+        "opcode_counts": {
+          "CONV_I8": 400,
+          "DMA_COPY2D": 1763,
+          "EPILOGUE": 100,
+          "FILL8": 16
+        },
+        "output_group_tiles": 100
+      },
+      {
+        "boundary_fill_commands": 16,
+        "command_count": 2279,
+        "dma_bytes": {
+          "constants": 10752,
+          "input": 73728,
+          "output": 51200,
+          "total": 135680
+        },
+        "input_channel_chunks": 4,
+        "kind": "conv_silu",
+        "macs": 14745600,
+        "name": "model.4.m.1.cv2",
+        "opcode_counts": {
+          "CONV_I8": 400,
+          "DMA_COPY2D": 1763,
+          "EPILOGUE": 100,
+          "FILL8": 16
+        },
+        "output_group_tiles": 100
+      },
+      {
+        "command_count": 2502,
+        "dma_bytes": {
+          "constants": 1024,
+          "input": 102400,
+          "output": 51200,
+          "total": 154624
+        },
+        "fixed_point": {
+          "left_multiplier": 1566147004,
+          "right_multiplier": 2084376267,
+          "shift": 31
+        },
+        "kind": "residual_add",
+        "name": "/model.4/m.1/Add",
+        "opcode_counts": {
+          "ADD_I8": 100,
+          "DMA_COPY2D": 2402
+        }
+      },
+      {
+        "command_count": 6801,
+        "dma_bytes": {
+          "constants": 2048,
+          "input": 204800,
+          "output": 204800,
+          "total": 411648
+        },
+        "fixed_point": [
+          {
+            "input_scale_binary32": 0.045478034764528275,
+            "multiplier": 1381415088,
+            "output_scale_binary32": 0.07069803774356842,
+            "shift": 31,
+            "source": "model.4.split0"
+          },
+          {
+            "input_scale_binary32": 0.045478034764528275,
+            "multiplier": 1381415088,
+            "output_scale_binary32": 0.07069803774356842,
+            "shift": 31,
+            "source": "model.4.split1"
+          },
+          {
+            "input_scale_binary32": 0.051559656858444214,
+            "multiplier": 1566147004,
+            "output_scale_binary32": 0.07069803774356842,
+            "shift": 31,
+            "source": "model.4.m.0.add"
+          },
+          {
+            "input_scale_binary32": 0.07069803774356842,
+            "multiplier": 1073741824,
+            "output_scale_binary32": 0.07069803774356842,
+            "shift": 30,
+            "source": "model.4.m.1.add"
+          }
+        ],
+        "kind": "channel_concat",
+        "name": "/model.4/Concat",
+        "opcode_counts": {
+          "DMA_COPY2D": 6401,
+          "MAP_I8": 400
+        }
+      },
+      {
+        "boundary_fill_commands": 0,
+        "command_count": 8203,
+        "dma_bytes": {
+          "constants": 10240,
+          "input": 204800,
+          "output": 102400,
+          "total": 317440
+        },
+        "input_channel_chunks": 16,
+        "kind": "conv_silu",
+        "macs": 13107200,
+        "name": "model.4.cv2",
+        "opcode_counts": {
+          "CONV_I8": 3200,
+          "DMA_COPY2D": 4803,
+          "EPILOGUE": 200
+        },
+        "output_group_tiles": 200
+      }
+    ],
+    "layers": [
+      {
+        "boundary_fill_bytes": 90168,
+        "boundary_fill_commands": 39,
+        "channel_groups": 2,
+        "command_count": 8442,
+        "command_range": [
+          1,
+          8442
+        ],
+        "dma_bytes": {
+          "constants": 2432,
+          "input": 919368,
+          "output": 409600,
+          "total": 1331400
+        },
+        "input_channel_chunks": 1,
+        "macs": 11059200,
+        "name": "model.0",
+        "opcode_counts": {
+          "CONV_I8": 800,
+          "DMA_COPY2D": 6803,
+          "EPILOGUE": 800,
+          "FILL8": 39
+        },
+        "spatial_tiles": 400,
+        "tile_executions": 800,
+        "tile_shape": [
+          8,
+          8
+        ]
+      },
+      {
+        "boundary_fill_bytes": 87856,
+        "boundary_fill_commands": 19,
+        "channel_groups": 4,
+        "command_count": 7802,
+        "command_range": [
+          8443,
+          16244
+        ],
+        "dma_bytes": {
+          "constants": 6144,
+          "input": 456976,
+          "output": 204800,
+          "total": 667920
+        },
+        "input_channel_chunks": 2,
+        "macs": 29491200,
+        "name": "model.1",
+        "opcode_counts": {
+          "CONV_I8": 800,
+          "DMA_COPY2D": 6583,
+          "EPILOGUE": 400,
+          "FILL8": 19
+        },
+        "spatial_tiles": 100,
+        "tile_executions": 400,
+        "tile_shape": [
+          8,
+          8
+        ]
+      }
+    ],
+    "macs": 194560000,
+    "opcode_counts": {
+      "ADD_I8": 400,
+      "CONV_I8": 13600,
+      "DMA_COPY2D": 79066,
+      "END": 1,
+      "EPILOGUE": 3400,
+      "FILL8": 203,
+      "MAP_I8": 1000
+    }
+  },
+  "exact_integer_comparisons": [
+    {
+      "compared_values": 409600,
+      "mismatch_count": 0,
+      "name": "model.0",
+      "output_sha256": "fe8d76d32d17f2ad005e4fd366ee6908c652a6c0a67a633158dd6716fd3de0ed",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 204800,
+      "mismatch_count": 0,
+      "name": "model.1",
+      "output_sha256": "bf84e4cac552336d0da0e0b09cc41d51bcd57ec988472b358797aa9dedb29616",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 204800,
+      "mismatch_count": 0,
+      "name": "model.2.cv1",
+      "output_sha256": "47b22f75a150fd4ba2975a5a91b2e47496a5755ca3c3a5ff0b06d705f787cc5a",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.2.split0",
+      "output_sha256": "ff4cf793b2b7ee8484fc3e9c2744bb38db7ea30cabc92de7d7d6b72601866b7f",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.2.split1",
+      "output_sha256": "039618a93419e86d1b3693db89489082104d32facc9445fd4dcb946b01fdffdd",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.2.m.0.cv1",
+      "output_sha256": "d98cb49e8374e311c238be37f6b6372a09c34a2897c44faca2647e6192e82615",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.2.m.0.cv2",
+      "output_sha256": "9c8fe796e7fdda9bb9c98f24ffda3b970e44d75ac003283ee219b6b26c1ddba8",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.2.m.0.add",
+      "output_sha256": "b0ecf8a82b7783f3b421246a9b583a0eaaf2ec4e812846b6b652739e47f36fb0",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 307200,
+      "mismatch_count": 0,
+      "name": "model.2.concat",
+      "output_sha256": "9d717359d5c7033013042a2a3bcba2622e854129e609f99e01d1be2e7d1439ab",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 204800,
+      "mismatch_count": 0,
+      "name": "model.2",
+      "output_sha256": "b75047e969c2216669bda24320c0ab0babeddc9d649c192ff0fe4e7c6c0940c6",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.3",
+      "output_sha256": "50111c1748b1011352df35c79677ba4c5666112732ce6eda08fc313f7c245df2",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.4.cv1",
+      "output_sha256": "9e58088faf92e23f0564ca16ece859c0b3de4b9e30c7a4316a783b7916704765",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 51200,
+      "mismatch_count": 0,
+      "name": "model.4.split0",
+      "output_sha256": "a474c74712f3855d3befa2059b3b0551e588538f03d17935d10aa45e62dc55c4",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 51200,
+      "mismatch_count": 0,
+      "name": "model.4.split1",
+      "output_sha256": "be041d3e4c4ef3f2d28f4398f89b08add2275c913209a6190d1e041e33bdd81c",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 51200,
+      "mismatch_count": 0,
+      "name": "model.4.m.0.cv1",
+      "output_sha256": "cf7dad3aeac1eeab51ecbe4c1a708ea541c38a655820b346b7be729083681915",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 51200,
+      "mismatch_count": 0,
+      "name": "model.4.m.0.cv2",
+      "output_sha256": "05f303bf095e1c3d5e5e46f7109a8e8e0946856be93538ee7f1290c5f7c2ad18",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 51200,
+      "mismatch_count": 0,
+      "name": "model.4.m.0.add",
+      "output_sha256": "454477b0b0e23b0ad39ab99f4c9d6f91609e56bd154d1ba23601b238df6d40c4",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 51200,
+      "mismatch_count": 0,
+      "name": "model.4.m.1.cv1",
+      "output_sha256": "b24d06f9698cdaf26bd020c83c766114dea7dfa1200fce9ecd110b9091b832c2",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 51200,
+      "mismatch_count": 0,
+      "name": "model.4.m.1.cv2",
+      "output_sha256": "6445b547ce55fe3921a089aa807b5fda6c8b98daf1ff814ac1442a9f5fdddfb1",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 51200,
+      "mismatch_count": 0,
+      "name": "model.4.m.1.add",
+      "output_sha256": "c836522a8f056fd31c313e3b7c83bfa1bdb0e5256e6943a406412806f9591871",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 204800,
+      "mismatch_count": 0,
+      "name": "model.4.concat",
+      "output_sha256": "72d5610bffbea80e5ebc461721b013477fca2c2acf59844b174997e7b42b7b5b",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    },
+    {
+      "compared_values": 102400,
+      "mismatch_count": 0,
+      "name": "model.4",
+      "output_sha256": "b5a31d36282bb577249df091b48819c0ac809ba2f6e4211297a16ba813d7481a",
+      "pass": true,
+      "reference": "independent haslab_ref graph evaluation"
+    }
+  ],
+  "exact_integer_totals": {
+    "compared_values": 2764800,
+    "mismatch_count": 0,
+    "pass": true
+  },
+  "release_final_comparison": {
+    "compared_values": 102400,
+    "mismatch_count": 0,
+    "name": "model.4",
+    "output_sha256": "b5a31d36282bb577249df091b48819c0ac809ba2f6e4211297a16ba813d7481a",
+    "pass": true,
+    "reference": "independent haslab_ref graph evaluation"
+  },
+  "onnx_float_comparisons": [
+    {
+      "compared_values": 409600,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 0.38719677925109863,
+      "mean_absolute_error": 0.07102784156912445,
+      "name": "model.0",
+      "root_mean_square_error": 0.09061412542717567
+    },
+    {
+      "compared_values": 204800,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 1.6789932250976562,
+      "mean_absolute_error": 0.19739906402411783,
+      "name": "model.1",
+      "root_mean_square_error": 0.27495057143672474
+    },
+    {
+      "compared_values": 204800,
+      "int8_saturation_count": 391,
+      "maximum_absolute_error": 19.034889221191406,
+      "mean_absolute_error": 0.1333181919952127,
+      "name": "model.2.cv1",
+      "root_mean_square_error": 0.6288964545698612
+    },
+    {
+      "compared_values": 102400,
+      "int8_saturation_count": 868,
+      "maximum_absolute_error": 13.169052124023438,
+      "mean_absolute_error": 0.23230218960350768,
+      "name": "model.2.m.0.cv1",
+      "root_mean_square_error": 0.6743076789156418
+    },
+    {
+      "compared_values": 102400,
+      "int8_saturation_count": 677,
+      "maximum_absolute_error": 21.680967330932617,
+      "mean_absolute_error": 0.3502079770855017,
+      "name": "model.2.m.0.cv2",
+      "root_mean_square_error": 1.0936561753136989
+    },
+    {
+      "compared_values": 102400,
+      "int8_saturation_count": 198,
+      "maximum_absolute_error": 22.377338409423828,
+      "mean_absolute_error": 0.3937469595100289,
+      "name": "model.2.m.0.add",
+      "root_mean_square_error": 1.1242008566749042
+    },
+    {
+      "compared_values": 307200,
+      "int8_saturation_count": 198,
+      "maximum_absolute_error": 22.377338409423828,
+      "mean_absolute_error": 0.22694959584905575,
+      "name": "model.2.concat",
+      "root_mean_square_error": 0.8302294177526596
+    },
+    {
+      "compared_values": 204800,
+      "int8_saturation_count": 92,
+      "maximum_absolute_error": 2.306351661682129,
+      "mean_absolute_error": 0.11555776281998822,
+      "name": "model.2",
+      "root_mean_square_error": 0.20933643083965878
+    },
+    {
+      "compared_values": 102400,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 1.1638493537902832,
+      "mean_absolute_error": 0.089320204143573,
+      "name": "model.3",
+      "root_mean_square_error": 0.1417720958160026
+    },
+    {
+      "compared_values": 102400,
+      "int8_saturation_count": 197,
+      "maximum_absolute_error": 2.3181405067443848,
+      "mean_absolute_error": 0.08509338856958176,
+      "name": "model.4.cv1",
+      "root_mean_square_error": 0.1470155888134137
+    },
+    {
+      "compared_values": 51200,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 0.639671266078949,
+      "mean_absolute_error": 0.059128133869081265,
+      "name": "model.4.m.0.cv1",
+      "root_mean_square_error": 0.09970106836500853
+    },
+    {
+      "compared_values": 51200,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 0.6719963550567627,
+      "mean_absolute_error": 0.08095843146414175,
+      "name": "model.4.m.0.cv2",
+      "root_mean_square_error": 0.11989852981046088
+    },
+    {
+      "compared_values": 51200,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 0.8943214416503906,
+      "mean_absolute_error": 0.11673812577810452,
+      "name": "model.4.m.0.add",
+      "root_mean_square_error": 0.15702487366893364
+    },
+    {
+      "compared_values": 51200,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 0.38142406940460205,
+      "mean_absolute_error": 0.02623313389245652,
+      "name": "model.4.m.1.cv1",
+      "root_mean_square_error": 0.046099329078372914
+    },
+    {
+      "compared_values": 51200,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 0.903061032295227,
+      "mean_absolute_error": 0.08841294024346326,
+      "name": "model.4.m.1.cv2",
+      "root_mean_square_error": 0.13468565283186473
+    },
+    {
+      "compared_values": 51200,
+      "int8_saturation_count": 40,
+      "maximum_absolute_error": 1.2890703678131104,
+      "mean_absolute_error": 0.15796438472694718,
+      "name": "model.4.m.1.add",
+      "root_mean_square_error": 0.2076561699812761
+    },
+    {
+      "compared_values": 204800,
+      "int8_saturation_count": 40,
+      "maximum_absolute_error": 2.296611785888672,
+      "mean_absolute_error": 0.11280938996455829,
+      "name": "model.4.concat",
+      "root_mean_square_error": 0.16716026701270334
+    },
+    {
+      "compared_values": 102400,
+      "int8_saturation_count": 0,
+      "maximum_absolute_error": 2.014231860637665,
+      "mean_absolute_error": 0.06236787099791389,
+      "name": "model.4",
+      "root_mean_square_error": 0.116165799292321
+    }
+  ],
+  "environment": {
+    "python": "3.12.4",
+    "numpy": "1.26.4",
+    "onnx": "1.16.2",
+    "onnxruntime": "1.19.2",
+    "platform": "macOS-26.6.2-arm64-arm-64bit"
+  }
+}

@@ -10,9 +10,12 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 import struct
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from .graph import C2fStageSpec
 
 from haslab_ref import oihw_to_khwci8, quantize_int8
 from haslab_sim import ABI_MAJOR, ABI_MINOR, Command, MemorySpace, Opcode
@@ -207,8 +210,8 @@ def _prepare(spec: C2fConvSpec) -> _PreparedConv:
     weight_chunk_bytes = spec.kernel * spec.kernel * LANES * LANES
     if input_groups * chunk_bytes > 16_384:
         raise CompileError(f"{spec.name} input chunks exceed v0 input SRAM")
-    if input_groups * output_groups * weight_chunk_bytes > 16_384:
-        raise CompileError(f"{spec.name} resident weights exceed v0 weight SRAM")
+    if input_groups * weight_chunk_bytes > 16_384:
+        raise CompileError(f"{spec.name} one-output-group weights exceed v0 weight SRAM")
     if output_groups * 128 + 1024 > 3_072:
         raise CompileError(f"{spec.name} parameters and LUT exceed v0 parameter SRAM")
     weights_i8 = quantize_int8(weights, scales.reshape(output_channels, 1, 1, 1))
@@ -249,9 +252,13 @@ class _Builder:
         self.tensors: list[dict[str, object]] = manifest["output"]["tensors"]
         self.views: list[dict[str, object]] = []
         self.output_bytes = int(manifest["buffers"]["output"]["bytes"])
+        self.allocation_description = "retained operator tensors plus zero-allocation split views"
         self.opcodes = Counter(command.opcode for command in self.commands)
         self.dma = Counter(manifest["schedule"]["dma_bytes"])
         self.operations: list[dict[str, object]] = []
+        self.operation_schedule_key = "c2f_operations"
+        self.schema = SCHEMA
+        self.profile = "M6_FIRST_C2F_GRAPH"
 
     def emit(self, opcode: Opcode, payload: Sequence[int] = (), *, flags: int = 0) -> int:
         index = len(self.commands)
@@ -460,7 +467,9 @@ class _Builder:
         start = len(self.commands)
         before_opcodes = self.opcodes.copy()
         before_dma = self.dma.copy()
-        self.load_constant(weight_offset, len(weights), MemorySpace.WEIGHT, 0)
+        stream_weights = len(weights) > 16_384
+        if not stream_weights:
+            self.load_constant(weight_offset, len(weights), MemorySpace.WEIGHT, 0)
         self.load_constant(parameter_offset, len(parameters), MemorySpace.PARAM, 0)
         self.load_constant(lut_offset, 1024, MemorySpace.PARAM, layer.output_groups * 128)
         patch_h = (TILE_H - 1) * layer.spec.stride + layer.spec.kernel
@@ -497,6 +506,14 @@ class _Builder:
                         patch_w,
                     )
                 for output_group in range(layer.output_groups):
+                    if stream_weights:
+                        group_weight_bytes = layer.input_groups * weight_chunk_bytes
+                        self.load_constant(
+                            weight_offset + output_group * group_weight_bytes,
+                            group_weight_bytes,
+                            MemorySpace.WEIGHT,
+                            0,
+                        )
                     for input_group in range(layer.input_groups):
                         flags = (FIRST_FLAG if input_group == 0 else 0) | (
                             LAST_FLAG if input_group == layer.input_groups - 1 else 0
@@ -505,7 +522,12 @@ class _Builder:
                             Opcode.CONV_I8,
                             [
                                 input_group * chunk_bytes,
-                                (output_group * layer.input_groups + input_group) * weight_chunk_bytes,
+                                (
+                                    input_group
+                                    if stream_weights
+                                    else output_group * layer.input_groups + input_group
+                                )
+                                * weight_chunk_bytes,
                                 0,
                                 TILE_H,
                                 TILE_W,
@@ -541,6 +563,8 @@ class _Builder:
                 "output_group_tiles": (layer.output_h // TILE_H) * (layer.output_w // TILE_W) * layer.output_groups,
             }
         )
+        if stream_weights:
+            self.operations[-1]["weight_residency"] = "one output group streamed per spatial tile"
         self.debug.setdefault("layers", []).append(
             {
                 "bias_i32": layer.bias_i32.astype(int).tolist(),
@@ -684,8 +708,8 @@ class _Builder:
     def finish(self, source_nodes: Sequence[str]) -> bytes:
         self.emit(Opcode.END)
         command_bytes = b"".join(command.to_bytes() for command in self.commands)
-        self.manifest["schema"] = SCHEMA
-        self.manifest["profile"] = "M6_FIRST_C2F_GRAPH"
+        self.manifest["schema"] = self.schema
+        self.manifest["profile"] = self.profile
         self.manifest["commands"] = {
             "bytes": len(command_bytes),
             "count": len(self.commands),
@@ -693,10 +717,10 @@ class _Builder:
         }
         self.manifest["buffers"]["constants"]["bytes"] = len(self.constants)
         self.manifest["buffers"]["output"]["bytes"] = self.output_bytes
-        self.manifest["output"]["allocation"] = "retained operator tensors plus zero-allocation split views"
+        self.manifest["output"]["allocation"] = self.allocation_description
         self.manifest["output"]["views"] = self.views
         self.manifest["source"]["nodes"] = list(source_nodes)
-        self.manifest["schedule"]["c2f_operations"] = self.operations
+        self.manifest["schedule"][self.operation_schedule_key] = self.operations
         self.manifest["schedule"]["dma_bytes"] = {
             key: self.dma[key] for key in ("constants", "input", "output")
         } | {"total": sum(self.dma[key] for key in ("constants", "input", "output"))}
@@ -706,7 +730,7 @@ class _Builder:
         self.manifest["schedule"]["opcode_counts"] = {
             Opcode(key).name: value for key, value in sorted(self.opcodes.items())
         }
-        self.debug["schema"] = SCHEMA
+        self.debug["schema"] = self.schema
         self.debug["constant_data_sha256"] = _sha256(bytes(self.constants))
         return build_hxb(
             [
@@ -838,7 +862,11 @@ def _conv_from_nodes(
         "pads": [padding, padding, padding, padding],
         "strides": [stride, stride],
     }
-    if attrs != expected or (kernel, stride, padding) not in {(1, 1, 0), (3, 1, 1)}:
+    if attrs != expected or (kernel, stride, padding) not in {
+        (1, 1, 0),
+        (3, 1, 1),
+        (3, 2, 1),
+    }:
         raise CompileError(f"unsupported first-C2f Conv attributes for {conv.name}: {attrs!r}")
     try:
         record = records[node_index]
@@ -966,3 +994,180 @@ def compile_pinned_first_c2f(
 ) -> bytes:
     stem, block, model_hash = load_pinned_first_c2f(model_path, calibration_path, lut_path)
     return compile_first_c2f(stem_layers=stem, block=block, source_model_sha256=model_hash)
+
+
+def load_pinned_through_second_c2f(
+    model_path: str | Path, calibration_path: str | Path, lut_path: str | Path
+) -> tuple[
+    list[ConvSiluLayerSpec],
+    C2fBlockSpec,
+    C2fConvSpec,
+    C2fStageSpec,
+    str,
+]:
+    """Validate and extract nodes 0..47 through the second C2f block."""
+
+    try:
+        import onnx
+        from onnx import numpy_helper
+    except ImportError as exc:  # pragma: no cover - integration-only dependency.
+        raise CompileError("ONNX is required to compile the pinned model") from exc
+    from .graph import C2fStageSpec
+
+    stem, first, model_hash = load_pinned_first_c2f(
+        model_path, calibration_path, lut_path
+    )
+    model = onnx.load(model_path)
+    if len(model.graph.node) < 48:
+        raise CompileError("graph does not contain the complete second C2f block")
+    expected_types = [
+        "Conv", "Sigmoid", "Mul", "Conv", "Sigmoid", "Mul", "Constant", "Split",
+        "Conv", "Sigmoid", "Mul", "Conv", "Sigmoid", "Mul", "Add",
+        "Conv", "Sigmoid", "Mul", "Conv", "Sigmoid", "Mul", "Add", "Concat",
+        "Conv", "Sigmoid", "Mul",
+    ]
+    if [node.op_type for node in model.graph.node[22:48]] != expected_types:
+        raise CompileError("nodes 22..47 do not match the pinned downsample and second C2f")
+    calibration = json.loads(Path(calibration_path).read_text(encoding="utf-8"))
+    scales = {item["name"]: item["values"] for item in calibration["scales"]}
+    records = {int(item["conv_node_index"]): item for item in calibration["silu"]["records"]}
+    initializers = {item.name: numpy_helper.to_array(item) for item in model.graph.initializer}
+    lut_blob = Path(lut_path).read_bytes()
+
+    downsample = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=22,
+        prefix="model.3",
+        input_h=80,
+        input_w=80,
+        input_channels=32,
+        input_scale=first.cv2.output_scale,
+    )
+    cv1 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=25,
+        prefix="model.4.cv1",
+        input_h=40,
+        input_w=40,
+        input_channels=64,
+        input_scale=downsample.output_scale,
+    )
+    bottleneck0_cv1 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=30,
+        prefix="model.4.m.0.cv1",
+        input_h=40,
+        input_w=40,
+        input_channels=32,
+        input_scale=cv1.output_scale,
+    )
+    bottleneck0_cv2 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=33,
+        prefix="model.4.m.0.cv2",
+        input_h=40,
+        input_w=40,
+        input_channels=32,
+        input_scale=bottleneck0_cv1.output_scale,
+    )
+    residual0_scale = float(scales["/model.4/m.0/Add_output_0_scale"][0])
+    bottleneck1_cv1 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=37,
+        prefix="model.4.m.1.cv1",
+        input_h=40,
+        input_w=40,
+        input_channels=32,
+        input_scale=residual0_scale,
+    )
+    bottleneck1_cv2 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=40,
+        prefix="model.4.m.1.cv2",
+        input_h=40,
+        input_w=40,
+        input_channels=32,
+        input_scale=bottleneck1_cv1.output_scale,
+    )
+    residual1_scale = float(scales["/model.4/m.1/Add_output_0_scale"][0])
+    concat_scale = float(scales["/model.4/Concat_output_0_scale"][0])
+    cv2 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=45,
+        prefix="model.4.cv2",
+        input_h=40,
+        input_w=40,
+        input_channels=128,
+        input_scale=concat_scale,
+    )
+    constant, split = model.graph.node[28:30]
+    split_value = onnx.helper.get_attribute_value(constant.attribute[0])
+    if np.asarray(numpy_helper.to_array(split_value)).tolist() != [32, 32]:
+        raise CompileError("second C2f split must be the static 32/32 partition")
+    connections = [
+        (22, model.graph.node[21].output[0]),
+        (25, model.graph.node[24].output[0]),
+        (30, split.output[1]),
+        (33, model.graph.node[32].output[0]),
+        (37, model.graph.node[36].output[0]),
+        (40, model.graph.node[39].output[0]),
+        (45, model.graph.node[44].output[0]),
+    ]
+    for index, expected_input in connections:
+        if list(model.graph.node[index].input[:1]) != [expected_input]:
+            raise CompileError(f"node {index} has an unexpected graph input")
+    if list(split.input) != [model.graph.node[27].output[0], constant.output[0]]:
+        raise CompileError("second C2f split inputs do not match the pinned graph")
+    if list(model.graph.node[36].input) != [split.output[1], model.graph.node[35].output[0]]:
+        raise CompileError("second C2f first residual inputs do not match")
+    if list(model.graph.node[43].input) != [model.graph.node[36].output[0], model.graph.node[42].output[0]]:
+        raise CompileError("second C2f second residual inputs do not match")
+    if list(model.graph.node[44].input) != [
+        split.output[0],
+        split.output[1],
+        model.graph.node[36].output[0],
+        model.graph.node[43].output[0],
+    ]:
+        raise CompileError("second C2f concat inputs do not match")
+    second = C2fStageSpec(
+        cv1=cv1,
+        bottlenecks=(
+            (bottleneck0_cv1, bottleneck0_cv2),
+            (bottleneck1_cv1, bottleneck1_cv2),
+        ),
+        cv2=cv2,
+        residual_scales=(residual0_scale, residual1_scale),
+        concat_scale=concat_scale,
+        split_nodes=(constant.name, split.name),
+        add_nodes=(model.graph.node[36].name, model.graph.node[43].name),
+        concat_node=model.graph.node[44].name,
+    )
+    return stem, first, downsample, second, model_hash

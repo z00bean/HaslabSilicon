@@ -46,4 +46,4 @@ The independent graph evaluation compares 1,843,200 values across the two stem o
 
 The implementation validates the exact first C2f topology rather than accepting arbitrary ONNX graphs. It retains every boundary for differential testing and uses a deliberately direct DMA schedule. The command count therefore exposes a real scaling risk: extending this special-case schedule unchanged could exceed the current package limit or impose impractical command-dispatch traffic.
 
-The next compiler increment should introduce a reusable graph IR and liveness scheduler, then cover nodes 22–47: the `model.3` downsampling Conv-SiLU and the second C2f block. It should reuse the same branch primitives, support repeated bottlenecks, preserve exact boundary comparison, and report both the diagnostic retain-all allocation and a release-oriented liveness allocation.
+That next increment is complete in the [reusable graph schedule](reusable-graph-format.md), which covers nodes 22–47 in diagnostic and lifetime-reuse modes. This document remains the record for the earlier first-C2f package profile.

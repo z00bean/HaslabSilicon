@@ -7,12 +7,12 @@ HASLAB welcomes focused reviews, reproducibility reports, failing test cases, an
 | Area | Concrete contribution | Evidence to include |
 |---|---|---|
 | Contract and conformance | Independently review an opcode, state transition, or fixture derivation; add a minimal positive, boundary, or negative case | Contract rule, hand-derived expected bytes/status, and `make conformance` result |
-| Compiler and runtime | Generalize the first-C2f planner into a graph IR/liveness allocator and extend the pinned path through nodes 22–47 | Node-level validation, retain-all versus reusable allocation report, package determinism, and `make test` result |
+| Compiler and runtime | Extend the reusable graph path through nodes 48–73, covering the `model.5` downsample and third C2f | Node-level validation, diagnostic versus release allocation report, package determinism, exact boundary comparisons, and `make test` result |
 | Workload reproduction | Repeat the pinned export, calibration, or COCO evaluation on a documented environment | Artifact hashes, versions, commands, accuracy results, and any mismatch from checked-in reports |
 | Hardware preparation | Prototype a small SRAM/MAC/DMA structure or review a board constraint without claiming v0 FPGA support | Source, tool versions, synthesis or simulation output, and limitations |
 | Documentation | Correct a stale status statement or make an experiment easier to reproduce | Link to the implementation or report that supports the change |
 
-The [development plan](development-plan.md) is the status and dependency record. The [v0 contract](haslab-v0-contract.md), [conformance format](../conformance/FORMAT.md), and [first-C2f schedule](../compiler/first-c2f-format.md) are good starting points. Run `make check`, `make test`, and `git diff --check` for changes that affect executable behavior. Documentation-only changes need `make check` and link/status review.
+The [development plan](development-plan.md) is the status and dependency record. The [v0 contract](haslab-v0-contract.md), [conformance format](../conformance/FORMAT.md), and [reusable graph schedule](../compiler/reusable-graph-format.md) are good starting points. Run `make check`, `make test`, and `git diff --check` for changes that affect executable behavior. Documentation-only changes need `make check` and link/status review.
 
 ## Submission expectations
 

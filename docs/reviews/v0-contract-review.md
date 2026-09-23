@@ -62,8 +62,8 @@ Validation on 2026-09-20: `make test` passed 43 numerical-model tests and 42 sim
 | Commands per frame, host refill, patch copies, spill traffic | M5/M6 schedule estimates; M9 measurements | First two layers measured cumulatively in the functional runtime; whole-model and transport timing pending |
 | Board, aperture, bus ordering, cache maintenance, reset quiescence | M9 transport adapter and fault-injection evidence before integrated RTL freeze | Pending |
 | Physical SRAM mapping and synchronous read timing | M7 prototypes/M9 target probes | Pending |
-| Native FP8 | M10 separate numeric contract and arithmetic feasibility | Deferred; does not block v0 |
-| ASIC SRAM/PHY/DFT/process | M11 feasibility | Deferred; does not block v0 |
+| Native FP8 | M11 separate numeric contract and arithmetic feasibility | Deferred; does not block v0 |
+| ASIC SRAM/PHY/DFT/process | M12 feasibility | Deferred; does not block v0 |
 
 Small isolated RTL experiments may follow reviewed independent vectors, but full v0 RTL freeze still requires the workload/numerical and relevant transport gates. A documentation decision alone cannot satisfy a measurement gate.
 

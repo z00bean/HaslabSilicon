@@ -62,8 +62,9 @@ The current test suite covers the numerical model, functional command simulator,
 - [ ] Implement the minimal compiler and simulated runtime path. **Active: the first two Conv-SiLU blocks pass; the first C2f block is next.**
 - [ ] Implement and differentially verify the first RTL vertical slice.
 - [ ] Expand RTL operation coverage one conformance-gated operation at a time.
-- [ ] Select an FPGA from measured resource probes and complete v0 bring-up.
-- [ ] Evaluate RISC-V control and native FP8 for v1 using measured v0 evidence.
+- [ ] Select an FPGA from measured resource probes, complete stored-image bring-up, and measure the live camera-to-detection path.
+- [ ] Run a second pinned perception model on the same bitstream and publish the cost of reprogramming it.
+- [ ] Evaluate RISC-V control and native FP8 for v1 using measured v0 and multi-workload evidence.
 - [ ] Begin ASIC feasibility only after the FPGA design is stable and measured.
 
 The detailed [development plan](docs/development-plan.md) is the status record for dependencies, checklists, exit criteria, and evidence. The README checklist is updated when milestone status changes.
@@ -99,6 +100,8 @@ The primary target is batch-one edge vision:
 - Sensor-processing plus neural-network inference
 
 Compact vision transformers and edge transformers are later research targets where operator coverage and memory traffic prove practical. Large-model training and datacenter LLM inference are outside the initial scope.
+
+The implementation priority is the complete detector and a measured live perception path. A second vision model should then demonstrate reprogramming on the same FPGA image. Small policy or other inference workloads remain valid later experiments when they fit the measured operator and memory envelope without displacing the vision work.
 
 The first end-to-end workload candidate is a pinned YOLOv8n detector at 320×320. Its exact third-party weight, FLOAT ONNX export, preprocessing, complete graph inventory, learned-head/host-tail boundary, and calibration package are recorded in the [workload manifest](benchmarks/manifests/yolov8n-320-opset13/README.md). The proposed FPGA path executes the quantized backbone, neck, and learned detection head, while the host performs declared image preparation and final box decoding/DFL/NMS. The structural audit found no unsupported accelerator nodes and all proposed convolution tiles fit local memory. Repeated full COCO val2017 evaluations measured **28.50 COCO bbox mAP50–95** for FLOAT and **27.61** for the signed-symmetric INT8 software proxy, a 0.887-point loss within the stated one-point budget. The first two Conv-SiLU blocks now pass exact command-level comparison at both retained boundaries; remaining-layer, whole-model, and hardware execution remain unimplemented.
 

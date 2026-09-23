@@ -26,6 +26,8 @@ M5 is complete as a workload-pinning milestone. The exact YOLOv8n artifact, grap
 
 M6 is active. A reusable scheduler now executes the first two Conv-SiLU blocks as one package. It retains the `16×160×160` and `32×80×80` HWC8 tensors, handles two input-channel accumulation chunks in the second convolution, and reports 16,245 commands, 1,999,320 DMA bytes, 40,550,400 MACs, and 1,442,176 externally allocated bytes. All 614,400 retained INT8 values match the independent golden path, and runtime submission records the exact eight-entry FIFO refill behavior. The next slice is the first C2f block, including 1×1 convolution, split/view, concat liveness, and residual-scale handling. Independent M3/M4 review remains required before a stable ABI/corpus or package release.
 
+The scope priority is vision and perception: complete the pinned detector, prove the same path in portable RTL, bring it up on an FPGA, and measure a live camera-to-detection pipeline. A second independently pinned vision workload should then demonstrate that changing the model does not require changing the hardware image. Small policy or other inference models may follow when they fit the measured architecture and operator set without delaying the detector path.
+
 ## Milestone plan
 
 | ID | Milestone | Status | Depends on | Completion evidence |
@@ -39,9 +41,10 @@ M6 is active. A reusable scheduler now executes the first two Conv-SiLU blocks a
 | M6 | Minimal compiler and simulated runtime | `ACTIVE` | M5 complete; M3/M4 candidate usable, stable release still gated by independent review | Reusable lowering through the first two Conv-SiLU blocks passes exactly; completion still requires branched whole-model lowering, host tail, and layerwise comparisons |
 | M7 | First RTL vertical slice | `BLOCKED` | Frozen M3, M4 | Command decode through one INT8 MAC path, INT32 accumulation, requantization, completion/error behavior, and differential tests |
 | M8 | Incremental RTL operation coverage | `BLOCKED` | M7 | Each added DMA, convolution, or utility operation passes its conformance and assertion gates |
-| M9 | FPGA selection and v0 bring-up | `BLOCKED` | M5, M6, M8 | Measured resource probes inform board selection; reproducible build, timing, utilization, accuracy, transfer, and end-to-end latency reports are published |
-| M10 | v1 RISC-V and native FP8 research | `LATER` | Measured v0 | RISC-V control and FP8 are added only with workload evidence and independent numerical/implementation validation |
-| M11 | ASIC feasibility and test core | `LATER` | Stable measured FPGA design | Process, SRAM, IO, clock, power, DFT, physical verification, packaging, and fabrication collateral are explicitly resolved |
+| M9 | FPGA selection, v0 bring-up, and camera measurement | `BLOCKED` | M5, M6, M8 | Measured probes inform board selection; reproducible build, accuracy, resources, timing, power, transfers, and camera-to-box latency are published |
+| M10 | Second perception workload and reprogramming proof | `LATER` | Complete measured M9 detector | A separately pinned vision/perception graph runs on the same bitstream; operator coverage, compile time, changed package bytes, accuracy, and performance are published |
+| M11 | v1 RISC-V and native FP8 research | `LATER` | Measured v0 and M10 evidence | RISC-V control and FP8 are added only with workload evidence and independent numerical/implementation validation |
+| M12 | ASIC feasibility and test core | `LATER` | Stable measured FPGA design | Process, SRAM, IO, clock, power, DFT, physical verification, packaging, and fabrication collateral are explicitly resolved |
 
 M4 candidate fixtures and M5 workload auditing can proceed against M3's explicitly pinned candidate. Candidate fixtures provide the independent evidence needed to close M3; only then is the final M4 corpus tied to a frozen ABI. This staged gate avoids requiring a freeze before gathering the evidence needed to justify it. M7 may begin with reviewed M4 vectors after M3 freeze, before the full model compiler is finished, but no complete v0 RTL claim can be made before M5 and M6 establish the real workload path.
 
@@ -80,6 +83,7 @@ Location: [conformance/](../conformance/README.md). Candidate schema/runner deci
 - [x] Validate every fixture against the functional simulator through `make conformance`, included in `make test` and CI.
 - [x] Test the runner using corrupted artifacts, malformed schemas, and deliberately wrong expectations.
 - [ ] Complete independent review and stable-ABI corpus release after M3 closes.
+- [ ] Publish a short external-review quickstart that identifies the ABI registry, fixture derivations, reproduction commands, unsupported-operation diagnostics, and how to submit a minimized failing case.
 
 Ongoing rule: minimize each newly discovered failure into a permanent regression. The initial corpus reproduced the candidate simulator results without requiring a new arithmetic or command-semantic change. Runner discrepancies found during future use are bugs to investigate, not reasons to copy the implementation's output into golden files.
 
@@ -124,7 +128,7 @@ First vertical-slice evidence:
 - [ ] Lower the first C2f block with 1×1 convolution, split/view aliases, concat liveness, residual addition, and explicit scale checks.
 - [ ] Generalize from the first layer to every accelerator-region node and the declared host tail before closing M6.
 
-## M7–M9 — RTL and FPGA rules
+## M7–M9 — RTL, FPGA, and camera rules
 
 The first RTL slice is intentionally narrow:
 
@@ -147,7 +151,28 @@ Every new hardware operation must pass this gate:
 - [ ] Random tests record their seeds and minimized failures become regressions.
 - [ ] CI passes with pinned tool versions.
 
-FPGA selection follows small synthesis probes for SRAM, MAC, and DMA structures on at least two plausible targets. The choice must be based on measured memory mapping, DSP use, external-memory support, tool availability, cost, and accessibility to university teams.
+Portable RTL development starts with Verilator on macOS/Linux and a second simulator where the supported SystemVerilog subset permits it. Vendor simulation, synthesis, implementation, and programming are separate board-specific gates; passing the portable simulator does not establish timing or FPGA compatibility.
+
+FPGA selection follows small synthesis probes for SRAM, MAC, DMA, and host-interface structures on at least two plausible targets. Run these probes before purchasing a board. The choice must be based on measured memory mapping, DSP use, external-memory and camera support, host/software integration, tool and license availability, cost, lead time, and accessibility to university teams.
+
+M9 bring-up order:
+
+- [ ] Pin the portable RTL simulator versions and run the M4 binary conformance cases through the RTL harness.
+- [ ] Synthesize resource probes for at least two candidate FPGA families and publish tool versions, commands, inferred memories, DSP use, timing, and warnings.
+- [ ] Select and purchase a board only after the probes show that the v0 core, external-memory interface, and debug instrumentation fit with margin.
+- [ ] Bring up register access, reset, DMA, and a stored-image inference before adding a live camera; preserve each failure as a regression.
+- [ ] Integrate one documented USB or direct sensor path and state exactly which capture, resize, color conversion, normalization, and postprocessing steps run on the host or FPGA.
+- [ ] Measure layerwise correctness and COCO accuracy from the actual HASLAB command path before presenting live detections as evidence.
+- [ ] Measure cold and warm camera-to-box latency, sustained throughput, dropped frames, transfer traffic, thermals, power, and accuracy under the [hardware measurement protocol](../benchmarks/MEASUREMENT.md).
+
+## M10 — second perception workload and reprogramming proof
+
+- [ ] Choose a separately licensed and independently pinned vision/perception workload after the first detector is complete; prefer a graph that exposes a useful new operator or memory pattern.
+- [ ] Keep the FPGA bitstream unchanged. Record compiler/package hashes, compilation time, changed constant/package bytes, required host code, and unsupported operations.
+- [ ] Publish task-appropriate accuracy, layerwise agreement, end-to-end latency, throughput, power, and memory traffic using the same measurement discipline as the detector.
+- [ ] If a small policy or non-vision inference graph is added, treat it as an additional workload and do not replace the second perception proof or delay the complete detector.
+
+Exit criterion: the evidence shows model reprogramming on one hardware image rather than a second fixed-function demonstration.
 
 ## Project-wide controls
 
@@ -157,6 +182,7 @@ FPGA selection follows small synthesis probes for SRAM, MAC, and DMA structures 
 - Keep deterministic tests; record random seeds and artifact hashes.
 - Test error paths with the same care as successful execution.
 - Compare intermediate tensors instead of relying only on final detections.
+- Keep the public workload order explicit: detector first, live perception second, then compatible policy or other inference experiments.
 - Treat silent fallback, ignored errors, unreported saturation, and accidental approximation as failures.
 - Keep the golden oracle independent from the implementation under test.
 - Require reproducible evidence before changing a public status to implemented or tested.

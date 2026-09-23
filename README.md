@@ -45,6 +45,8 @@ make check
 make test
 ```
 
+For a smaller first experiment, run `make conformance` and inspect the [fixture format](conformance/FORMAT.md), or run `make sim` and read the [command simulator guide](simulation/README.md). The pinned YOLOv8n [reproduction guide](benchmarks/manifests/yolov8n-320-opset13/README.md) covers the more involved model and dataset workflow; third-party weights are not stored here.
+
 The current test suite covers the numerical model, functional command simulator, compiler/package writer, strict runtime loader and lifecycle, conformance infrastructure, stored independent expectations, and workload-manifest consistency. Run `make conformance` for the corpus alone. Passing establishes agreement for the tested cases; it is not an FPGA or silicon performance result. See the [conformance guide](conformance/README.md) for coverage and derivations.
 
 ### Progress at a glance
@@ -65,6 +67,8 @@ The current test suite covers the numerical model, functional command simulator,
 - [ ] Begin ASIC feasibility only after the FPGA design is stable and measured.
 
 The detailed [development plan](docs/development-plan.md) is the status record for dependencies, checklists, exit criteria, and evidence. The README checklist is updated when milestone status changes.
+
+Future hardware performance reports should follow the [measurement protocol](benchmarks/MEASUREMENT.md).
 
 The [contract review record](docs/reviews/v0-contract-review.md) explains the corrected simulator defects and remaining workload, package, and transport gates. The current candidate is **command ABI 0.1 / contract document revision 0.2**; these are separate versions. No RTL has been written.
 

@@ -1,6 +1,9 @@
 # Local website planning brief
 /docs/website-content-brief.md
 
+# Private positioning notes; never publish or commit
+/positioning/
+
 # macOS / desktop metadata
 .DS_Store
 ._*

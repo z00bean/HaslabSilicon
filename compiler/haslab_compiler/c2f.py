@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Sequence
 import numpy as np
 
 if TYPE_CHECKING:
-    from .graph import C2fStageSpec, SPPFSpec
+    from .graph import C2fStageSpec, FirstNeckStageSpec, SPPFSpec
 
 from haslab_ref import oihw_to_khwci8, quantize_int8
 from haslab_sim import ABI_MAJOR, ABI_MINOR, Command, MemorySpace, Opcode
@@ -821,6 +821,69 @@ class _Builder:
             }
         )
 
+    def schedule_upsample2(
+        self,
+        source: _TensorRef,
+        destination: _TensorRef,
+        node_name: str,
+    ) -> None:
+        """Schedule exact nearest-neighbor 2x upsampling by channel group."""
+
+        if (destination.height, destination.width, destination.channels) != (
+            source.height * 2,
+            source.width * 2,
+            source.channels,
+        ):
+            raise CompileError("upsample output must be exactly 2x the input spatial shape")
+        if not _same_scale(source.scale, destination.scale):
+            raise CompileError("upsample must retain the input scale")
+        groups = source.channels // LANES
+        tile_h = _divisor_at_most_eight(source.height)
+        tile_w = _divisor_at_most_eight(source.width)
+        start = len(self.commands)
+        before_opcodes = self.opcodes.copy()
+        before_dma = self.dma.copy()
+        for y in range(0, source.height, tile_h):
+            for x in range(0, source.width, tile_w):
+                for group in range(groups):
+                    self._load_dense_group(source, group, y, x, 0, tile_h, tile_w)
+                    self.emit(
+                        Opcode.UPSAMPLE2_I8,
+                        [0, 0, tile_h, tile_w, LANES],
+                    )
+                    self._store_group(
+                        destination,
+                        group,
+                        y * 2,
+                        x * 2,
+                        tile_h * 2,
+                        tile_w * 2,
+                    )
+        opcode_delta = self.opcodes - before_opcodes
+        dma_delta = self.dma - before_dma
+        self.operations.append(
+            {
+                "command_count": len(self.commands) - start,
+                "dma_bytes": {
+                    key: dma_delta[key] for key in ("constants", "input", "output")
+                }
+                | {
+                    "total": sum(
+                        dma_delta[key] for key in ("constants", "input", "output")
+                    )
+                },
+                "input_group_tiles":
+                    (source.height // tile_h) * (source.width // tile_w) * groups,
+                "kind": "upsample2_nearest",
+                "name": node_name,
+                "opcode_counts": {
+                    Opcode(key).name: value
+                    for key, value in sorted(opcode_delta.items())
+                },
+                "tile_shape": [tile_h, tile_w],
+            }
+        )
+
     def schedule_concat(
         self,
         sources: Sequence[_TensorRef],
@@ -861,9 +924,11 @@ class _Builder:
         tile_w = _divisor_at_most_eight(destination.width)
         destination_group = 0
         parameter_group = 0
+        streamed_group_records = False
         for source in sources:
             groups = source.channels // LANES
-            if stream_parameters:
+            stream_source_groups = stream_parameters and groups * 128 > 3_072
+            if stream_parameters and not stream_source_groups:
                 self.load_constant(
                     parameter_offset + parameter_group * 128,
                     groups * 128,
@@ -873,6 +938,14 @@ class _Builder:
             for y in range(0, source.height, tile_h):
                 for x in range(0, source.width, tile_w):
                     for group in range(groups):
+                        if stream_source_groups:
+                            self.load_constant(
+                                parameter_offset + (parameter_group + group) * 128,
+                                128,
+                                MemorySpace.PARAM,
+                                0,
+                            )
+                            streamed_group_records = True
                         self._load_dense_group(source, group, y, x, 0, tile_h, tile_w)
                         self.emit(
                             Opcode.MAP_I8,
@@ -882,7 +955,9 @@ class _Builder:
                                 tile_h,
                                 tile_w,
                                 LANES,
-                                group * 128
+                                0
+                                if stream_source_groups
+                                else group * 128
                                 if stream_parameters
                                 else (parameter_group + group) * 128,
                             ],
@@ -907,7 +982,11 @@ class _Builder:
                 },
             }
         )
-        if stream_parameters:
+        if streamed_group_records:
+            self.operations[-1]["parameter_residency"] = (
+                "one concat channel-group record streamed per spatial tile"
+            )
+        elif stream_parameters:
             self.operations[-1]["parameter_residency"] = "one concat source at a time"
 
     def finish(self, source_nodes: Sequence[str]) -> bytes:
@@ -1771,5 +1850,189 @@ def load_pinned_through_backbone(
         downsample4,
         fourth,
         sppf,
+        model_hash,
+    )
+
+
+def load_pinned_through_first_neck(
+    model_path: str | Path, calibration_path: str | Path, lut_path: str | Path
+) -> tuple[
+    list[ConvSiluLayerSpec],
+    C2fBlockSpec,
+    C2fConvSpec,
+    C2fStageSpec,
+    C2fConvSpec,
+    C2fStageSpec,
+    C2fConvSpec,
+    C2fStageSpec,
+    SPPFSpec,
+    FirstNeckStageSpec,
+    str,
+]:
+    """Validate and extract pinned nodes 0..119 through the first neck C2f."""
+
+    try:
+        import onnx
+        from onnx import numpy_helper
+    except ImportError as exc:  # pragma: no cover - integration-only dependency.
+        raise CompileError("ONNX is required to compile the pinned model") from exc
+    from .graph import C2fStageSpec, FirstNeckStageSpec
+
+    (
+        stem,
+        first,
+        downsample2,
+        second,
+        downsample3,
+        third,
+        downsample4,
+        fourth,
+        sppf,
+        model_hash,
+    ) = load_pinned_through_backbone(model_path, calibration_path, lut_path)
+    model = onnx.load(model_path)
+    if len(model.graph.node) < 120:
+        raise CompileError("graph does not contain the complete first neck C2f")
+    expected_types = [
+        "Constant", "Resize", "Concat", "Conv", "Sigmoid", "Mul", "Split",
+        "Conv", "Sigmoid", "Mul", "Conv", "Sigmoid", "Mul", "Concat",
+        "Conv", "Sigmoid", "Mul",
+    ]
+    if [node.op_type for node in model.graph.node[103:120]] != expected_types:
+        raise CompileError("nodes 103..119 do not match the pinned first neck stage")
+    calibration = json.loads(Path(calibration_path).read_text(encoding="utf-8"))
+    scales = {item["name"]: item["values"] for item in calibration["scales"]}
+    records = {int(item["conv_node_index"]): item for item in calibration["silu"]["records"]}
+    initializers = {item.name: numpy_helper.to_array(item) for item in model.graph.initializer}
+    lut_blob = Path(lut_path).read_bytes()
+
+    resize_constant, resize = model.graph.node[103:105]
+    resize_value = onnx.helper.get_attribute_value(resize_constant.attribute[0])
+    if np.asarray(numpy_helper.to_array(resize_value)).tolist() != [1.0, 1.0, 2.0, 2.0]:
+        raise CompileError("first neck Resize must use the static NCHW 2x scale")
+    resize_attributes = {
+        item.name: onnx.helper.get_attribute_value(item) for item in resize.attribute
+    }
+    if resize_attributes != {
+        "coordinate_transformation_mode": b"asymmetric",
+        "cubic_coeff_a": -0.75,
+        "mode": b"nearest",
+        "nearest_mode": b"floor",
+    }:
+        raise CompileError("first neck Resize attributes are outside the v0 profile")
+    if list(resize.input) != [
+        model.graph.node[102].output[0],
+        "",
+        resize_constant.output[0],
+    ]:
+        raise CompileError("first neck Resize inputs do not match the pinned graph")
+    neck_concat = model.graph.node[105]
+    if list(neck_concat.input) != [resize.output[0], model.graph.node[73].output[0]]:
+        raise CompileError("first neck concat does not use the model.6 skip tensor")
+
+    neck_concat_scale = float(scales["/model.11/Concat_output_0_scale"][0])
+    cv1 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=106,
+        prefix="model.12.cv1",
+        input_h=20,
+        input_w=20,
+        input_channels=384,
+        input_scale=neck_concat_scale,
+    )
+    bottleneck_cv1 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=110,
+        prefix="model.12.m.0.cv1",
+        input_h=20,
+        input_w=20,
+        input_channels=64,
+        input_scale=cv1.output_scale,
+    )
+    bottleneck_cv2 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=113,
+        prefix="model.12.m.0.cv2",
+        input_h=20,
+        input_w=20,
+        input_channels=64,
+        input_scale=bottleneck_cv1.output_scale,
+    )
+    c2f_concat_scale = float(scales["/model.12/Concat_output_0_scale"][0])
+    cv2 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=117,
+        prefix="model.12.cv2",
+        input_h=20,
+        input_w=20,
+        input_channels=192,
+        input_scale=c2f_concat_scale,
+    )
+    split = model.graph.node[109]
+    split_constant = model.graph.node[54]
+    split_value = onnx.helper.get_attribute_value(split_constant.attribute[0])
+    if np.asarray(numpy_helper.to_array(split_value)).tolist() != [64, 64]:
+        raise CompileError("first neck C2f split must be the static 64/64 partition")
+    if list(split.input) != [model.graph.node[108].output[0], split_constant.output[0]]:
+        raise CompileError("first neck C2f split inputs do not match")
+    connections = [
+        (106, neck_concat.output[0]),
+        (110, split.output[1]),
+        (113, model.graph.node[112].output[0]),
+        (117, model.graph.node[116].output[0]),
+    ]
+    for index, expected_input in connections:
+        if list(model.graph.node[index].input[:1]) != [expected_input]:
+            raise CompileError(f"node {index} has an unexpected graph input")
+    if list(model.graph.node[116].input) != [
+        split.output[0], split.output[1], model.graph.node[115].output[0]
+    ]:
+        raise CompileError("first neck C2f concat inputs do not match")
+    stage = C2fStageSpec(
+        cv1=cv1,
+        bottlenecks=((bottleneck_cv1, bottleneck_cv2),),
+        cv2=cv2,
+        residual_scales=(None,),
+        concat_scale=c2f_concat_scale,
+        split_nodes=(split.name,),
+        add_nodes=(None,),
+        concat_node=model.graph.node[116].name,
+    )
+    neck = FirstNeckStageSpec(
+        upsample_name="model.10",
+        resize_nodes=(resize_constant.name, resize.name),
+        skip_source="model.6",
+        concat_name="model.11.concat",
+        concat_node=neck_concat.name,
+        concat_scale=neck_concat_scale,
+        stage=stage,
+    )
+    return (
+        stem,
+        first,
+        downsample2,
+        second,
+        downsample3,
+        third,
+        downsample4,
+        fourth,
+        sppf,
+        neck,
         model_hash,
     )

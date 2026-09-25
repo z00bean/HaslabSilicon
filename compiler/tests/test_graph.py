@@ -16,11 +16,17 @@ from haslab_compiler import (
     GraphIR,
     GraphTensor,
     MaxPoolOp,
+    Upsample2Op,
     build_two_c2f_graph,
     compile_graph,
     first_stage,
 )
-from haslab_ref import build_silu_lut, maxpool5_i8, nchw_to_hwc8
+from haslab_ref import (
+    build_silu_lut,
+    maxpool5_i8,
+    nchw_to_hwc8,
+    upsample2_nearest_i8,
+)
 from haslab_runtime import RuntimeStatus, SimulatorRuntime, load_hxb
 from haslab_compiler.c2f import _conv_tile_shape
 
@@ -237,6 +243,43 @@ class GraphScheduleTests(unittest.TestCase):
         completion = runtime.wait(runtime.submit())
         self.assertIs(completion.status, RuntimeStatus.SUCCESS)
 
+    def test_single_wide_concat_source_streams_one_group_record(self) -> None:
+        layer = conv("verywide.source", 16, 32, 256, 1)
+        graph = GraphIR(
+            tensors=(
+                GraphTensor("verywide.source", 16, 16, 256, 1.0),
+                GraphTensor("verywide.concat", 16, 16, 256, 1.0),
+            ),
+            operations=(
+                ConvSiluOp("model.1", "verywide.source", layer),
+                ConcatOp(
+                    ("verywide.source",),
+                    "verywide.concat",
+                    "verywide.concat.node",
+                ),
+            ),
+            source_nodes=layer.node_names + ("verywide.concat.node",),
+            final_outputs=("verywide.concat",),
+        )
+        raw = compile_graph(
+            stem_layers=self.stem,
+            graph=graph,
+            source_model_sha256="88" * 32,
+            allocation_mode="release",
+        )
+        package = load_hxb(raw)
+        operation = package.manifest["schedule"]["graph_operations"][-1]
+        self.assertEqual(
+            operation["parameter_residency"],
+            "one concat channel-group record streamed per spatial tile",
+        )
+        source = np.zeros((1, 3, 64, 64), dtype=np.int8)
+        runtime = SimulatorRuntime()
+        runtime.load_model(raw)
+        runtime.bind_input(np.ascontiguousarray(nchw_to_hwc8(source)).tobytes())
+        completion = runtime.wait(runtime.submit())
+        self.assertIs(completion.status, RuntimeStatus.SUCCESS)
+
     def test_maxpool_graph_operation_compiles_halo_and_executes_exactly(self) -> None:
         graph = GraphIR(
             tensors=(GraphTensor("pool", 16, 16, 32, 1.0),),
@@ -325,6 +368,58 @@ class GraphScheduleTests(unittest.TestCase):
         operations = package.manifest["schedule"]["graph_operations"]
         self.assertIn("output-group record", operations[0]["parameter_residency"])
         self.assertIn("left/right channel-group pair", operations[3]["parameter_residency"])
+
+    def test_upsample_graph_operation_executes_exactly(self) -> None:
+        graph = GraphIR(
+            tensors=(GraphTensor("upsample", 32, 32, 32, 1.0),),
+            operations=(Upsample2Op("model.1", "upsample", "resize.node"),),
+            source_nodes=("resize.constant", "resize.node"),
+            final_outputs=("upsample",),
+        )
+        raw = compile_graph(
+            stem_layers=self.stem,
+            graph=graph,
+            source_model_sha256="77" * 32,
+            allocation_mode="diagnostic",
+        )
+        package = load_hxb(raw)
+        operation = package.manifest["schedule"]["graph_operations"][0]
+        self.assertEqual(operation["kind"], "upsample2_nearest")
+        self.assertEqual(operation["tile_shape"], [8, 8])
+        self.assertEqual(operation["input_group_tiles"], 16)
+        self.assertEqual(operation["opcode_counts"]["UPSAMPLE2_I8"], 16)
+
+        source = (
+            np.arange(1 * 3 * 64 * 64, dtype=np.int32).reshape(1, 3, 64, 64)
+            % 17
+            - 8
+        ).astype(np.int8)
+        runtime = SimulatorRuntime()
+        runtime.load_model(raw)
+        runtime.bind_input(np.ascontiguousarray(nchw_to_hwc8(source)).tobytes())
+        completion = runtime.wait(runtime.submit())
+        self.assertIs(completion.status, RuntimeStatus.SUCCESS)
+        assert completion.output is not None
+        records = {
+            item["name"]: item for item in package.manifest["output"]["tensors"]
+        }
+        model1_record = records["model.1"]
+        upsample_record = records["upsample"]
+        model1 = np.frombuffer(
+            completion.output[
+                model1_record["addend"] : model1_record["addend"]
+                + model1_record["bytes"]
+            ],
+            dtype=np.int8,
+        ).reshape(model1_record["physical_shape"])
+        actual = np.frombuffer(
+            completion.output[
+                upsample_record["addend"] : upsample_record["addend"]
+                + upsample_record["bytes"]
+            ],
+            dtype=np.int8,
+        ).reshape(upsample_record["physical_shape"])
+        np.testing.assert_array_equal(actual, upsample2_nearest_i8(model1))
 
 
 if __name__ == "__main__":

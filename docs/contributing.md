@@ -7,7 +7,7 @@ HASLAB welcomes focused reviews, reproducibility reports, failing test cases, an
 | Area | Concrete contribution | Evidence to include |
 |---|---|---|
 | Contract and conformance | Independently review an opcode, state transition, or fixture derivation; add a minimal positive, boundary, or negative case | Contract rule, hand-derived expected bytes/status, and `make conformance` result |
-| Compiler and runtime | Lower nodes 103–119 through the first top-down neck branch | Exact `UPSAMPLE2_I8`, concat with the long-lived `model.6` skip, non-residual `model.12` C2f lowering, diagnostic versus release allocation, exact boundary comparisons, and `make test` result |
+| Compiler and runtime | Lower nodes 120–136 through the second top-down neck branch | Exact `UPSAMPLE2_I8`, concat with the long-lived `model.4` skip, non-residual `model.15` C2f lowering, diagnostic versus release allocation, exact boundary comparisons, and `make test` result |
 | Workload reproduction | Repeat the pinned export, calibration, or COCO evaluation on a documented environment | Artifact hashes, versions, commands, accuracy results, and any mismatch from checked-in reports |
 | Hardware preparation | Prototype a small SRAM/MAC/DMA structure or review a board constraint without claiming v0 FPGA support | Source, tool versions, synthesis or simulation output, and limitations |
 | Documentation | Correct a stale status statement or make an experiment easier to reproduce | Link to the implementation or report that supports the change |

@@ -69,7 +69,14 @@ class MaxPoolOp:
     node_name: str
 
 
-GraphOp = ConvSiluOp | AddOp | ConcatOp | MaxPoolOp
+@dataclass(frozen=True)
+class Upsample2Op:
+    source: str
+    destination: str
+    node_name: str
+
+
+GraphOp = ConvSiluOp | AddOp | ConcatOp | MaxPoolOp | Upsample2Op
 
 
 @dataclass(frozen=True)
@@ -85,10 +92,10 @@ class C2fStageSpec:
     cv1: C2fConvSpec
     bottlenecks: tuple[tuple[C2fConvSpec, C2fConvSpec], ...]
     cv2: C2fConvSpec
-    residual_scales: tuple[float, ...]
+    residual_scales: tuple[float | None, ...]
     concat_scale: float
-    split_nodes: tuple[str, str]
-    add_nodes: tuple[str, ...]
+    split_nodes: tuple[str, ...]
+    add_nodes: tuple[str | None, ...]
     concat_node: str
 
 
@@ -105,6 +112,17 @@ class SPPFSpec:
     concat_node: str
     concat_scale: float
     cv2: C2fConvSpec
+
+
+@dataclass(frozen=True)
+class FirstNeckStageSpec:
+    upsample_name: str
+    resize_nodes: tuple[str, str]
+    skip_source: str
+    concat_name: str
+    concat_node: str
+    concat_scale: float
+    stage: C2fStageSpec
 
 
 def _material(name: str, layer: C2fConvSpec) -> GraphTensor:
@@ -128,6 +146,99 @@ def first_stage(block: C2fBlockSpec) -> C2fStageSpec:
     )
 
 
+def _append_c2f_stage(
+    tensors: list[GraphTensor],
+    operations: list[GraphOp],
+    stage: C2fStageSpec,
+    source: str,
+    prefix: str,
+) -> str:
+    cv1_name = f"{prefix}.cv1"
+    tensors.append(_material(cv1_name, stage.cv1))
+    operations.append(ConvSiluOp(source, cv1_name, stage.cv1))
+    hidden_channels = int(np.asarray(stage.cv1.weights).shape[0]) // 2
+    split0 = f"{prefix}.split0"
+    split1 = f"{prefix}.split1"
+    cv1_tensor = tensors[-1]
+    tensors.extend(
+        [
+            GraphTensor(
+                split0,
+                cv1_tensor.height,
+                cv1_tensor.width,
+                hidden_channels,
+                cv1_tensor.scale,
+                alias_of=cv1_name,
+                channel_group_offset=0,
+            ),
+            GraphTensor(
+                split1,
+                cv1_tensor.height,
+                cv1_tensor.width,
+                hidden_channels,
+                cv1_tensor.scale,
+                alias_of=cv1_name,
+                channel_group_offset=hidden_channels // 8,
+            ),
+        ]
+    )
+    branch = split1
+    concat_sources = [split0, split1]
+    if not (
+        len(stage.bottlenecks)
+        == len(stage.residual_scales)
+        == len(stage.add_nodes)
+    ):
+        raise CompileError(f"{prefix} bottleneck metadata lengths disagree")
+    for index, ((conv1, conv2), residual_scale, add_node) in enumerate(
+        zip(stage.bottlenecks, stage.residual_scales, stage.add_nodes)
+    ):
+        conv1_name = f"{prefix}.m.{index}.cv1"
+        conv2_name = f"{prefix}.m.{index}.cv2"
+        tensors.append(_material(conv1_name, conv1))
+        operations.append(ConvSiluOp(branch, conv1_name, conv1))
+        tensors.append(_material(conv2_name, conv2))
+        operations.append(ConvSiluOp(conv1_name, conv2_name, conv2))
+        if (residual_scale is None) != (add_node is None):
+            raise CompileError(f"{prefix} residual scale and add node must both be present or absent")
+        if residual_scale is None:
+            branch = conv2_name
+        else:
+            add_name = f"{prefix}.m.{index}.add"
+            conv2_tensor = tensors[-1]
+            tensors.append(
+                GraphTensor(
+                    add_name,
+                    conv2_tensor.height,
+                    conv2_tensor.width,
+                    conv2_tensor.channels,
+                    residual_scale,
+                )
+            )
+            assert add_node is not None
+            operations.append(AddOp(branch, conv2_name, add_name, add_node))
+            branch = add_name
+        concat_sources.append(branch)
+    concat_name = f"{prefix}.concat"
+    tensors.append(
+        GraphTensor(
+            concat_name,
+            cv1_tensor.height,
+            cv1_tensor.width,
+            sum(
+                next(item.channels for item in tensors if item.name == name)
+                for name in concat_sources
+            ),
+            stage.concat_scale,
+        )
+    )
+    operations.append(ConcatOp(tuple(concat_sources), concat_name, stage.concat_node))
+    output_name = prefix
+    tensors.append(_material(output_name, stage.cv2))
+    operations.append(ConvSiluOp(concat_name, output_name, stage.cv2))
+    return output_name
+
+
 def build_two_c2f_graph(
     *, first: C2fStageSpec, downsample: C2fConvSpec, second: C2fStageSpec
 ) -> GraphIR:
@@ -147,87 +258,10 @@ def build_c2f_graph(
     tensors: list[GraphTensor] = []
     operations: list[GraphOp] = []
 
-    def add_stage(stage: C2fStageSpec, source: str, prefix: str) -> str:
-        cv1_name = f"{prefix}.cv1"
-        tensors.append(_material(cv1_name, stage.cv1))
-        operations.append(ConvSiluOp(source, cv1_name, stage.cv1))
-        hidden_channels = int(np.asarray(stage.cv1.weights).shape[0]) // 2
-        split0 = f"{prefix}.split0"
-        split1 = f"{prefix}.split1"
-        cv1_tensor = tensors[-1]
-        tensors.extend(
-            [
-                GraphTensor(
-                    split0,
-                    cv1_tensor.height,
-                    cv1_tensor.width,
-                    hidden_channels,
-                    cv1_tensor.scale,
-                    alias_of=cv1_name,
-                    channel_group_offset=0,
-                ),
-                GraphTensor(
-                    split1,
-                    cv1_tensor.height,
-                    cv1_tensor.width,
-                    hidden_channels,
-                    cv1_tensor.scale,
-                    alias_of=cv1_name,
-                    channel_group_offset=hidden_channels // 8,
-                ),
-            ]
-        )
-        branch = split1
-        concat_sources = [split0, split1]
-        if not (
-            len(stage.bottlenecks)
-            == len(stage.residual_scales)
-            == len(stage.add_nodes)
-        ):
-            raise CompileError(f"{prefix} bottleneck metadata lengths disagree")
-        for index, ((conv1, conv2), residual_scale, add_node) in enumerate(
-            zip(stage.bottlenecks, stage.residual_scales, stage.add_nodes)
-        ):
-            conv1_name = f"{prefix}.m.{index}.cv1"
-            conv2_name = f"{prefix}.m.{index}.cv2"
-            add_name = f"{prefix}.m.{index}.add"
-            tensors.append(_material(conv1_name, conv1))
-            operations.append(ConvSiluOp(branch, conv1_name, conv1))
-            tensors.append(_material(conv2_name, conv2))
-            operations.append(ConvSiluOp(conv1_name, conv2_name, conv2))
-            conv2_tensor = tensors[-1]
-            tensors.append(
-                GraphTensor(
-                    add_name,
-                    conv2_tensor.height,
-                    conv2_tensor.width,
-                    conv2_tensor.channels,
-                    residual_scale,
-                )
-            )
-            operations.append(AddOp(branch, conv2_name, add_name, add_node))
-            branch = add_name
-            concat_sources.append(add_name)
-        concat_name = f"{prefix}.concat"
-        tensors.append(
-            GraphTensor(
-                concat_name,
-                cv1_tensor.height,
-                cv1_tensor.width,
-                sum(next(item.channels for item in tensors if item.name == name) for name in concat_sources),
-                stage.concat_scale,
-            )
-        )
-        operations.append(ConcatOp(tuple(concat_sources), concat_name, stage.concat_node))
-        output_name = prefix
-        tensors.append(_material(output_name, stage.cv2))
-        operations.append(ConvSiluOp(concat_name, output_name, stage.cv2))
-        return output_name
-
     if not first.cv1.name.endswith(".cv1"):
         raise CompileError("first C2f stage name must end in .cv1")
     first_prefix = first.cv1.name.removesuffix(".cv1")
-    output = add_stage(first, "model.1", first_prefix)
+    output = _append_c2f_stage(tensors, operations, first, "model.1", first_prefix)
     source_nodes = _stage_source_nodes(first)
     for extension in extensions:
         downsample_name = extension.downsample.name
@@ -237,7 +271,9 @@ def build_c2f_graph(
         if not extension.stage.cv1.name.endswith(".cv1"):
             raise CompileError("C2f stage name must end in .cv1")
         prefix = extension.stage.cv1.name.removesuffix(".cv1")
-        output = add_stage(extension.stage, downsample_name, prefix)
+        output = _append_c2f_stage(
+            tensors, operations, extension.stage, downsample_name, prefix
+        )
         source_nodes.extend(_stage_source_nodes(extension.stage))
     return GraphIR(tuple(tensors), tuple(operations), tuple(source_nodes), (output,))
 
@@ -309,19 +345,78 @@ def build_backbone_graph(
     )
 
 
+def extend_with_first_neck_stage(
+    graph: GraphIR, neck: FirstNeckStageSpec
+) -> GraphIR:
+    """Append pinned nodes 103..119 through the first top-down neck C2f."""
+
+    if len(graph.final_outputs) != 1:
+        raise CompileError("first neck stage requires one preceding graph output")
+    tensor_map = {tensor.name: tensor for tensor in graph.tensors}
+    source_name = graph.final_outputs[0]
+    if source_name not in tensor_map or neck.skip_source not in tensor_map:
+        raise CompileError("first neck stage source or skip tensor is unavailable")
+    source = tensor_map[source_name]
+    skip = tensor_map[neck.skip_source]
+    if (source.height * 2, source.width * 2) != (skip.height, skip.width):
+        raise CompileError("first neck upsample shape does not match its skip tensor")
+    tensors = list(graph.tensors)
+    operations = list(graph.operations)
+    tensors.append(
+        GraphTensor(
+            neck.upsample_name,
+            source.height * 2,
+            source.width * 2,
+            source.channels,
+            source.scale,
+        )
+    )
+    operations.append(
+        Upsample2Op(source_name, neck.upsample_name, neck.resize_nodes[-1])
+    )
+    tensors.append(
+        GraphTensor(
+            neck.concat_name,
+            skip.height,
+            skip.width,
+            source.channels + skip.channels,
+            neck.concat_scale,
+        )
+    )
+    operations.append(
+        ConcatOp(
+            (neck.upsample_name, neck.skip_source),
+            neck.concat_name,
+            neck.concat_node,
+        )
+    )
+    if not neck.stage.cv1.name.endswith(".cv1"):
+        raise CompileError("neck C2f stage name must end in .cv1")
+    prefix = neck.stage.cv1.name.removesuffix(".cv1")
+    output = _append_c2f_stage(
+        tensors, operations, neck.stage, neck.concat_name, prefix
+    )
+    source_nodes = list(graph.source_nodes)
+    source_nodes.extend(neck.resize_nodes)
+    source_nodes.append(neck.concat_node)
+    source_nodes.extend(_stage_source_nodes(neck.stage))
+    return GraphIR(tuple(tensors), tuple(operations), tuple(source_nodes), (output,))
+
+
 def _stage_source_nodes(stage: C2fStageSpec) -> list[str]:
     nodes = list(stage.cv1.node_names) + list(stage.split_nodes)
     for pair, add_node in zip(stage.bottlenecks, stage.add_nodes):
         nodes.extend(pair[0].node_names)
         nodes.extend(pair[1].node_names)
-        nodes.append(add_node)
+        if add_node is not None:
+            nodes.append(add_node)
     nodes.append(stage.concat_node)
     nodes.extend(stage.cv2.node_names)
     return nodes
 
 
 def _operation_sources(operation: GraphOp) -> tuple[str, ...]:
-    if isinstance(operation, (ConvSiluOp, MaxPoolOp)):
+    if isinstance(operation, (ConvSiluOp, MaxPoolOp, Upsample2Op)):
         return (operation.source,)
     if isinstance(operation, AddOp):
         return (operation.left, operation.right)
@@ -562,8 +657,14 @@ def compile_graph(
                 refs[operation.destination],
                 operation.node_name,
             )
-        else:
+        elif isinstance(operation, MaxPoolOp):
             builder.schedule_maxpool(
+                refs[operation.source],
+                refs[operation.destination],
+                operation.node_name,
+            )
+        else:
+            builder.schedule_upsample2(
                 refs[operation.source],
                 refs[operation.destination],
                 operation.node_name,
@@ -660,6 +761,50 @@ def compile_pinned_through_backbone(
             C2fExtension(downsample=downsample4, stage=fourth),
         ),
         sppf=sppf,
+    )
+    return compile_graph(
+        stem_layers=stem,
+        graph=graph,
+        source_model_sha256=model_hash,
+        allocation_mode=allocation_mode,
+    )
+
+
+def compile_pinned_through_first_neck(
+    model_path: str,
+    calibration_path: str,
+    lut_path: str,
+    *,
+    allocation_mode: AllocationMode,
+) -> bytes:
+    """Compile pinned nodes 0..119 through the first top-down neck C2f."""
+
+    from .c2f import load_pinned_through_first_neck
+
+    (
+        stem,
+        first,
+        downsample2,
+        second,
+        downsample3,
+        third,
+        downsample4,
+        fourth,
+        sppf,
+        neck,
+        model_hash,
+    ) = load_pinned_through_first_neck(model_path, calibration_path, lut_path)
+    graph = extend_with_first_neck_stage(
+        build_backbone_graph(
+            first=first_stage(first),
+            extensions=(
+                C2fExtension(downsample=downsample2, stage=second),
+                C2fExtension(downsample=downsample3, stage=third),
+                C2fExtension(downsample=downsample4, stage=fourth),
+            ),
+            sppf=sppf,
+        ),
+        neck,
     )
     return compile_graph(
         stem_layers=stem,

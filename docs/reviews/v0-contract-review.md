@@ -25,6 +25,8 @@ Follow-up, 2026-09-23: [M6's third-C2f schedule](../../benchmarks/manifests/yolo
 
 Follow-up, 2026-09-25: [M6's backbone schedule](../../benchmarks/manifests/yolov8n-320-opset13/m6-through-backbone.json) now executes nodes 0–102 through SPPF. It adds three exact 5×5 pools with compiled `-128` halos and streams wide convolution/residual parameters without increasing the 3 KiB parameter SRAM. Diagnostic mode matches 3,532,800 values across 49 boundaries; release mode retains the 614,400-byte peak and matches all 25,600 final backbone values. Neck/head lowering, transport timing, and independent M3/M4 review remain open.
 
+Follow-up, 2026-09-25: [M6's first-neck schedule](../../benchmarks/manifests/yolov8n-320-opset13/m6-through-first-neck.json) now executes nodes 0–119. It adds exact 2× nearest-neighbor upsampling, preserves the `model.6` skip through its late concat, supports a non-residual C2f block, and streams a 256-channel concat source one parameter record at a time. Diagnostic mode matches 4,070,400 values across 58 boundaries; release mode retains the 614,400-byte peak and matches all 51,200 final neck values. Remaining neck/head lowering, transport timing, and independent M3/M4 review remain open.
+
 ## Scope and review results
 
 | Area | Reviewed behavior | Outcome / evidence |
@@ -65,9 +67,9 @@ Validation on 2026-09-20: `make test` passed 43 numerical-model tests and 42 sim
 | Detection-tail boundary and preprocessing/output conventions | M5 graph inventory and reproducible baseline | Complete for the pinned workload |
 | INT8 accuracy budget and calibration | M5 evaluation; one-percentage-point mAP50–95 budget | Calibrated proxy passes; exact command-level comparison remains in M6 |
 | Scale approximation and reproducible coefficient/LUT bytes | M5/M6 coefficient-generation policy and accuracy/error report | Candidate bytes and approximation errors recorded; M6 must execute them exactly |
-| Residual/concat scales, split boundaries, chunk/halo layouts | M5 every-layer audit, then M6 lowering tests | All backbone C2f/SPPF forms pass with explicit residual/concat coefficients, zero-allocation split views, MaxPool halos, streamed wide parameters, and auditable lifetime reuse; neck/head forms remain pending |
+| Residual/concat scales, split boundaries, chunk/halo layouts | M5 every-layer audit, then M6 lowering tests | Backbone and first-neck forms pass with explicit merge coefficients, residual and non-residual C2f, zero-allocation split views, MaxPool halos, exact upsampling, streamed wide parameters, and auditable skip lifetimes; later neck/head forms remain pending |
 | Package schema, limits, relocations, parser behavior | M6 schema freeze before compiler/runtime implementation | Pending |
-| Commands per frame, host refill, patch copies, spill traffic | M5/M6 schedule estimates; M9 measurements | Nodes 0–102 measured cumulatively in the functional runtime; whole-model, optimized liveness, and transport timing pending |
+| Commands per frame, host refill, patch copies, spill traffic | M5/M6 schedule estimates; M9 measurements | Nodes 0–119 measured cumulatively in the functional runtime; whole-model, optimized liveness, and transport timing pending |
 | Board, aperture, bus ordering, cache maintenance, reset quiescence | M9 transport adapter and fault-injection evidence before integrated RTL freeze | Pending |
 | Physical SRAM mapping and synchronous read timing | M7 prototypes/M9 target probes | Pending |
 | Native FP8 | M11 separate numeric contract and arithmetic feasibility | Deferred; does not block v0 |
@@ -77,6 +79,6 @@ Small isolated RTL experiments may follow reviewed independent vectors, but full
 
 ## Next action and closure criteria
 
-The M4 fixture schema and first independently derived corpus now exist against **ABI 0.1 / contract revision 0.2**, and the M5 workload package is pinned. M6 now executes nodes 0–102 differentially through the complete backbone and SPPF with diagnostic and release allocations. The next implementation action is nodes 103–119 through upsampling, skip concat, and the first top-down neck C2f.
+The M4 fixture schema and first independently derived corpus now exist against **ABI 0.1 / contract revision 0.2**, and the M5 workload package is pinned. M6 now executes nodes 0–119 differentially through the complete backbone and first top-down neck C2f with diagnostic and release allocations. The next implementation action is nodes 120–136 through the second upsampling, skip concat, and top-down neck C2f stage.
 
 Before marking M3 complete, independently review the command tables and transitions, run the fixtures against another implementation or derivation, resolve discrepancies with a decision record, and explicitly allocate the frozen ABI. M6 candidate work may proceed, but a stable compiler/package release and full RTL commitment still depend on that independent review.

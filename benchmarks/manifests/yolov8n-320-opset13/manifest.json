@@ -375,10 +375,27 @@
     "mismatches": 0,
     "scope": "nodes 0-73 through the model.5 downsample and complete third C2f block"
   },
+  "m6_through_backbone": {
+    "status": "nodes_0_through_102_backbone_diagnostic_and_release_pass",
+    "result": "m6-through-backbone.json",
+    "package_schema": "haslab.graph-schedule.v1",
+    "diagnostic_package_sha256": "3a3626add0ef7fcb98a08752310550cd6c8230360833ee36e20dce68b6a3ca29",
+    "release_package_sha256": "907bb53bbd3b7b792def1c9c6d53f73717df169d3a6016a090daddef1b3f9e30",
+    "diagnostic_peak_output_bytes": 3148800,
+    "release_peak_output_bytes": 614400,
+    "reuse_savings_bytes": 2534400,
+    "commands": 186928,
+    "dma_bytes": 16602136,
+    "int8_macs": 394444800,
+    "diagnostic_exact_values_compared": 3532800,
+    "release_final_values_compared": 25600,
+    "mismatches": 0,
+    "scope": "nodes 0-102 through the complete backbone and model.9 SPPF"
+  },
   "open_gates": [
-    "Complete the backbone through nodes 74-102: model.7 downsample, model.8 fourth C2f, and model.9 SPPF. Add native MaxPool lowering and preserve graph liveness across the pooled branches.",
+    "Lower the first top-down neck stage through nodes 103-119: model.10 nearest-neighbor upsample, model.11 skip concat with the retained model.6 output, and model.12 C2f. Preserve the long-lived skip tensor in the release allocation.",
     "Extend the passing graph scheduler through the remaining calibrated accelerator graph and INT32 learned-head boundary; repeat layerwise comparisons.",
-    "Generate an optimized whole-graph command/DMA report and resolve the package-size, weight/parameter-streaming, and command-dispatch pressure exposed by the 143,156-command nodes 0-73 package.",
+    "Generate an optimized whole-graph command/DMA report and resolve the package-size, weight/parameter-streaming, and command-dispatch pressure exposed by the 186,928-command nodes 0-102 package.",
     "Measure whether a real transport can sustain the generated command rate; the functional runtime records refill counts but has no cycle or bus timing."
   ]
 }

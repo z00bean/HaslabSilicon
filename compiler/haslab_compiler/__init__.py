@@ -10,6 +10,7 @@ from .c2f import (
     compile_first_c2f,
     compile_pinned_first_c2f,
     load_pinned_first_c2f,
+    load_pinned_through_backbone,
 )
 from .first_layer import compile_conv_silu_first_layer, compile_pinned_first_layer
 from .graph import (
@@ -20,11 +21,16 @@ from .graph import (
     ConvSiluOp,
     GraphIR,
     GraphTensor,
+    MaxPoolOp,
+    SPPFSpec,
+    build_backbone_graph,
     build_two_c2f_graph,
     build_c2f_graph,
     compile_graph,
     compile_pinned_through_second_c2f,
     compile_pinned_through_third_c2f,
+    compile_pinned_through_backbone,
+    extend_with_sppf,
     first_stage,
 )
 from .pipeline import (
@@ -52,9 +58,12 @@ __all__ = [
     "ConvSiluLayerSpec",
     "GraphIR",
     "GraphTensor",
+    "MaxPoolOp",
+    "SPPFSpec",
     "Section",
     "SectionType",
     "build_hxb",
+    "build_backbone_graph",
     "build_c2f_graph",
     "build_two_c2f_graph",
     "compile_conv_silu_first_layer",
@@ -68,8 +77,11 @@ __all__ = [
     "compile_pinned_first_two_layers",
     "compile_pinned_through_second_c2f",
     "compile_pinned_through_third_c2f",
+    "compile_pinned_through_backbone",
+    "extend_with_sppf",
     "extract_input_patch",
     "first_stage",
     "load_pinned_first_two_layers",
     "load_pinned_first_c2f",
+    "load_pinned_through_backbone",
 ]

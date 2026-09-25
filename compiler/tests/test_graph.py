@@ -6,6 +6,7 @@ import unittest
 import numpy as np
 
 from haslab_compiler import (
+    AddOp,
     C2fBlockSpec,
     C2fConvSpec,
     C2fStageSpec,
@@ -14,11 +15,12 @@ from haslab_compiler import (
     ConvSiluLayerSpec,
     GraphIR,
     GraphTensor,
+    MaxPoolOp,
     build_two_c2f_graph,
     compile_graph,
     first_stage,
 )
-from haslab_ref import build_silu_lut, nchw_to_hwc8
+from haslab_ref import build_silu_lut, maxpool5_i8, nchw_to_hwc8
 from haslab_runtime import RuntimeStatus, SimulatorRuntime, load_hxb
 from haslab_compiler.c2f import _conv_tile_shape
 
@@ -234,6 +236,95 @@ class GraphScheduleTests(unittest.TestCase):
         runtime.bind_input(np.ascontiguousarray(nchw_to_hwc8(source)).tobytes())
         completion = runtime.wait(runtime.submit())
         self.assertIs(completion.status, RuntimeStatus.SUCCESS)
+
+    def test_maxpool_graph_operation_compiles_halo_and_executes_exactly(self) -> None:
+        graph = GraphIR(
+            tensors=(GraphTensor("pool", 16, 16, 32, 1.0),),
+            operations=(MaxPoolOp("model.1", "pool", "pool.node"),),
+            source_nodes=("pool.node",),
+            final_outputs=("pool",),
+        )
+        raw = compile_graph(
+            stem_layers=self.stem,
+            graph=graph,
+            source_model_sha256="55" * 32,
+            allocation_mode="diagnostic",
+        )
+        package = load_hxb(raw)
+        operation = package.manifest["schedule"]["graph_operations"][0]
+        self.assertEqual(operation["kind"], "maxpool5")
+        self.assertEqual(operation["tile_shape"], [8, 8])
+        self.assertEqual(operation["output_group_tiles"], 16)
+        self.assertEqual(operation["opcode_counts"]["MAXPOOL5_I8"], 16)
+        self.assertEqual(operation["boundary_fill_commands"], 16)
+
+        source = (
+            np.arange(1 * 3 * 64 * 64, dtype=np.int32).reshape(1, 3, 64, 64)
+            % 17
+            - 8
+        ).astype(np.int8)
+        runtime = SimulatorRuntime()
+        runtime.load_model(raw)
+        runtime.bind_input(np.ascontiguousarray(nchw_to_hwc8(source)).tobytes())
+        completion = runtime.wait(runtime.submit())
+        self.assertIs(completion.status, RuntimeStatus.SUCCESS)
+        assert completion.output is not None
+        records = {
+            item["name"]: item for item in package.manifest["output"]["tensors"]
+        }
+        model1_record = records["model.1"]
+        pool_record = records["pool"]
+        model1 = np.frombuffer(
+            completion.output[
+                model1_record["addend"] : model1_record["addend"]
+                + model1_record["bytes"]
+            ],
+            dtype=np.int8,
+        ).reshape(model1_record["physical_shape"])
+        actual = np.frombuffer(
+            completion.output[
+                pool_record["addend"] : pool_record["addend"] + pool_record["bytes"]
+            ],
+            dtype=np.int8,
+        ).reshape(pool_record["physical_shape"])
+        padded = np.full((20, 20, 4, 8), -128, dtype=np.int8)
+        padded[2:-2, 2:-2] = model1
+        np.testing.assert_array_equal(actual, maxpool5_i8(padded))
+
+    def test_wide_conv_and_add_stream_parameter_records(self) -> None:
+        wide_layer = conv("wide.conv", 16, 32, 256, 1)
+        left_layer = conv("wide.left", 16, 32, 128, 1)
+        right_layer = conv("wide.right", 16, 32, 128, 1)
+        graph = GraphIR(
+            tensors=(
+                GraphTensor("wide.conv", 16, 16, 256, 1.0),
+                GraphTensor("wide.left", 16, 16, 128, 1.0),
+                GraphTensor("wide.right", 16, 16, 128, 1.0),
+                GraphTensor("wide.add", 16, 16, 128, 1.0),
+            ),
+            operations=(
+                ConvSiluOp("model.1", "wide.conv", wide_layer),
+                ConvSiluOp("model.1", "wide.left", left_layer),
+                ConvSiluOp("model.1", "wide.right", right_layer),
+                AddOp("wide.left", "wide.right", "wide.add", "wide.add.node"),
+            ),
+            source_nodes=wide_layer.node_names
+            + left_layer.node_names
+            + right_layer.node_names
+            + ("wide.add.node",),
+            final_outputs=("wide.add",),
+        )
+        package = load_hxb(
+            compile_graph(
+                stem_layers=self.stem,
+                graph=graph,
+                source_model_sha256="66" * 32,
+                allocation_mode="release",
+            )
+        )
+        operations = package.manifest["schedule"]["graph_operations"]
+        self.assertIn("output-group record", operations[0]["parameter_residency"])
+        self.assertIn("left/right channel-group pair", operations[3]["parameter_residency"])
 
 
 if __name__ == "__main__":

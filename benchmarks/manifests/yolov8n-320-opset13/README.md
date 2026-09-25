@@ -1,6 +1,6 @@
 # YOLOv8n 320×320 workload candidate
 
-This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes nodes 0–73 through the third C2f block. Diagnostic execution matches 3,225,600 values across 34 materialized or aliased boundaries, and a lifetime-reuse package matches the final 51,200-value tensor. The remaining model, RTL, and hardware remain unimplemented.
+This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes nodes 0–102 through the complete backbone and SPPF. Diagnostic execution matches 3,532,800 values across 49 materialized or aliased boundaries, and a lifetime-reuse package matches the final 25,600-value backbone tensor. The neck, learned heads, host tail, RTL, and hardware remain unimplemented.
 
 ## Third-party artifact and license
 
@@ -296,4 +296,28 @@ The compiler validates and executes nodes 0–73. The extension adds the stride-
 
 The checked-in [`m6-through-third-c2f.json`](m6-through-third-c2f.json) records both package hashes, tensor lifetimes, dynamic tile choices, weight and parameter residency, exact comparisons, FLOAT-reference errors, and FIFO behavior.
 
-The next implementation step is nodes 74–102, completing the backbone through the `model.7` downsample, `model.8` fourth C2f, and `model.9` SPPF. It must add native MaxPool lowering, preserve the three pooled intermediates needed by the SPPF concat, and retain the same diagnostic/release evidence split.
+## Reproduce the complete backbone through SPPF
+
+```sh
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/compile_yolov8n_backbone.py
+```
+
+The compiler validates and executes nodes 0–102. This extension adds the stride-two `model.7` convolution, the one-bottleneck `model.8` C2f, and `model.9` SPPF, ending with a `10×10×256` tensor. The three chained pools use `MAXPOOL5_I8` with explicit `-128` border halos. The 256-channel convolutions stream one epilogue record per output group while retaining the SiLU LUT, and the 128-channel residual streams one left/right parameter pair per group; both stay within the unchanged 3 KiB parameter SRAM.
+
+| Nodes 0–102 measurement | Diagnostic | Release |
+|---|---:|---:|
+| Package bytes | 34,599,168 | 34,453,504 |
+| Peak output allocation | 3,148,800 | 614,400 |
+| Declared external bytes | 5,336,192 | 2,801,792 |
+| Commands | 186,928 | 186,928 |
+| DMA bytes | 16,602,136 | 16,602,136 |
+| INT8 MACs | 394,444,800 | 394,444,800 |
+| `MAXPOOL5_I8` commands | 192 | 192 |
+| Exact values compared | 3,532,800 | 25,600 final values |
+| Integer mismatches | 0 | 0 |
+| FIFO `BUSY`/refill events | 186,920 | 186,920 |
+
+The checked-in [`m6-through-backbone.json`](m6-through-backbone.json) records both package hashes, pooled tensor lifetimes, wide-parameter residency, exact comparisons, FLOAT-reference errors, and FIFO behavior.
+
+The next implementation step is nodes 103–119: exact nearest-neighbor `model.10` upsampling, `model.11` concat with the long-lived `model.6` skip tensor, and the non-residual `model.12` C2f block. It must preserve the skip tensor through the complete downstream backbone work and retain the diagnostic/release evidence split.

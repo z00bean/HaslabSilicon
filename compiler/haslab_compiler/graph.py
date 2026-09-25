@@ -62,7 +62,14 @@ class ConcatOp:
     node_name: str
 
 
-GraphOp = ConvSiluOp | AddOp | ConcatOp
+@dataclass(frozen=True)
+class MaxPoolOp:
+    source: str
+    destination: str
+    node_name: str
+
+
+GraphOp = ConvSiluOp | AddOp | ConcatOp | MaxPoolOp
 
 
 @dataclass(frozen=True)
@@ -89,6 +96,15 @@ class C2fStageSpec:
 class C2fExtension:
     downsample: C2fConvSpec
     stage: C2fStageSpec
+
+
+@dataclass(frozen=True)
+class SPPFSpec:
+    cv1: C2fConvSpec
+    pool_nodes: tuple[str, str, str]
+    concat_node: str
+    concat_scale: float
+    cv2: C2fConvSpec
 
 
 def _material(name: str, layer: C2fConvSpec) -> GraphTensor:
@@ -226,6 +242,73 @@ def build_c2f_graph(
     return GraphIR(tuple(tensors), tuple(operations), tuple(source_nodes), (output,))
 
 
+def extend_with_sppf(graph: GraphIR, sppf: SPPFSpec) -> GraphIR:
+    """Append the pinned three-pool SPPF pattern to a validated graph shape."""
+
+    if len(graph.final_outputs) != 1:
+        raise CompileError("SPPF requires one graph input")
+    if not sppf.cv1.name.endswith(".cv1") or not sppf.cv2.name.endswith(".cv2"):
+        raise CompileError("SPPF convolution names must end in .cv1 and .cv2")
+    prefix = sppf.cv1.name.removesuffix(".cv1")
+    if sppf.cv2.name.removesuffix(".cv2") != prefix:
+        raise CompileError("SPPF convolution names must share a prefix")
+    source = graph.final_outputs[0]
+    tensors = list(graph.tensors)
+    operations = list(graph.operations)
+    cv1_name = sppf.cv1.name
+    cv1_tensor = _material(cv1_name, sppf.cv1)
+    tensors.append(cv1_tensor)
+    operations.append(ConvSiluOp(source, cv1_name, sppf.cv1))
+    pool_sources = [cv1_name]
+    for index, node_name in enumerate(sppf.pool_nodes):
+        destination = f"{prefix}.pool{index}"
+        tensors.append(
+            GraphTensor(
+                destination,
+                cv1_tensor.height,
+                cv1_tensor.width,
+                cv1_tensor.channels,
+                cv1_tensor.scale,
+            )
+        )
+        operations.append(MaxPoolOp(pool_sources[-1], destination, node_name))
+        pool_sources.append(destination)
+    concat_name = f"{prefix}.concat"
+    tensors.append(
+        GraphTensor(
+            concat_name,
+            cv1_tensor.height,
+            cv1_tensor.width,
+            cv1_tensor.channels * len(pool_sources),
+            sppf.concat_scale,
+        )
+    )
+    operations.append(ConcatOp(tuple(pool_sources), concat_name, sppf.concat_node))
+    output_name = prefix
+    tensors.append(_material(output_name, sppf.cv2))
+    operations.append(ConvSiluOp(concat_name, output_name, sppf.cv2))
+    source_nodes = list(graph.source_nodes)
+    source_nodes.extend(sppf.cv1.node_names)
+    source_nodes.extend(sppf.pool_nodes)
+    source_nodes.append(sppf.concat_node)
+    source_nodes.extend(sppf.cv2.node_names)
+    return GraphIR(tuple(tensors), tuple(operations), tuple(source_nodes), (output_name,))
+
+
+def build_backbone_graph(
+    *,
+    first: C2fStageSpec,
+    extensions: Sequence[C2fExtension],
+    sppf: SPPFSpec,
+) -> GraphIR:
+    """Build the pinned YOLOv8n backbone through its SPPF output."""
+
+    return extend_with_sppf(
+        build_c2f_graph(first=first, extensions=extensions),
+        sppf,
+    )
+
+
 def _stage_source_nodes(stage: C2fStageSpec) -> list[str]:
     nodes = list(stage.cv1.node_names) + list(stage.split_nodes)
     for pair, add_node in zip(stage.bottlenecks, stage.add_nodes):
@@ -238,7 +321,7 @@ def _stage_source_nodes(stage: C2fStageSpec) -> list[str]:
 
 
 def _operation_sources(operation: GraphOp) -> tuple[str, ...]:
-    if isinstance(operation, ConvSiluOp):
+    if isinstance(operation, (ConvSiluOp, MaxPoolOp)):
         return (operation.source,)
     if isinstance(operation, AddOp):
         return (operation.left, operation.right)
@@ -473,9 +556,15 @@ def compile_graph(
                 refs[operation.destination],
                 operation.node_name,
             )
-        else:
+        elif isinstance(operation, ConcatOp):
             builder.schedule_concat(
                 tuple(refs[name] for name in operation.sources),
+                refs[operation.destination],
+                operation.node_name,
+            )
+        else:
+            builder.schedule_maxpool(
+                refs[operation.source],
                 refs[operation.destination],
                 operation.node_name,
             )
@@ -531,6 +620,46 @@ def compile_pinned_through_third_c2f(
             C2fExtension(downsample=downsample2, stage=second),
             C2fExtension(downsample=downsample3, stage=third),
         ),
+    )
+    return compile_graph(
+        stem_layers=stem,
+        graph=graph,
+        source_model_sha256=model_hash,
+        allocation_mode=allocation_mode,
+    )
+
+
+def compile_pinned_through_backbone(
+    model_path: str,
+    calibration_path: str,
+    lut_path: str,
+    *,
+    allocation_mode: AllocationMode,
+) -> bytes:
+    """Compile pinned nodes 0..102 through the complete backbone and SPPF."""
+
+    from .c2f import load_pinned_through_backbone
+
+    (
+        stem,
+        first,
+        downsample2,
+        second,
+        downsample3,
+        third,
+        downsample4,
+        fourth,
+        sppf,
+        model_hash,
+    ) = load_pinned_through_backbone(model_path, calibration_path, lut_path)
+    graph = build_backbone_graph(
+        first=first_stage(first),
+        extensions=(
+            C2fExtension(downsample=downsample2, stage=second),
+            C2fExtension(downsample=downsample3, stage=third),
+            C2fExtension(downsample=downsample4, stage=fourth),
+        ),
+        sppf=sppf,
     )
     return compile_graph(
         stem_layers=stem,

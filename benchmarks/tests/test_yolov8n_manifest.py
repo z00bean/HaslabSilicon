@@ -35,6 +35,9 @@ class TestYolov8nManifest(unittest.TestCase):
         cls.m6_third_c2f = json.loads(
             (WORKLOAD / "m6-through-third-c2f.json").read_text()
         )
+        cls.m6_backbone = json.loads(
+            (WORKLOAD / "m6-through-backbone.json").read_text()
+        )
 
     def test_artifact_identity_is_consistent(self):
         self.assertEqual(
@@ -287,6 +290,38 @@ class TestYolov8nManifest(unittest.TestCase):
         fifo = result["packages"]["release"]["fifo"]
         self.assertEqual(fifo["accepted_commands"], 143156)
         self.assertEqual(fifo["busy_responses"], 143148)
+        self.assertEqual(fifo["final_drain_commands"], 8)
+
+    def test_m6_backbone_records_pooling_and_wide_parameter_streaming(self):
+        result = self.m6_backbone
+        record = self.manifest["m6_through_backbone"]
+        self.assertEqual(result["source_model"]["sha256"], self.manifest["export"]["onnx_sha256"])
+        self.assertEqual(result["scope"]["node_indices"], [0, 102])
+        self.assertEqual(result["packages"]["release"]["sha256"], record["release_package_sha256"])
+        self.assertTrue(result["packages"]["release"]["repeated_compilation_byte_identical"])
+        allocation = result["packages"]["release"]["allocation"]
+        self.assertEqual(allocation["diagnostic_peak_output_bytes"], 3148800)
+        self.assertEqual(allocation["release_peak_output_bytes"], 614400)
+        self.assertEqual(allocation["reuse_savings_bytes"], 2534400)
+        self.assertEqual(sum(result["schedule"]["opcode_counts"].values()), 186928)
+        self.assertEqual(result["schedule"]["opcode_counts"]["MAXPOOL5_I8"], 192)
+        self.assertEqual(result["schedule"]["dma_bytes"]["total"], 16602136)
+        self.assertEqual(result["schedule"]["macs"], 394444800)
+        operations = result["schedule"]["graph_operations"]
+        model7 = next(item for item in operations if item["name"] == "model.7")
+        residual = next(item for item in operations if item["name"] == "/model.8/m.0/Add")
+        pools = [item for item in operations if item["kind"] == "maxpool5"]
+        self.assertIn("output-group record", model7["parameter_residency"])
+        self.assertIn("left/right channel-group pair", residual["parameter_residency"])
+        self.assertEqual(len(pools), 3)
+        self.assertTrue(all(item["output_group_tiles"] == 64 for item in pools))
+        self.assertEqual(result["exact_integer_totals"]["compared_values"], 3532800)
+        self.assertEqual(result["exact_integer_totals"]["mismatch_count"], 0)
+        self.assertTrue(result["release_final_comparison"]["pass"])
+        self.assertEqual(result["release_final_comparison"]["compared_values"], 25600)
+        fifo = result["packages"]["release"]["fifo"]
+        self.assertEqual(fifo["accepted_commands"], 186928)
+        self.assertEqual(fifo["busy_responses"], 186920)
         self.assertEqual(fifo["final_drain_commands"], 8)
 
 

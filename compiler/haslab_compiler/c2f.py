@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Sequence
 import numpy as np
 
 if TYPE_CHECKING:
-    from .graph import C2fStageSpec
+    from .graph import C2fStageSpec, SPPFSpec
 
 from haslab_ref import oihw_to_khwci8, quantize_int8
 from haslab_sim import ABI_MAJOR, ABI_MINOR, Command, MemorySpace, Opcode
@@ -232,8 +232,6 @@ def _prepare(spec: C2fConvSpec) -> _PreparedConv:
     weight_chunk_bytes = spec.kernel * spec.kernel * LANES * LANES
     if input_groups * weight_chunk_bytes > 16_384:
         raise CompileError(f"{spec.name} one-output-group weights exceed v0 weight SRAM")
-    if output_groups * 128 + 1024 > 3_072:
-        raise CompileError(f"{spec.name} parameters and LUT exceed v0 parameter SRAM")
     weights_i8 = quantize_int8(weights, scales.reshape(output_channels, 1, 1, 1))
     return _PreparedConv(
         spec,
@@ -505,10 +503,14 @@ class _Builder:
         before_opcodes = self.opcodes.copy()
         before_dma = self.dma.copy()
         stream_weights = len(weights) > 16_384
+        stream_parameters = len(parameters) + 1024 > 3_072
         if not stream_weights:
             self.load_constant(weight_offset, len(weights), MemorySpace.WEIGHT, 0)
-        self.load_constant(parameter_offset, len(parameters), MemorySpace.PARAM, 0)
-        self.load_constant(lut_offset, 1024, MemorySpace.PARAM, layer.output_groups * 128)
+        if stream_parameters:
+            self.load_constant(lut_offset, 1024, MemorySpace.PARAM, 128)
+        else:
+            self.load_constant(parameter_offset, len(parameters), MemorySpace.PARAM, 0)
+            self.load_constant(lut_offset, 1024, MemorySpace.PARAM, layer.output_groups * 128)
         tile_h, tile_w = _conv_tile_shape(
             layer.output_h,
             layer.output_w,
@@ -550,6 +552,13 @@ class _Builder:
                         patch_w,
                     )
                 for output_group in range(layer.output_groups):
+                    if stream_parameters:
+                        self.load_constant(
+                            parameter_offset + output_group * 128,
+                            128,
+                            MemorySpace.PARAM,
+                            0,
+                        )
                     if stream_weights:
                         group_weight_bytes = layer.input_groups * weight_chunk_bytes
                         self.load_constant(
@@ -586,7 +595,13 @@ class _Builder:
                         )
                     self.emit(
                         Opcode.EPILOGUE,
-                        [0, 0, output_group * 128, 2, layer.output_groups * 128],
+                        [
+                            0,
+                            0,
+                            0 if stream_parameters else output_group * 128,
+                            2,
+                            128 if stream_parameters else layer.output_groups * 128,
+                        ],
                     )
                     self._store_group(
                         destination, output_group, output_y, output_x, tile_h, tile_w
@@ -615,6 +630,10 @@ class _Builder:
             self.operations[-1]["tile_shape"] = [tile_h, tile_w]
         if stream_weights:
             self.operations[-1]["weight_residency"] = "one output group streamed per spatial tile"
+        if stream_parameters:
+            self.operations[-1]["parameter_residency"] = (
+                "one output-group record streamed per spatial tile; SiLU LUT retained"
+            )
         self.debug.setdefault("layers", []).append(
             {
                 "bias_i32": layer.bias_i32.astype(int).tolist(),
@@ -649,13 +668,28 @@ class _Builder:
         start = len(self.commands)
         before_opcodes = self.opcodes.copy()
         before_dma = self.dma.copy()
-        self.load_constant(left_offset, len(left_raw), MemorySpace.PARAM, 0)
-        self.load_constant(right_offset, len(right_raw), MemorySpace.PARAM, len(left_raw))
+        stream_parameters = len(left_raw) + len(right_raw) > 3_072
+        if not stream_parameters:
+            self.load_constant(left_offset, len(left_raw), MemorySpace.PARAM, 0)
+            self.load_constant(right_offset, len(right_raw), MemorySpace.PARAM, len(left_raw))
         tile_h = _divisor_at_most_eight(left.height)
         tile_w = _divisor_at_most_eight(left.width)
         for y in range(0, left.height, tile_h):
             for x in range(0, left.width, tile_w):
                 for group in range(groups):
+                    if stream_parameters:
+                        self.load_constant(
+                            left_offset + group * 128,
+                            128,
+                            MemorySpace.PARAM,
+                            0,
+                        )
+                        self.load_constant(
+                            right_offset + group * 128,
+                            128,
+                            MemorySpace.PARAM,
+                            128,
+                        )
                     self._load_dense_group(left, group, y, x, 0, tile_h, tile_w)
                     self._load_dense_group(
                         right, group, y, x, tile_h * tile_w * LANES, tile_h, tile_w
@@ -669,8 +703,8 @@ class _Builder:
                             tile_h,
                             tile_w,
                             LANES,
-                            group * 128,
-                            len(left_raw) + group * 128,
+                            0 if stream_parameters else group * 128,
+                            128 if stream_parameters else len(left_raw) + group * 128,
                         ],
                     )
                     self._store_group(destination, group, y, x, tile_h, tile_w)
@@ -691,6 +725,99 @@ class _Builder:
                 "opcode_counts": {
                     Opcode(key).name: value for key, value in sorted(opcode_delta.items())
                 },
+            }
+        )
+        if stream_parameters:
+            self.operations[-1]["parameter_residency"] = (
+                "one left/right channel-group pair streamed per spatial tile"
+            )
+
+    def schedule_maxpool(
+        self,
+        source: _TensorRef,
+        destination: _TensorRef,
+        node_name: str,
+    ) -> None:
+        """Schedule 5x5 stride-one pooling with a compiled -128 boundary halo."""
+
+        if (source.height, source.width, source.channels) != (
+            destination.height,
+            destination.width,
+            destination.channels,
+        ):
+            raise CompileError("maxpool input and output shapes must match")
+        if not _same_scale(source.scale, destination.scale):
+            raise CompileError("maxpool must retain the input scale")
+        groups = source.channels // LANES
+        tile_h = _divisor_at_most_eight(source.height)
+        tile_w = _divisor_at_most_eight(source.width)
+        patch_h = tile_h + 4
+        patch_w = tile_w + 4
+        patch_bytes = patch_h * patch_w * LANES
+        start = len(self.commands)
+        before_opcodes = self.opcodes.copy()
+        before_dma = self.dma.copy()
+        boundary_fills = 0
+        for y in range(0, source.height, tile_h):
+            input_start_y = y - 2
+            valid_y0 = max(0, input_start_y)
+            valid_y1 = min(source.height, input_start_y + patch_h)
+            valid_h = valid_y1 - valid_y0
+            destination_y = valid_y0 - input_start_y
+            for x in range(0, source.width, tile_w):
+                input_start_x = x - 2
+                valid_x0 = max(0, input_start_x)
+                valid_x1 = min(source.width, input_start_x + patch_w)
+                valid_w = valid_x1 - valid_x0
+                destination_x = valid_x0 - input_start_x
+                boundary = valid_h != patch_h or valid_w != patch_w
+                for group in range(groups):
+                    if boundary:
+                        self.emit(
+                            Opcode.FILL8,
+                            [MemorySpace.INPUT, 0, patch_bytes, 0x80],
+                        )
+                        boundary_fills += 1
+                    self._load_patch_group(
+                        source,
+                        group,
+                        valid_y0,
+                        valid_x0,
+                        valid_h,
+                        valid_w,
+                        0,
+                        destination_y,
+                        destination_x,
+                        patch_w,
+                    )
+                    self.emit(
+                        Opcode.MAXPOOL5_I8,
+                        [0, 0, tile_h, tile_w, LANES],
+                    )
+                    self._store_group(destination, group, y, x, tile_h, tile_w)
+        opcode_delta = self.opcodes - before_opcodes
+        dma_delta = self.dma - before_dma
+        self.operations.append(
+            {
+                "boundary_fill_commands": boundary_fills,
+                "command_count": len(self.commands) - start,
+                "dma_bytes": {
+                    key: dma_delta[key] for key in ("constants", "input", "output")
+                }
+                | {
+                    "total": sum(
+                        dma_delta[key] for key in ("constants", "input", "output")
+                    )
+                },
+                "kind": "maxpool5",
+                "name": node_name,
+                "opcode_counts": {
+                    Opcode(key).name: value
+                    for key, value in sorted(opcode_delta.items())
+                },
+                "output_group_tiles":
+                    (source.height // tile_h) * (source.width // tile_w) * groups,
+                "tile_shape": [tile_h, tile_w],
             }
         )
 
@@ -1428,3 +1555,221 @@ def load_pinned_through_third_c2f(
         concat_node=model.graph.node[70].name,
     )
     return stem, first, downsample2, second, downsample3, third, model_hash
+
+
+def load_pinned_through_backbone(
+    model_path: str | Path, calibration_path: str | Path, lut_path: str | Path
+) -> tuple[
+    list[ConvSiluLayerSpec],
+    C2fBlockSpec,
+    C2fConvSpec,
+    C2fStageSpec,
+    C2fConvSpec,
+    C2fStageSpec,
+    C2fConvSpec,
+    C2fStageSpec,
+    SPPFSpec,
+    str,
+]:
+    """Validate and extract pinned nodes 0..102 through the backbone SPPF."""
+
+    try:
+        import onnx
+        from onnx import numpy_helper
+    except ImportError as exc:  # pragma: no cover - integration-only dependency.
+        raise CompileError("ONNX is required to compile the pinned model") from exc
+    from .graph import C2fStageSpec, SPPFSpec
+
+    stem, first, downsample2, second, downsample3, third, model_hash = (
+        load_pinned_through_third_c2f(model_path, calibration_path, lut_path)
+    )
+    model = onnx.load(model_path)
+    if len(model.graph.node) < 103:
+        raise CompileError("graph does not contain the complete backbone SPPF")
+    expected_types = [
+        "Conv", "Sigmoid", "Mul", "Conv", "Sigmoid", "Mul", "Constant", "Split",
+        "Conv", "Sigmoid", "Mul", "Conv", "Sigmoid", "Mul", "Add", "Concat",
+        "Conv", "Sigmoid", "Mul", "Conv", "Sigmoid", "Mul", "MaxPool", "MaxPool",
+        "MaxPool", "Concat", "Conv", "Sigmoid", "Mul",
+    ]
+    if [node.op_type for node in model.graph.node[74:103]] != expected_types:
+        raise CompileError("nodes 74..102 do not match the pinned fourth C2f and SPPF")
+    calibration = json.loads(Path(calibration_path).read_text(encoding="utf-8"))
+    scales = {item["name"]: item["values"] for item in calibration["scales"]}
+    records = {int(item["conv_node_index"]): item for item in calibration["silu"]["records"]}
+    initializers = {item.name: numpy_helper.to_array(item) for item in model.graph.initializer}
+    lut_blob = Path(lut_path).read_bytes()
+
+    downsample4 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=74,
+        prefix="model.7",
+        input_h=20,
+        input_w=20,
+        input_channels=128,
+        input_scale=third.cv2.output_scale,
+    )
+    cv1 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=77,
+        prefix="model.8.cv1",
+        input_h=10,
+        input_w=10,
+        input_channels=256,
+        input_scale=downsample4.output_scale,
+    )
+    bottleneck_cv1 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=82,
+        prefix="model.8.m.0.cv1",
+        input_h=10,
+        input_w=10,
+        input_channels=128,
+        input_scale=cv1.output_scale,
+    )
+    bottleneck_cv2 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=85,
+        prefix="model.8.m.0.cv2",
+        input_h=10,
+        input_w=10,
+        input_channels=128,
+        input_scale=bottleneck_cv1.output_scale,
+    )
+    residual_scale = float(scales["/model.8/m.0/Add_output_0_scale"][0])
+    fourth_concat_scale = float(scales["/model.8/Concat_output_0_scale"][0])
+    fourth_cv2 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=90,
+        prefix="model.8.cv2",
+        input_h=10,
+        input_w=10,
+        input_channels=384,
+        input_scale=fourth_concat_scale,
+    )
+    constant, split = model.graph.node[80:82]
+    split_value = onnx.helper.get_attribute_value(constant.attribute[0])
+    if np.asarray(numpy_helper.to_array(split_value)).tolist() != [128, 128]:
+        raise CompileError("fourth C2f split must be the static 128/128 partition")
+    connections = [
+        (74, model.graph.node[73].output[0]),
+        (77, model.graph.node[76].output[0]),
+        (82, split.output[1]),
+        (85, model.graph.node[84].output[0]),
+        (90, model.graph.node[89].output[0]),
+    ]
+    for index, expected_input in connections:
+        if list(model.graph.node[index].input[:1]) != [expected_input]:
+            raise CompileError(f"node {index} has an unexpected graph input")
+    if list(split.input) != [model.graph.node[79].output[0], constant.output[0]]:
+        raise CompileError("fourth C2f split inputs do not match the pinned graph")
+    if list(model.graph.node[88].input) != [split.output[1], model.graph.node[87].output[0]]:
+        raise CompileError("fourth C2f residual inputs do not match")
+    if list(model.graph.node[89].input) != [
+        split.output[0], split.output[1], model.graph.node[88].output[0]
+    ]:
+        raise CompileError("fourth C2f concat inputs do not match")
+    fourth = C2fStageSpec(
+        cv1=cv1,
+        bottlenecks=((bottleneck_cv1, bottleneck_cv2),),
+        cv2=fourth_cv2,
+        residual_scales=(residual_scale,),
+        concat_scale=fourth_concat_scale,
+        split_nodes=(constant.name, split.name),
+        add_nodes=(model.graph.node[88].name,),
+        concat_node=model.graph.node[89].name,
+    )
+
+    sppf_cv1 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=93,
+        prefix="model.9.cv1",
+        input_h=10,
+        input_w=10,
+        input_channels=256,
+        input_scale=fourth.cv2.output_scale,
+    )
+    pool_nodes = tuple(model.graph.node[index] for index in (96, 97, 98))
+    expected_pool_attributes = {
+        "ceil_mode": 0,
+        "dilations": [1, 1],
+        "kernel_shape": [5, 5],
+        "pads": [2, 2, 2, 2],
+        "strides": [1, 1],
+    }
+    for node in pool_nodes:
+        attributes = {
+            item.name: onnx.helper.get_attribute_value(item) for item in node.attribute
+        }
+        if attributes != expected_pool_attributes:
+            raise CompileError(f"{node.name} attributes are outside the v0 MaxPool profile")
+    if list(pool_nodes[0].input) != [model.graph.node[95].output[0]]:
+        raise CompileError("first SPPF pool input does not match")
+    if list(pool_nodes[1].input) != [pool_nodes[0].output[0]]:
+        raise CompileError("second SPPF pool input does not match")
+    if list(pool_nodes[2].input) != [pool_nodes[1].output[0]]:
+        raise CompileError("third SPPF pool input does not match")
+    if list(model.graph.node[99].input) != [
+        model.graph.node[95].output[0],
+        pool_nodes[0].output[0],
+        pool_nodes[1].output[0],
+        pool_nodes[2].output[0],
+    ]:
+        raise CompileError("SPPF concat inputs do not match the pooled chain")
+    sppf_concat_scale = float(scales["/model.9/Concat_output_0_scale"][0])
+    sppf_cv2 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=100,
+        prefix="model.9.cv2",
+        input_h=10,
+        input_w=10,
+        input_channels=512,
+        input_scale=sppf_concat_scale,
+    )
+    sppf = SPPFSpec(
+        cv1=sppf_cv1,
+        pool_nodes=tuple(node.name for node in pool_nodes),
+        concat_node=model.graph.node[99].name,
+        concat_scale=sppf_concat_scale,
+        cv2=sppf_cv2,
+    )
+    return (
+        stem,
+        first,
+        downsample2,
+        second,
+        downsample3,
+        third,
+        downsample4,
+        fourth,
+        sppf,
+        model_hash,
+    )

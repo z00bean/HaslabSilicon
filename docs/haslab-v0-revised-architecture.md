@@ -230,4 +230,4 @@ Version numbers should follow demonstrated capabilities rather than a requiremen
 | Host work | Image preparation and declared detection tail | Reduced where worthwhile | Product-dependent, explicitly specified |
 | Claim | Functional complete host+FPGA detector | Integrated FP8/INT8 inference prototype | Only measured silicon capabilities |
 
-The next step would be the pinned model/operator and quantization feasibility audit. This revision stops at architecture: no export, implementation, RTL, or FPGA project has been started.
+At publication, the next step was the pinned model/operator and quantization feasibility audit, and this revision stopped at architecture. That audit and subsequent software work are now tracked in the [development plan](development-plan.md); this document remains the architectural baseline rather than the current status record.

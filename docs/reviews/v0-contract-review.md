@@ -63,15 +63,15 @@ Validation on 2026-09-20: `make test` passed 43 numerical-model tests and 42 sim
 
 | Gate | Resolution / owner milestone | Status |
 |---|---|---|
-| ABI allocation and command/state review | M3 candidate + ADR 0001; independent M4 evidence required for stable freeze | Candidate ready; independent review pending |
+| ABI allocation and command/state review | M3 candidate + ADR 0001; independent M4 evidence and M6 command-delivery decision required for stable freeze | Candidate semantics ready; independent review and transport-facing command-volume resolution pending |
 | Single definition for multiple implementation consumers | M4 machine-readable ABI definition and schema consistency checks | Candidate registry implemented and checked against simulator constants; new consumers still require integration |
 | Workload artifact, exporter, IR, opset, weights, hashes | M5 pinned manifest | Complete for the first YOLOv8n workload |
 | Detection-tail boundary and preprocessing/output conventions | M5 graph inventory and reproducible baseline | Complete for the pinned workload |
 | INT8 accuracy budget and calibration | M5 evaluation; one-percentage-point mAP50–95 budget | Calibrated proxy passes; exact command-level comparison remains in M6 |
 | Scale approximation and reproducible coefficient/LUT bytes | M5/M6 coefficient-generation policy and accuracy/error report | Candidate bytes and approximation errors recorded; M6 must execute them exactly |
 | Residual/concat scales, split boundaries, chunk/halo layouts | M5 every-layer audit, then M6 lowering tests | Backbone and both top-down neck forms pass with explicit merge coefficients, residual and non-residual C2f, zero-allocation split views, MaxPool halos, exact upsampling, streamed wide parameters, and auditable skip lifetimes; bottom-up neck/head forms remain pending |
-| Package schema, limits, relocations, parser behavior | M6 schema freeze before compiler/runtime implementation | Pending |
-| Commands per frame, host refill, patch copies, spill traffic | M5/M6 schedule estimates; M9 measurements | Nodes 0–136 measured cumulatively in the functional runtime; whole-model, optimized liveness, and transport timing pending |
+| Package schema, limits, relocations, parser behavior | M6 schema freeze before stable compiler/runtime release | Experimental `.hxb` writer and strict simulator loader exist; required keys, limits, host-tail metadata, and malformed whole-graph cases remain pending |
+| Commands per frame, host refill, patch copies, spill traffic | M5/M6 schedule estimates; M9 measurements | Nodes 0–136 already require 277,436 commands / 35,511,808 command bytes per inference. Whole-model traffic, command reuse/fetch decision, and transport timing remain pending; do not freeze the transport-facing ABI on functional FIFO evidence alone |
 | Board, aperture, bus ordering, cache maintenance, reset quiescence | M9 transport adapter and fault-injection evidence before integrated RTL freeze | Pending |
 | Physical SRAM mapping and synchronous read timing | M7 prototypes/M9 target probes | Pending |
 | Native FP8 | M11 separate numeric contract and arithmetic feasibility | Deferred; does not block v0 |
@@ -83,4 +83,4 @@ Small isolated RTL experiments may follow reviewed independent vectors, but full
 
 The M4 fixture schema and first independently derived corpus now exist against **ABI 0.1 / contract revision 0.2**, and the M5 workload package is pinned. M6 now executes nodes 0–136 differentially through the complete backbone and both top-down neck C2f stages with diagnostic and release allocations. The next implementation action is nodes 137–154 through the first bottom-up downsample, skip concat, and neck C2f stage.
 
-Before marking M3 complete, independently review the command tables and transitions, run the fixtures against another implementation or derivation, resolve discrepancies with a decision record, and explicitly allocate the frozen ABI. M6 candidate work may proceed, but a stable compiler/package release and full RTL commitment still depend on that independent review.
+Before marking M3 complete, independently review the command tables and transitions, run the fixtures against another implementation or derivation, resolve discrepancies with a decision record, resolve the command-delivery mechanism using the complete M6 schedule, and explicitly allocate the frozen ABI. M6 candidate work may proceed, but a stable compiler/package release and interface RTL commitment depend on those gates.

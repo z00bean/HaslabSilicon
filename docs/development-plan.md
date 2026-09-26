@@ -2,7 +2,7 @@
 
 This is the tracked source of truth for HASLAB implementation progress. The top-level README contains a short public snapshot; this document contains the work order, dependencies, and evidence required to call a milestone complete.
 
-Last reviewed: 2026-09-25
+Last reviewed: 2026-09-26
 
 ## Status vocabulary
 
@@ -26,6 +26,8 @@ M5 is complete as a workload-pinning milestone. The exact YOLOv8n artifact, grap
 
 M6 is active. The command path now executes nodes 0–136 through the complete backbone and both top-down neck C2f stages using a reusable static graph IR. It covers SRAM-fit dynamic tiles, 1×1 and 3×3 stride-one/stride-two convolution, residual and non-residual C2f blocks, zero-allocation split views, scaled merges, 5×5 MaxPool, exact nearest-neighbor upsampling, long-lived skip tensors, streamed weight/parameter residency, and deterministic lifetime allocation. The 277,436-command schedule reports 22,243,352 DMA bytes and 512,409,600 MACs. Diagnostic execution matches all 5,145,600 compared INT8 values; release execution reduces peak output storage from 4,608,000 to 665,600 bytes and matches the independent 102,400-value neck tensor. The next slice is nodes 137–154 through the first bottom-up neck branch. Independent M3/M4 review remains required before a stable ABI/corpus or package release.
 
+The 2026-09-26 plan audit found no failing checked-in evidence, but it identified a pre-RTL transport risk. The node 136 release package already contains 277,436 fixed 128-byte commands, or 35,511,808 command bytes per inference. Re-submitting that stream over MMIO at 30 frames/s would require about 1.07 GB/s of command writes before the measured 22,243,352 bytes of scheduled tensor/constant DMA per inference. The current FIFO/refill path remains valid as a functional model, but stable ABI freeze and M7 interface RTL now require an explicit measured command-delivery decision. Candidate resolutions include one-time linear command storage/fetch, bounded loop or macro descriptors, or evidence that a selected bridge can sustain the existing stream. This decision must preserve the existing command semantics or allocate a new experimental ABI revision.
+
 The scope priority is vision and perception: complete the pinned detector, prove the same path in portable RTL, bring it up on an FPGA, and measure a live camera-to-detection pipeline. A second independently pinned vision workload should then demonstrate that changing the model does not require changing the hardware image. Small policy or other inference models may follow when they fit the measured architecture and operator set without delaying the detector path.
 
 ## Milestone plan
@@ -35,11 +37,11 @@ The scope priority is vision and perception: complete the pinned detector, prove
 | M0 | Repository foundation | `DONE` | — | Project structure, build entry points, documentation skeletons, CI skeleton, and licensing are tracked |
 | M1 | Numerical golden model | `DONE` | M0 | Documented FP8/INT8 semantics and passing numerical, layout, activation, and operation tests |
 | M2 | Functional command simulator | `DONE` | M1 | Versioned 128-byte command encoding, memory/device behavior, architectural errors, and passing simulator tests |
-| M3 | Freeze the v0 contract | `ACTIVE` | M1, M2; independent M4 review for closure | Candidate and conformance evidence available; final freeze awaits independent command/transition review |
+| M3 | Freeze the v0 contract | `ACTIVE` | M1, M2; independent M4 review and M6 command-delivery decision for closure | Candidate and conformance evidence available; final freeze awaits independent command/transition review and resolution of transport-facing command volume |
 | M4 | v0 conformance package | `ACTIVE` | Candidate implemented; frozen M3 for final corpus release | 46 binary fixtures, hashes/schema, ABI consistency, simulator runner, and CI implemented; final release awaits independent review and stable ABI |
 | M5 | Pin the first YOLO workload | `DONE` | M3 candidate | Exact artifact, graph, preprocessing, partition, FLOAT baseline, deterministic INT8 calibration package, proxy accuracy, and diagnostic evidence are tracked; exact target execution belongs to M6 |
-| M6 | Minimal compiler and simulated runtime | `ACTIVE` | M5 complete; M3/M4 candidate usable, stable release still gated by independent review | Nodes 0–136 pass through both top-down neck C2f stages in diagnostic and lifetime-reuse modes; completion still requires bottom-up neck/head lowering, INT32 boundary, host tail, and layerwise comparisons |
-| M7 | First RTL vertical slice | `BLOCKED` | Frozen M3, M4 | Command decode through one INT8 MAC path, INT32 accumulation, requantization, completion/error behavior, and differential tests |
+| M6 | Minimal compiler and simulated runtime | `ACTIVE` | M5 complete; M3/M4 candidate usable, stable release still gated by independent review | Nodes 0–136 pass through both top-down neck C2f stages in diagnostic and lifetime-reuse modes; completion still requires bottom-up neck/head lowering, INT32 boundary, host tail, multi-input comparisons, actual command-path COCO evaluation, and command-delivery resolution |
+| M7 | First RTL vertical slice | `BLOCKED` | Frozen M3/M4 semantics and an explicit M6 command-delivery decision | Command decode through one INT8 MAC path, INT32 accumulation, requantization, completion/error behavior, and differential tests |
 | M8 | Incremental RTL operation coverage | `BLOCKED` | M7 | Each added DMA, convolution, or utility operation passes its conformance and assertion gates |
 | M9 | FPGA selection, v0 bring-up, and camera measurement | `BLOCKED` | M5, M6, M8 | Measured probes inform board selection; reproducible build, accuracy, resources, timing, power, transfers, and camera-to-box latency are published |
 | M10 | Second perception workload and reprogramming proof | `LATER` | Complete measured M9 detector | A separately pinned vision/perception graph runs on the same bitstream; operator coverage, compile time, changed package bytes, accuracy, and performance are published |
@@ -48,11 +50,25 @@ The scope priority is vision and perception: complete the pinned detector, prove
 
 M4 candidate fixtures and M5 workload auditing can proceed against M3's explicitly pinned candidate. Candidate fixtures provide the independent evidence needed to close M3; only then is the final M4 corpus tied to a frozen ABI. This staged gate avoids requiring a freeze before gathering the evidence needed to justify it. M7 may begin with reviewed M4 vectors after M3 freeze, before the full model compiler is finished, but no complete v0 RTL claim can be made before M5 and M6 establish the real workload path.
 
+## Audit findings and stop conditions
+
+| Risk | Evidence now | Required action before the affected milestone advances |
+|---|---|---|
+| Command delivery may dominate useful throughput | Nodes 0–136 require 35,511,808 command bytes and 277,436 FIFO submissions per inference | Before stable M3 freeze or M7 interface RTL, measure candidate transports and decide whether v0 uses host refill, one-time linear command fetch, or a revised bounded descriptor mechanism |
+| Whole-graph differential evidence is narrow | Each large graph report uses one deterministic synthetic input; operation tests cover numerical edge cases separately | Before M6 closes, run layerwise command-path comparisons on zero/extreme patterns, seeded random inputs, and pinned real calibration images, then retain minimized failures |
+| The real-model integration path is not regenerated in CI | CI validates checked-in reports and unit tests because third-party model weights are intentionally absent | Before M6 closes, add a redistributable miniature graph fixture that exercises repeated neck/skip/liveness behavior in CI, and keep the full pinned-model reproduction command documented |
+| Current accuracy is a software-proxy result | FLOAT and QOperator INT8 COCO runs pass the budget; complete HASLAB commands and host tail do not yet produce detections | Before M6 closes or any v0 accuracy claim, run the complete accelerator command path plus declared host tail over COCO and compare against the recorded FLOAT baseline |
+| Timing, stalls, and physical resource use are unmeasured | The simulator is functional and records command/refill counts without cycles or bus timing | Do not select a board or publish latency/throughput until transport and synthesis probes provide measured evidence |
+| Numerical CI could drift with hosted-runner updates | The audit found an unpinned Python runner and unbounded NumPy install | CI now pins Python 3.11.10 and NumPy 1.26.4; future dependency changes require an explicit compatibility update |
+
+These are open engineering gates rather than regressions in the checked-in software. Passing unit, conformance, or single-input graph tests does not close them.
+
 ## M3 — freeze the v0 contract
 
 - [x] Review command fields, flags, descriptors, alignment, and address calculations against the implementation; document remaining evidence gaps.
 - [x] Select the candidate ABI identifier and define exact version rejection rules.
 - [ ] Freeze the stable ABI identifier after independent evidence review.
+- [ ] Resolve command delivery and transport-facing ABI implications using the complete M6 schedule before stable freeze.
 - [x] Specify invalid-field behavior, commit/reset precedence, sequence handling, partial DMA failure, and post-fault behavior; transport verification remains a later gate.
 - [x] Review accumulator lifecycle, chunk continuation, overflow, padding, and zero-fill rules against existing tests.
 - [x] Separate device guarantees from compiler, runtime, transport, and host-tail responsibilities in the review record.
@@ -132,6 +148,14 @@ First vertical-slice evidence:
 - [x] Lower nodes 103–119 through the first top-down neck branch: exact nearest-neighbor `model.10` upsampling, `model.11` concat with the long-lived `model.6` skip tensor, and the non-residual `model.12` C2f block. A 256-channel concat source streams one mapping record per channel group to remain within parameter SRAM.
 - [x] Lower nodes 120–136 through the second top-down neck branch: exact nearest-neighbor `model.13` upsampling, `model.14` concat with the long-lived `model.4` skip tensor, and the non-residual `model.15` C2f block. Release liveness retains `model.4` from operation 15 through operation 47.
 - [ ] Lower nodes 137–154 through the first bottom-up neck branch: stride-two `model.16`, `model.17` concat with the retained `model.12` tensor, and the non-residual `model.18` C2f block.
+- [ ] Lower nodes 155–172 through the second bottom-up neck branch: stride-two `model.19`, `model.20` concat with the retained `model.9` tensor, and the non-residual `model.21` C2f block.
+- [ ] Lower accelerator nodes 173–217 through the learned detection head and emit the three declared INT32 HWC8 boundary tensors with exact per-channel scales.
+- [ ] Execute declared host-tail nodes 218–260 explicitly and compare decoded boxes, scores, class order, DFL behavior, coordinate mapping, and NMS against the pinned reference.
+- [ ] Expand whole-graph differential testing beyond the current synthetic image to zero/extreme patterns, seeded random inputs, and pinned real calibration images.
+- [ ] Run the complete HASLAB command path plus declared host tail over COCO val2017 and evaluate the same accuracy budget used by the FLOAT and INT8 software-proxy baselines.
+- [ ] Add a redistributable miniature graph fixture to CI that covers repeated top-down/bottom-up skips, non-residual C2f, liveness reuse, and package determinism without third-party weights.
+- [ ] Produce the optimized whole-graph allocation, command, DMA, constant, and package-size report; decide and document command delivery before freezing the transport-facing ABI or starting M7 interface RTL.
+- [ ] Freeze the package schema only after required keys, section limits, relocation rules, malformed-package behavior, host-tail metadata, and unknown-field policy have dedicated tests.
 - [ ] Generalize from the first layer to every accelerator-region node and the declared host tail before closing M6.
 
 ## M7–M9 — RTL, FPGA, and camera rules
@@ -224,3 +248,4 @@ When work changes status:
 | 2026-09-25 | Completed the YOLOv8n backbone through nodes 0–102. The scheduler adds three exact `MAXPOOL5_I8` SPPF operations with -128 halos and streams wide convolution and residual parameter records within the unchanged 3 KiB SRAM. The 186,928-command schedule records 16,602,136 DMA bytes and 394,444,800 MACs. Diagnostic mode matches 3,532,800 values across 49 boundaries; release mode saves 2,534,400 output bytes and matches the 25,600-value backbone tensor. | [Backbone report](../benchmarks/manifests/yolov8n-320-opset13/m6-through-backbone.json), [graph format](../compiler/reusable-graph-format.md), [tests](../compiler/tests/test_graph.py) |
 | 2026-09-25 | Extended the command path through nodes 0–119 and the first top-down neck C2f. The scheduler adds exact `UPSAMPLE2_I8`, retains the `model.6` skip through operation 40, supports non-residual C2f bottlenecks, and streams a wide concat source one channel-group record at a time. The 235,474-command schedule records 20,101,656 DMA bytes and 453,427,200 MACs. Diagnostic mode matches 4,070,400 values across 58 boundaries; release mode saves 3,020,800 output bytes and matches the 51,200-value neck tensor. | [First-neck report](../benchmarks/manifests/yolov8n-320-opset13/m6-through-first-neck.json), [graph format](../compiler/reusable-graph-format.md), [tests](../compiler/tests/test_graph.py) |
 | 2026-09-25 | Completed the second top-down neck stage through nodes 0–136. The generic neck extension lowers `model.13` upsampling, retains `model.4` from operation 15 through its operation-47 concat, and executes the non-residual `model.15` C2f. The 277,436-command schedule records 22,243,352 DMA bytes and 512,409,600 MACs. Diagnostic mode matches 5,145,600 values across 67 boundaries; release mode saves 3,942,400 output bytes and matches the 102,400-value neck tensor. | [Second-neck report](../benchmarks/manifests/yolov8n-320-opset13/m6-through-second-neck.json), [graph format](../compiler/reusable-graph-format.md), [tests](../benchmarks/tests/test_yolov8n_manifest.py) |
+| 2026-09-26 | Audited milestone dependencies and evidence. All 146 unit tests and 46 conformance cases pass. Added explicit pre-RTL gates for the 35,511,808-byte partial command stream, multi-input graph comparison, redistributable CI graph coverage, actual command-path COCO evaluation, package-schema closure, and command delivery. Pinned CI to Python 3.11.10 and NumPy 1.26.4. | [Development plan](development-plan.md), [contract](haslab-v0-contract.md), [contract review](reviews/v0-contract-review.md), [CI](../.github/workflows/ci.yml) |

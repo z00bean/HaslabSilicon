@@ -22,14 +22,14 @@ HASLAB is being designed in public from the numerical contract upward. The proje
 
 **Stage: v0 contract candidate and conformance corpus implemented; calibrated workload complete; minimal compiler/runtime active.**
 
-The repository currently contains an architecture specification, an executable Python golden model, a byte-level command simulator, 46 independently authored binary conformance fixtures with a strict runner, and a pinned YOLOv8n workload with reproducible FLOAT and calibrated INT8 software baselines. The compiler/runtime path now executes nodes 0–136 through the complete backbone and both top-down neck C2f stages. Its reusable graph IR emits diagnostic and release packages; deterministic lifetime reuse reduces peak output storage from 4,608,000 to 665,600 bytes while preserving the long-lived `model.6` and `model.4` skip tensors. The diagnostic path matches all 5,145,600 compared INT8 values exactly, and the release package matches the independently evaluated 102,400-value neck output. The repository does not yet contain a whole-model ONNX compiler, production runtime, tensor-accelerator RTL, FPGA bitstream, ASIC implementation, or end-to-end YOLO execution through HASLAB commands or hardware.
+The repository currently contains an architecture specification, an executable Python golden model, a byte-level command simulator, 46 independently authored binary conformance fixtures with a strict runner, and a pinned YOLOv8n workload with reproducible FLOAT and calibrated INT8 software baselines. The compiler/runtime path now executes nodes 0–136 through the complete backbone and both top-down neck C2f stages. Its reusable graph IR emits diagnostic and release packages; deterministic lifetime reuse reduces peak output storage from 4,608,000 to 665,600 bytes while preserving the long-lived `model.6` and `model.4` skip tensors. The diagnostic path matches all 5,145,600 compared INT8 values exactly, and the release package matches the independently evaluated 102,400-value neck output. The current partial schedule contains 277,436 fixed commands, or 35,511,808 command bytes per inference, so practical command delivery remains an explicit pre-RTL gate rather than a performance claim. The repository does not yet contain a whole-model ONNX compiler, production runtime, tensor-accelerator RTL, FPGA bitstream, ASIC implementation, or end-to-end YOLO execution through HASLAB commands or hardware.
 
 | Component | Status | What that means |
 |---|---|---|
-| Architecture and v0 contract | Freeze candidate | Document revision 0.2 reviewed against the software models; independent review remains open |
+| Architecture and v0 contract | Freeze candidate | Document revision 0.2 reviewed against the software models; independent review and command-delivery resolution remain open |
 | Python numerical model | Implemented and unit-tested | Defines FP8/INT8 conversion, accumulation, tensor operations, layouts, and edge cases |
 | Functional command simulator | Implemented and unit-tested | Executes the proposed 128-byte command ABI over modeled memory spaces |
-| v0 contract freeze | Active | ABI 0.1 candidate has conformance evidence; stable freeze awaits independent review |
+| v0 contract freeze | Active | ABI 0.1 candidate has conformance evidence; stable freeze awaits independent review and a practical command-delivery decision from the complete schedule |
 | v0 conformance package | Candidate implemented and tested | 46 stored command/memory/status fixtures, machine-readable ABI registry, integrity checks, and CI runner; final release tied to ABI freeze |
 | Pinned YOLO-class workload | Pinned and measured in software | Exact weight/export, graph inventory, preprocessing, partition, FLOAT baseline, deterministic INT8 calibration package, layerwise diagnostics, and proxy COCO accuracy are tracked |
 | ONNX importer and compiler | Reusable graph through both top-down neck stages | Nodes 0–136 cover dynamic legal tiles, convolution, residual and non-residual C2f blocks, split views, scaled merge operations, MaxPool, exact 2× upsampling, long-lived skip tensors, streamed parameters, and deterministic liveness allocation; bottom-up neck and head lowering stay open |
@@ -55,7 +55,7 @@ The current test suite covers the numerical model, functional command simulator,
 - [x] Implement and test the numerical golden model.
 - [x] Implement and test the functional command simulator.
 - [x] Review the v0 contract against the software models, fix discrepancies, and record the ABI candidate decisions.
-- [ ] Freeze the stable v0 ABI after independent review and conformance evidence.
+- [ ] Freeze the stable v0 ABI after independent review, conformance evidence, and command-delivery resolution.
 - [x] Build the candidate independent conformance corpus, ABI registry, and CI runner.
 - [ ] Release the final conformance corpus after stable ABI freeze and independent review.
 - [x] Pin and audit the first YOLO-class workload, including reproducible FLOAT accuracy and a calibrated INT8 software proxy inside the one-point mAP50–95 budget.

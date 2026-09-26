@@ -89,6 +89,8 @@ Many accelerators expose impressive peak arithmetic while leaving model conversi
 
 HASLAB is an inference engine, not a training platform, camera ISP, safety-certified controller, or complete robotics stack. It is intended to become a reliable perception and policy-inference building block inside those larger systems.
 
+![What HASLAB is designed to become and what it is not intended to be](docs/images/what-haslab-is-and-is-not.jpg)
+
 ## Target workloads
 
 The primary target is batch-one edge vision:
@@ -104,6 +106,8 @@ Compact vision transformers and edge transformers are later research targets whe
 The implementation priority is the complete detector and a measured live perception path. A second vision model should then demonstrate reprogramming on the same FPGA image. Small policy or other inference workloads remain valid later experiments when they fit the measured operator and memory envelope without displacing the vision work.
 
 The first end-to-end workload candidate is a pinned YOLOv8n detector at 320×320. Its exact third-party weight, FLOAT ONNX export, preprocessing, complete graph inventory, learned-head/host-tail boundary, and calibration package are recorded in the [workload manifest](benchmarks/manifests/yolov8n-320-opset13/README.md). The proposed FPGA path executes the quantized backbone, neck, and learned detection head, while the host performs declared image preparation and final box decoding/DFL/NMS. The structural audit found no unsupported accelerator nodes and all proposed convolution tiles fit local memory. Repeated full COCO val2017 evaluations measured **28.50 COCO bbox mAP50–95** for FLOAT and **27.61** for the signed-symmetric INT8 software proxy, a 0.887-point loss within the stated one-point budget. Nodes 0–136 now pass exact command-level diagnostic comparison across 67 materialized or aliased boundaries, including SPPF, both top-down nearest-neighbor upsampling stages, long-lived backbone skips, and non-residual neck C2f blocks; bottom-up neck, learned-head, host-tail, and hardware execution remain unimplemented.
+
+![Measured FLOAT and calibrated INT8 proxy accuracy on COCO val2017](docs/images/measured-accuracy-int8.jpg)
 
 ## Architecture direction
 

@@ -409,10 +409,27 @@
     "mismatches": 0,
     "scope": "nodes 0-119 through the first top-down neck C2f block"
   },
+  "m6_through_second_neck": {
+    "status": "nodes_0_through_136_second_neck_diagnostic_and_release_pass",
+    "result": "m6-through-second-neck.json",
+    "package_schema": "haslab.graph-schedule.v1",
+    "diagnostic_package_sha256": "70862b78cf9fa7da9e3be8e11eda47f3e65aa831a349ddb98a9a58adf70f66c5",
+    "release_package_sha256": "75491255a26260065d9ddc139c41091a13848fcc14521a21f59fef518bb24018",
+    "diagnostic_peak_output_bytes": 4608000,
+    "release_peak_output_bytes": 665600,
+    "reuse_savings_bytes": 3942400,
+    "commands": 277436,
+    "dma_bytes": 22243352,
+    "int8_macs": 512409600,
+    "diagnostic_exact_values_compared": 5145600,
+    "release_final_values_compared": 102400,
+    "mismatches": 0,
+    "scope": "nodes 0-136 through both top-down neck C2f blocks"
+  },
   "open_gates": [
-    "Lower the second top-down neck stage through nodes 120-136: model.13 nearest-neighbor upsample, model.14 skip concat with the retained model.4 output, and model.15 non-residual C2f. Preserve the long-lived model.4 skip tensor in the release allocation.",
+    "Lower the first bottom-up neck stage through nodes 137-154: model.16 stride-two convolution, model.17 concat with the retained model.12 output, and model.18 non-residual C2f. Preserve model.12 through its skip use in the release allocation.",
     "Extend the passing graph scheduler through the remaining calibrated accelerator graph and INT32 learned-head boundary; repeat layerwise comparisons.",
-    "Generate an optimized whole-graph command/DMA report and resolve the package-size, weight/parameter-streaming, and command-dispatch pressure exposed by the 235,474-command nodes 0-119 package.",
+    "Generate an optimized whole-graph command/DMA report and resolve the package-size, weight/parameter-streaming, and command-dispatch pressure exposed by the 277,436-command nodes 0-136 package.",
     "Measure whether a real transport can sustain the generated command rate; the functional runtime records refill counts but has no cycle or bus timing."
   ]
 }

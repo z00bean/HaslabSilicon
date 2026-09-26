@@ -2036,3 +2036,221 @@ def load_pinned_through_first_neck(
         neck,
         model_hash,
     )
+
+
+def load_pinned_through_second_neck(
+    model_path: str | Path, calibration_path: str | Path, lut_path: str | Path
+) -> tuple[
+    list[ConvSiluLayerSpec],
+    C2fBlockSpec,
+    C2fConvSpec,
+    C2fStageSpec,
+    C2fConvSpec,
+    C2fStageSpec,
+    C2fConvSpec,
+    C2fStageSpec,
+    SPPFSpec,
+    FirstNeckStageSpec,
+    FirstNeckStageSpec,
+    str,
+]:
+    """Validate and extract pinned nodes 0..136 through the second neck C2f."""
+
+    try:
+        import onnx
+        from onnx import numpy_helper
+    except ImportError as exc:  # pragma: no cover - integration-only dependency.
+        raise CompileError("ONNX is required to compile the pinned model") from exc
+    from .graph import C2fStageSpec, FirstNeckStageSpec
+
+    (
+        stem,
+        first,
+        downsample2,
+        second,
+        downsample3,
+        third,
+        downsample4,
+        fourth,
+        sppf,
+        first_neck,
+        model_hash,
+    ) = load_pinned_through_first_neck(model_path, calibration_path, lut_path)
+    model = onnx.load(model_path)
+    if len(model.graph.node) < 137:
+        raise CompileError("graph does not contain the complete second neck C2f")
+    expected_types = [
+        "Constant", "Resize", "Concat", "Conv", "Sigmoid", "Mul", "Split",
+        "Conv", "Sigmoid", "Mul", "Conv", "Sigmoid", "Mul", "Concat",
+        "Conv", "Sigmoid", "Mul",
+    ]
+    if [node.op_type for node in model.graph.node[120:137]] != expected_types:
+        raise CompileError("nodes 120..136 do not match the pinned second neck stage")
+
+    calibration = json.loads(Path(calibration_path).read_text(encoding="utf-8"))
+    scales = {item["name"]: item["values"] for item in calibration["scales"]}
+    records = {
+        int(item["conv_node_index"]): item for item in calibration["silu"]["records"]
+    }
+    initializers = {
+        item.name: numpy_helper.to_array(item) for item in model.graph.initializer
+    }
+    lut_blob = Path(lut_path).read_bytes()
+
+    resize_constant, resize = model.graph.node[120:122]
+    resize_value = onnx.helper.get_attribute_value(resize_constant.attribute[0])
+    if np.asarray(numpy_helper.to_array(resize_value)).tolist() != [1.0, 1.0, 2.0, 2.0]:
+        raise CompileError("second neck Resize must use the static NCHW 2x scale")
+    resize_attributes = {
+        item.name: onnx.helper.get_attribute_value(item) for item in resize.attribute
+    }
+    if resize_attributes != {
+        "coordinate_transformation_mode": b"asymmetric",
+        "cubic_coeff_a": -0.75,
+        "mode": b"nearest",
+        "nearest_mode": b"floor",
+    }:
+        raise CompileError("second neck Resize attributes are outside the v0 profile")
+    if list(resize.input) != [
+        model.graph.node[119].output[0],
+        "",
+        resize_constant.output[0],
+    ]:
+        raise CompileError("second neck Resize inputs do not match the pinned graph")
+    resize_scale = float(scales["/model.13/Resize_output_0_scale"][0])
+    if not _same_scale(resize_scale, first_neck.stage.cv2.output_scale):
+        raise CompileError("second neck Resize must retain the model.12 scale")
+
+    neck_concat = model.graph.node[122]
+    if list(neck_concat.input) != [resize.output[0], model.graph.node[47].output[0]]:
+        raise CompileError("second neck concat does not use the model.4 skip tensor")
+    if {
+        item.name: onnx.helper.get_attribute_value(item) for item in neck_concat.attribute
+    } != {"axis": 1}:
+        raise CompileError("second neck concat must use the NCHW channel axis")
+    neck_concat_scale = float(scales["/model.14/Concat_output_0_scale"][0])
+
+    cv1 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=123,
+        prefix="model.15.cv1",
+        input_h=40,
+        input_w=40,
+        input_channels=192,
+        input_scale=neck_concat_scale,
+    )
+    bottleneck_cv1 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=127,
+        prefix="model.15.m.0.cv1",
+        input_h=40,
+        input_w=40,
+        input_channels=32,
+        input_scale=cv1.output_scale,
+    )
+    bottleneck_cv2 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=130,
+        prefix="model.15.m.0.cv2",
+        input_h=40,
+        input_w=40,
+        input_channels=32,
+        input_scale=bottleneck_cv1.output_scale,
+    )
+    c2f_concat_scale = float(scales["/model.15/Concat_output_0_scale"][0])
+    cv2 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=134,
+        prefix="model.15.cv2",
+        input_h=40,
+        input_w=40,
+        input_channels=96,
+        input_scale=c2f_concat_scale,
+    )
+
+    split = model.graph.node[126]
+    producer_by_output = {
+        output: node for node in model.graph.node for output in node.output
+    }
+    split_constant = producer_by_output.get(split.input[1])
+    if split_constant is None or split_constant.op_type != "Constant":
+        raise CompileError("second neck C2f split size is not a Constant")
+    split_value = onnx.helper.get_attribute_value(split_constant.attribute[0])
+    if np.asarray(numpy_helper.to_array(split_value)).tolist() != [32, 32]:
+        raise CompileError("second neck C2f split must be the static 32/32 partition")
+    if list(split.input) != [model.graph.node[125].output[0], split_constant.output[0]]:
+        raise CompileError("second neck C2f split inputs do not match")
+    if {
+        item.name: onnx.helper.get_attribute_value(item) for item in split.attribute
+    } != {"axis": 1}:
+        raise CompileError("second neck C2f split must use the NCHW channel axis")
+    connections = [
+        (123, neck_concat.output[0]),
+        (127, split.output[1]),
+        (130, model.graph.node[129].output[0]),
+        (134, model.graph.node[133].output[0]),
+    ]
+    for index, expected_input in connections:
+        if list(model.graph.node[index].input[:1]) != [expected_input]:
+            raise CompileError(f"node {index} has an unexpected graph input")
+    c2f_concat = model.graph.node[133]
+    if list(c2f_concat.input) != [
+        split.output[0],
+        split.output[1],
+        model.graph.node[132].output[0],
+    ]:
+        raise CompileError("second neck C2f concat inputs do not match")
+    if {
+        item.name: onnx.helper.get_attribute_value(item) for item in c2f_concat.attribute
+    } != {"axis": 1}:
+        raise CompileError("second neck C2f concat must use the NCHW channel axis")
+
+    stage = C2fStageSpec(
+        cv1=cv1,
+        bottlenecks=((bottleneck_cv1, bottleneck_cv2),),
+        cv2=cv2,
+        residual_scales=(None,),
+        concat_scale=c2f_concat_scale,
+        split_nodes=(split.name,),
+        add_nodes=(None,),
+        concat_node=c2f_concat.name,
+    )
+    second_neck = FirstNeckStageSpec(
+        upsample_name="model.13",
+        resize_nodes=(resize_constant.name, resize.name),
+        skip_source="model.4",
+        concat_name="model.14.concat",
+        concat_node=neck_concat.name,
+        concat_scale=neck_concat_scale,
+        stage=stage,
+    )
+    return (
+        stem,
+        first,
+        downsample2,
+        second,
+        downsample3,
+        third,
+        downsample4,
+        fourth,
+        sppf,
+        first_neck,
+        second_neck,
+        model_hash,
+    )

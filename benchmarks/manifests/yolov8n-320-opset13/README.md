@@ -1,6 +1,6 @@
 # YOLOv8n 320×320 workload candidate
 
-This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes nodes 0–119 through the complete backbone and first top-down neck C2f. Diagnostic execution matches 4,070,400 values across 58 materialized or aliased boundaries, and a lifetime-reuse package matches the final 51,200-value neck tensor. The remaining neck, learned heads, host tail, RTL, and hardware remain unimplemented.
+This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes nodes 0–136 through the complete backbone and both top-down neck C2f stages. Diagnostic execution matches 5,145,600 values across 67 materialized or aliased boundaries, and a lifetime-reuse package matches the final 102,400-value neck tensor. The bottom-up neck, learned heads, host tail, RTL, and hardware remain unimplemented.
 
 ## Third-party artifact and license
 
@@ -344,4 +344,28 @@ The compiler validates and executes nodes 0–119. This extension lowers the pin
 
 The checked-in [`m6-through-first-neck.json`](m6-through-first-neck.json) records both package hashes, the long-lived skip allocation, upsample and wide-concat residency, non-residual branch comparisons, FLOAT-reference errors, and FIFO behavior.
 
-The next implementation step is nodes 120–136: exact nearest-neighbor `model.13` upsampling, `model.14` concat with the long-lived `model.4` skip tensor, and the non-residual `model.15` C2f block.
+## Reproduce the second top-down neck stage
+
+```sh
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/compile_yolov8n_second_neck.py
+```
+
+The compiler validates and executes nodes 0–136. This extension reuses the generic top-down neck lowering for exact `model.13` upsampling, `model.14` concat with the earlier `model.4` tensor, and the non-residual `model.15` C2f block. The release lifetime plan retains `model.4` from operation 15 through operation 47. This longer skip lifetime raises the measured release peak from 614,400 to 665,600 bytes.
+
+| Nodes 0–136 measurement | Diagnostic | Release |
+|---|---:|---:|
+| Package bytes | 50,900,736 | 50,720,384 |
+| Peak output allocation | 4,608,000 | 665,600 |
+| Declared external bytes | 7,010,944 | 3,068,544 |
+| Commands | 277,436 | 277,436 |
+| DMA bytes | 22,243,352 | 22,243,352 |
+| INT8 MACs | 512,409,600 | 512,409,600 |
+| `UPSAMPLE2_I8` commands | 384 | 384 |
+| Exact values compared | 5,145,600 | 102,400 final values |
+| Integer mismatches | 0 | 0 |
+| FIFO `BUSY`/refill events | 277,428 | 277,428 |
+
+The checked-in [`m6-through-second-neck.json`](m6-through-second-neck.json) records both package hashes, the `model.4` skip lifetime, both upsample stages, exact intermediate comparisons, FLOAT-reference errors, and FIFO behavior.
+
+The next implementation step is nodes 137–154: stride-two `model.16`, `model.17` concat with the retained `model.12` output, and the non-residual `model.18` C2f block.

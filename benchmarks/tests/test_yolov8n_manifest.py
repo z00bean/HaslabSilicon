@@ -41,6 +41,9 @@ class TestYolov8nManifest(unittest.TestCase):
         cls.m6_first_neck = json.loads(
             (WORKLOAD / "m6-through-first-neck.json").read_text()
         )
+        cls.m6_second_neck = json.loads(
+            (WORKLOAD / "m6-through-second-neck.json").read_text()
+        )
 
     def test_artifact_identity_is_consistent(self):
         self.assertEqual(
@@ -359,6 +362,59 @@ class TestYolov8nManifest(unittest.TestCase):
         fifo = result["packages"]["release"]["fifo"]
         self.assertEqual(fifo["accepted_commands"], 235474)
         self.assertEqual(fifo["busy_responses"], 235466)
+        self.assertEqual(fifo["final_drain_commands"], 8)
+
+    def test_m6_second_neck_records_model4_lifetime_and_exact_execution(self):
+        result = self.m6_second_neck
+        record = self.manifest["m6_through_second_neck"]
+        self.assertEqual(
+            result["source_model"]["sha256"],
+            self.manifest["export"]["onnx_sha256"],
+        )
+        self.assertEqual(result["scope"]["node_indices"], [0, 136])
+        self.assertEqual(
+            result["packages"]["release"]["sha256"],
+            record["release_package_sha256"],
+        )
+        self.assertTrue(
+            result["packages"]["release"]["repeated_compilation_byte_identical"]
+        )
+        allocation = result["packages"]["release"]["allocation"]
+        self.assertEqual(allocation["diagnostic_peak_output_bytes"], 4608000)
+        self.assertEqual(allocation["release_peak_output_bytes"], 665600)
+        self.assertEqual(allocation["reuse_savings_bytes"], 3942400)
+        self.assertEqual(sum(result["schedule"]["opcode_counts"].values()), 277436)
+        self.assertEqual(result["schedule"]["opcode_counts"]["UPSAMPLE2_I8"], 384)
+        self.assertEqual(result["schedule"]["dma_bytes"]["total"], 22243352)
+        self.assertEqual(result["schedule"]["macs"], 512409600)
+        operations = result["schedule"]["graph_operations"]
+        resize = next(item for item in operations if item["name"] == "/model.13/Resize")
+        neck_concat = next(
+            item for item in operations if item["name"] == "/model.14/Concat"
+        )
+        self.assertEqual(resize["input_group_tiles"], 256)
+        self.assertEqual(
+            [item["source"] for item in neck_concat["fixed_point"]],
+            ["model.13", "model.4"],
+        )
+        self.assertFalse(
+            any(item["name"] == "/model.15/m.0/Add" for item in operations)
+        )
+        lifetimes = {
+            item["name"]: item
+            for item in result["allocation_plan"]["release_lifetimes"]
+        }
+        self.assertEqual(lifetimes["model.4"]["first_operation"], 15)
+        self.assertEqual(lifetimes["model.4"]["last_operation"], 47)
+        self.assertEqual(result["exact_integer_totals"]["compared_values"], 5145600)
+        self.assertEqual(result["exact_integer_totals"]["mismatch_count"], 0)
+        self.assertTrue(result["release_final_comparison"]["pass"])
+        self.assertEqual(
+            result["release_final_comparison"]["compared_values"], 102400
+        )
+        fifo = result["packages"]["release"]["fifo"]
+        self.assertEqual(fifo["accepted_commands"], 277436)
+        self.assertEqual(fifo["busy_responses"], 277428)
         self.assertEqual(fifo["final_drain_commands"], 8)
 
 

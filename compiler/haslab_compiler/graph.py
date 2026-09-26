@@ -125,6 +125,10 @@ class FirstNeckStageSpec:
     stage: C2fStageSpec
 
 
+# The same structural contract is used by every top-down upsample/skip/C2f stage.
+TopDownNeckStageSpec = FirstNeckStageSpec
+
+
 def _material(name: str, layer: C2fConvSpec) -> GraphTensor:
     weights = np.asarray(layer.weights)
     output_channels = int(weights.shape[0])
@@ -345,21 +349,21 @@ def build_backbone_graph(
     )
 
 
-def extend_with_first_neck_stage(
-    graph: GraphIR, neck: FirstNeckStageSpec
+def extend_with_top_down_neck_stage(
+    graph: GraphIR, neck: TopDownNeckStageSpec
 ) -> GraphIR:
-    """Append pinned nodes 103..119 through the first top-down neck C2f."""
+    """Append one nearest-neighbor upsample, skip concat, and C2f stage."""
 
     if len(graph.final_outputs) != 1:
-        raise CompileError("first neck stage requires one preceding graph output")
+        raise CompileError("top-down neck stage requires one preceding graph output")
     tensor_map = {tensor.name: tensor for tensor in graph.tensors}
     source_name = graph.final_outputs[0]
     if source_name not in tensor_map or neck.skip_source not in tensor_map:
-        raise CompileError("first neck stage source or skip tensor is unavailable")
+        raise CompileError("top-down neck stage source or skip tensor is unavailable")
     source = tensor_map[source_name]
     skip = tensor_map[neck.skip_source]
     if (source.height * 2, source.width * 2) != (skip.height, skip.width):
-        raise CompileError("first neck upsample shape does not match its skip tensor")
+        raise CompileError("top-down neck upsample shape does not match its skip tensor")
     tensors = list(graph.tensors)
     operations = list(graph.operations)
     tensors.append(
@@ -401,6 +405,14 @@ def extend_with_first_neck_stage(
     source_nodes.append(neck.concat_node)
     source_nodes.extend(_stage_source_nodes(neck.stage))
     return GraphIR(tuple(tensors), tuple(operations), tuple(source_nodes), (output,))
+
+
+def extend_with_first_neck_stage(
+    graph: GraphIR, neck: FirstNeckStageSpec
+) -> GraphIR:
+    """Append pinned nodes 103..119 through the first top-down neck C2f."""
+
+    return extend_with_top_down_neck_stage(graph, neck)
 
 
 def _stage_source_nodes(stage: C2fStageSpec) -> list[str]:
@@ -806,6 +818,50 @@ def compile_pinned_through_first_neck(
         ),
         neck,
     )
+    return compile_graph(
+        stem_layers=stem,
+        graph=graph,
+        source_model_sha256=model_hash,
+        allocation_mode=allocation_mode,
+    )
+
+
+def compile_pinned_through_second_neck(
+    model_path: str,
+    calibration_path: str,
+    lut_path: str,
+    *,
+    allocation_mode: AllocationMode,
+) -> bytes:
+    """Compile pinned nodes 0..136 through both top-down neck C2f stages."""
+
+    from .c2f import load_pinned_through_second_neck
+
+    (
+        stem,
+        first,
+        downsample2,
+        second,
+        downsample3,
+        third,
+        downsample4,
+        fourth,
+        sppf,
+        first_neck,
+        second_neck,
+        model_hash,
+    ) = load_pinned_through_second_neck(model_path, calibration_path, lut_path)
+    graph = build_backbone_graph(
+        first=first_stage(first),
+        extensions=(
+            C2fExtension(downsample=downsample2, stage=second),
+            C2fExtension(downsample=downsample3, stage=third),
+            C2fExtension(downsample=downsample4, stage=fourth),
+        ),
+        sppf=sppf,
+    )
+    graph = extend_with_top_down_neck_stage(graph, first_neck)
+    graph = extend_with_top_down_neck_stage(graph, second_neck)
     return compile_graph(
         stem_layers=stem,
         graph=graph,

@@ -1,6 +1,6 @@
 # Reusable graph schedule
 
-The M6 reusable scheduler lowers pinned YOLOv8n nodes 0–172 into the experimental `haslab.graph-schedule.v1` package profile. It covers the complete backbone and neck: the two-layer stem, eight C2f blocks, five stride-two convolutions, SPPF, two nearest-neighbor upsampling operations, and four skip concats. The implementation and schema remain experimental.
+The M6 reusable scheduler lowers the complete pinned YOLOv8n accelerator partition, nodes 0–217, into the experimental `haslab.graph-schedule.v1` package profile. It covers the two-layer stem, eight C2f blocks, five stride-two convolutions, SPPF, two nearest-neighbor upsampling operations, four skip concats, six learned class/box branches, six raw INT32 convolutions, and three exact INT32 boundary concats. The implementation and schema remain experimental.
 
 ## Graph representation
 
@@ -14,7 +14,7 @@ Diagnostic mode gives every material tensor a distinct 64-byte-aligned range and
 
 Release mode computes each material tensor's producing operation and last consuming operation, including alias uses. Its deterministic first-fit allocator permits two ranges to overlap only when their inclusive operation lifetimes are disjoint. Only declared final outputs are exposed. The full lifetime plan remains in the manifest so reuse can be audited.
 
-For nodes 0–172, diagnostic output storage is 5,107,200 bytes. Release storage is 691,200 bytes, saving 4,416,000 bytes. The release lifetime plan retains `model.6` through operation 40, `model.4` through operation 47, `model.12` through operation 54, and `model.9` from operation 38 through its bottom-up concat use at operation 61. The final skip lifetime raises the previous peak by 25,600 bytes. Diagnostic and release compilation are separately byte deterministic.
+For nodes 0–217, diagnostic output storage is 8,131,200 bytes. Release storage is 2,355,200 bytes, saving 5,776,000 bytes. The release lifetime plan retains the earlier neck skips only through their final consumers, then holds the three terminal INT32 tensors through graph completion. Diagnostic and release compilation are separately byte deterministic.
 
 ## Scheduling behavior
 
@@ -28,29 +28,29 @@ Residual addition and concat store explicit fixed-point rescaling parameters. Co
 
 The generic bottom-up neck extension applies a stride-two convolution to the current output, concatenates it with a named retained tensor at the resulting spatial shape, and appends a C2f block. Nodes 137–154 use it for `model.15 → model.16`, the retained `model.12` skip, and non-residual `model.18`; nodes 155–172 reuse it for `model.18 → model.19`, the retained `model.9` skip, and non-residual `model.21`.
 
+`ConvRawOp` uses EPILOGUE mode 0 to add bias once and store little-endian INT32 `HWC8` values without requantization. Each logical channel records the exact binary32 product of its input activation scale and weight scale. `ConcatI32Op` copies the 64 regression channels followed by the 80 classification channels without arithmetic. For the 256-input-channel 3×3 branch, one complete output-group weight set is 18 KiB, so the scheduler streams one 8×8 input/output-channel weight chunk per reduction step to stay within the 16 KiB weight SRAM.
+
 ## Recorded evidence
 
-The tracked [nodes 0–172 report](../benchmarks/manifests/yolov8n-320-opset13/m6-through-second-bottom-up-neck.json) records:
+The tracked [nodes 0–217 report](../benchmarks/manifests/yolov8n-320-opset13/m6-through-detection-head.json) records:
 
 | Measurement | Result |
 |---|---:|
-| Commands | 340,926 |
-| Command bytes | 43,638,528 |
-| DMA bytes | 28,700,376 |
-| INT8 MACs | 640,204,800 |
-| `MAXPOOL5_I8` commands | 192 |
-| `UPSAMPLE2_I8` commands | 384 |
-| Diagnostic package bytes | 62,233,792 |
-| Release package bytes | 61,998,464 |
-| Diagnostic peak output bytes | 5,107,200 |
-| Release peak output bytes | 691,200 |
-| Diagnostic values compared | 5,721,600 |
+| Commands | 412,092 |
+| Command bytes | 52,747,776 |
+| DMA bytes | 44,598,232 |
+| INT8 MACs | 1,092,864,000 |
+| Diagnostic package bytes | 75,688,384 |
+| Release package bytes | 75,409,728 |
+| Diagnostic peak output bytes | 8,131,200 |
+| Release peak output bytes | 2,355,200 |
+| Diagnostic values compared | 6,931,200 |
 | Diagnostic mismatches | 0 |
-| Release final values compared | 25,600 |
+| Release final values compared | 302,400 |
 | Release final mismatches | 0 |
 
-Both packages reached the eight-command FIFO high-water mark. Each accepted all 340,926 commands, observed 340,918 full-FIFO responses and refills, and drained eight commands at the end. These are functional submission counts, not cycle, latency, or transport-throughput measurements.
+Both packages reached the eight-command FIFO high-water mark. Each accepted all 412,092 commands, observed 412,084 full-FIFO responses and refills, and drained eight commands at the end. These are functional submission counts, not cycle, latency, or transport-throughput measurements.
 
 ## Remaining work
 
-The next bounded extension is accelerator nodes 173–217: the three learned detection-head branches and declared INT32 HWC8 boundary tensors with exact per-channel scales. Whole-model completion also requires the declared host tail. Command compression, transport timing, and hardware resource measurements remain separate work.
+The next bounded extension is the declared host tail at nodes 218–260: DFL decode, anchors and strides, distance-to-box conversion, class sigmoid, coordinate mapping, filtering, and NMS. It must consume the three INT32 HWC8 tensors with their per-channel scales and compare final decoded outputs against the pinned reference. Command/relocation compaction, transport timing, and hardware resource measurements remain separate pre-RTL work.

@@ -7,7 +7,7 @@ HASLAB welcomes focused reviews, reproducibility reports, failing test cases, an
 | Area | Concrete contribution | Evidence to include |
 |---|---|---|
 | Contract and conformance | Independently review an opcode, state transition, or fixture derivation; add a minimal positive, boundary, or negative case | Contract rule, hand-derived expected bytes/status, and `make conformance` result |
-| Compiler and runtime | Lower accelerator nodes 173–217 through the learned detection head | Three scale branches, class and box convolutions, exact INT32 HWC8 boundary tensors, per-channel scales, diagnostic versus release allocation, exact boundary comparisons, and `make test` result |
+| Compiler and runtime | Implement or independently review host-tail nodes 218–260 | INT32 per-channel dequantization, DFL decode, anchors/strides, box conversion, class sigmoid, filtering/NMS, exact pinned comparisons, unsupported-operation diagnostics, and `make test` result |
 | Workload reproduction | Repeat the pinned export, calibration, or COCO evaluation on a documented environment | Artifact hashes, versions, commands, accuracy results, and any mismatch from checked-in reports |
 | Hardware preparation | Prototype a small SRAM/MAC/DMA structure or review a board constraint without claiming v0 FPGA support | Source, tool versions, synthesis or simulation output, and limitations |
 | Documentation | Correct a stale status statement or make an experiment easier to reproduce | Link to the implementation or report that supports the change |

@@ -50,6 +50,9 @@ class TestYolov8nManifest(unittest.TestCase):
         cls.m6_second_bottom_up_neck = json.loads(
             (WORKLOAD / "m6-through-second-bottom-up-neck.json").read_text()
         )
+        cls.m6_detection_head = json.loads(
+            (WORKLOAD / "m6-through-detection-head.json").read_text()
+        )
 
     def test_artifact_identity_is_consistent(self):
         self.assertEqual(
@@ -508,6 +511,40 @@ class TestYolov8nManifest(unittest.TestCase):
         self.assertEqual(fifo["accepted_commands"], 340926)
         self.assertEqual(fifo["busy_responses"], 340918)
         self.assertEqual(fifo["final_drain_commands"], 8)
+
+    def test_m6_learned_head_exports_exact_raw_int32_boundaries(self):
+        result = self.m6_detection_head
+        record = self.manifest["m6_through_detection_head"]
+        self.assertEqual(result["scope"]["node_indices"], [0, 217])
+        self.assertEqual(
+            result["packages"]["diagnostic"]["sha256"],
+            record["diagnostic_package_sha256"],
+        )
+        self.assertEqual(
+            result["packages"]["release"]["sha256"],
+            record["release_package_sha256"],
+        )
+        allocation = result["packages"]["release"]["allocation"]
+        self.assertEqual(allocation["diagnostic_peak_output_bytes"], 8131200)
+        self.assertEqual(allocation["release_peak_output_bytes"], 2355200)
+        self.assertEqual(allocation["reuse_savings_bytes"], 5776000)
+        self.assertEqual(sum(result["schedule"]["opcode_counts"].values()), 412092)
+        self.assertEqual(result["schedule"]["dma_bytes"]["total"], 44598232)
+        self.assertEqual(result["schedule"]["macs"], 1092864000)
+        raw_ops = [
+            item for item in result["schedule"]["graph_operations"]
+            if item["kind"] == "conv_raw_int32"
+        ]
+        self.assertEqual(len(raw_ops), 6)
+        chunked = next(item for item in result["schedule"]["graph_operations"] if item["name"] == "model.22.cv2.2.0")
+        self.assertIn("reduction step", chunked["weight_residency"])
+        self.assertEqual(result["exact_integer_totals"]["compared_values"], 6931200)
+        self.assertEqual(result["exact_integer_totals"]["mismatch_count"], 0)
+        self.assertTrue(all(item["pass"] for item in result["release_final_comparisons"]))
+        self.assertEqual(
+            [item["compared_values"] for item in result["release_final_comparisons"]],
+            [230400, 57600, 14400],
+        )
 
 
 if __name__ == "__main__":

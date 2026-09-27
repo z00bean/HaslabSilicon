@@ -64,6 +64,24 @@ class C2fConvSpec:
 
 
 @dataclass(frozen=True)
+class RawConvSpec:
+    """One quantized convolution whose biased accumulator remains INT32."""
+
+    name: str
+    input_h: int
+    input_w: int
+    input_channels: int
+    weights: object
+    bias: object
+    input_scale: float
+    weight_scales: object
+    node_name: str
+    kernel: int
+    stride: int
+    padding: int
+
+
+@dataclass(frozen=True)
 class C2fBlockSpec:
     """The exact cv1/split/bottleneck/add/concat/cv2 structure of model.2."""
 
@@ -86,6 +104,18 @@ class _PreparedConv:
     multipliers: np.ndarray
     shifts: np.ndarray
     lut: np.ndarray
+    output_h: int
+    output_w: int
+    output_channels: int
+    input_groups: int
+    output_groups: int
+
+
+@dataclass(frozen=True)
+class _PreparedRawConv:
+    spec: RawConvSpec
+    weights_i8: np.ndarray
+    bias_i32: np.ndarray
     output_h: int
     output_w: int
     output_channels: int
@@ -230,8 +260,8 @@ def _prepare(spec: C2fConvSpec) -> _PreparedConv:
     output_groups = output_channels // LANES
     _conv_tile_shape(output_h, output_w, input_groups, spec.kernel, spec.stride)
     weight_chunk_bytes = spec.kernel * spec.kernel * LANES * LANES
-    if input_groups * weight_chunk_bytes > 16_384:
-        raise CompileError(f"{spec.name} one-output-group weights exceed v0 weight SRAM")
+    if weight_chunk_bytes > 16_384:
+        raise CompileError(f"{spec.name} one input/output-group weight chunk exceeds v0 weight SRAM")
     weights_i8 = quantize_int8(weights, scales.reshape(output_channels, 1, 1, 1))
     return _PreparedConv(
         spec,
@@ -240,6 +270,52 @@ def _prepare(spec: C2fConvSpec) -> _PreparedConv:
         multipliers,
         shifts,
         lut,
+        output_h,
+        output_w,
+        output_channels,
+        input_groups,
+        output_groups,
+    )
+
+
+def _prepare_raw(spec: RawConvSpec) -> _PreparedRawConv:
+    weights = np.asarray(spec.weights, dtype=np.float32)
+    bias = np.asarray(spec.bias, dtype=np.float32)
+    scales = np.asarray(spec.weight_scales, dtype=np.float32)
+    if spec.kernel not in (1, 3) or spec.stride not in (1, 2):
+        raise CompileError(f"{spec.name} uses an unsupported kernel or stride")
+    if spec.padding not in (0, 1) or spec.padding != (spec.kernel - 1) // 2:
+        raise CompileError(f"{spec.name} uses unsupported padding")
+    if weights.ndim != 4 or weights.shape[1:] != (
+        spec.input_channels,
+        spec.kernel,
+        spec.kernel,
+    ):
+        raise CompileError(f"{spec.name} weights do not match its declared convolution")
+    output_channels = int(weights.shape[0])
+    if output_channels % LANES or spec.input_channels % LANES:
+        raise CompileError(f"{spec.name} channels must be multiples of eight")
+    if bias.shape != (output_channels,) or scales.shape != (output_channels,):
+        raise CompileError(f"{spec.name} bias and weight scales must match output channels")
+    if not np.isfinite(spec.input_scale) or spec.input_scale <= 0:
+        raise CompileError(f"{spec.name} input scale must be finite and positive")
+    if np.any(~np.isfinite(weights)) or np.any(~np.isfinite(bias)):
+        raise CompileError(f"{spec.name} weights and bias must be finite")
+    if np.any(~np.isfinite(scales)) or np.any(scales <= 0):
+        raise CompileError(f"{spec.name} weight scales must be finite and positive")
+    output_h = (spec.input_h + 2 * spec.padding - spec.kernel) // spec.stride + 1
+    output_w = (spec.input_w + 2 * spec.padding - spec.kernel) // spec.stride + 1
+    input_groups = spec.input_channels // LANES
+    output_groups = output_channels // LANES
+    _conv_tile_shape(output_h, output_w, input_groups, spec.kernel, spec.stride)
+    weight_chunk_bytes = spec.kernel * spec.kernel * LANES * LANES
+    if weight_chunk_bytes > 16_384:
+        raise CompileError(f"{spec.name} one input/output-group weight chunk exceeds v0 weight SRAM")
+    weights_i8 = quantize_int8(weights, scales.reshape(output_channels, 1, 1, 1))
+    return _PreparedRawConv(
+        spec,
+        weights_i8,
+        _bias_i32(bias, float(spec.input_scale), scales),
         output_h,
         output_w,
         output_channels,
@@ -468,6 +544,37 @@ class _Builder:
             self.relocate(index, 3, "output", addend)
         self.dma["output"] += tile_h * tile_w * LANES
 
+    def _store_group_i32(
+        self,
+        destination: _TensorRef,
+        group: int,
+        y: int,
+        x: int,
+        tile_h: int,
+        tile_w: int,
+    ) -> None:
+        lane_bytes = LANES * 4
+        for row in range(tile_h):
+            addend = destination.addend + (
+                ((y + row) * destination.width + x) * destination.physical_groups + group
+            ) * lane_bytes
+            index = self.emit(
+                Opcode.DMA_COPY2D,
+                [
+                    MemorySpace.OUTPUT,
+                    row * tile_w * lane_bytes,
+                    MemorySpace.EXT,
+                    0,
+                    lane_bytes,
+                    tile_w,
+                    lane_bytes,
+                    destination.physical_groups * lane_bytes,
+                    0,
+                ],
+            )
+            self.relocate(index, 3, "output", addend)
+        self.dma["output"] += tile_h * tile_w * lane_bytes
+
     def schedule_conv(self, source: _TensorRef, destination: _TensorRef, layer: _PreparedConv) -> None:
         if (source.height, source.width, source.channels) != (
             layer.spec.input_h,
@@ -503,6 +610,10 @@ class _Builder:
         before_opcodes = self.opcodes.copy()
         before_dma = self.dma.copy()
         stream_weights = len(weights) > 16_384
+        group_weight_bytes = layer.input_groups * (
+            layer.spec.kernel * layer.spec.kernel * LANES * LANES
+        )
+        stream_weight_chunks = group_weight_bytes > 16_384
         stream_parameters = len(parameters) + 1024 > 3_072
         if not stream_weights:
             self.load_constant(weight_offset, len(weights), MemorySpace.WEIGHT, 0)
@@ -559,8 +670,7 @@ class _Builder:
                             MemorySpace.PARAM,
                             0,
                         )
-                    if stream_weights:
-                        group_weight_bytes = layer.input_groups * weight_chunk_bytes
+                    if stream_weights and not stream_weight_chunks:
                         self.load_constant(
                             weight_offset + output_group * group_weight_bytes,
                             group_weight_bytes,
@@ -568,6 +678,15 @@ class _Builder:
                             0,
                         )
                     for input_group in range(layer.input_groups):
+                        if stream_weight_chunks:
+                            self.load_constant(
+                                weight_offset
+                                + output_group * group_weight_bytes
+                                + input_group * weight_chunk_bytes,
+                                weight_chunk_bytes,
+                                MemorySpace.WEIGHT,
+                                0,
+                            )
                         flags = (FIRST_FLAG if input_group == 0 else 0) | (
                             LAST_FLAG if input_group == layer.input_groups - 1 else 0
                         )
@@ -576,7 +695,9 @@ class _Builder:
                             [
                                 input_group * chunk_bytes,
                                 (
-                                    input_group
+                                    0
+                                    if stream_weight_chunks
+                                    else input_group
                                     if stream_weights
                                     else output_group * layer.input_groups + input_group
                                 )
@@ -628,7 +749,9 @@ class _Builder:
         )
         if (tile_h, tile_w) != (TILE_H, TILE_W):
             self.operations[-1]["tile_shape"] = [tile_h, tile_w]
-        if stream_weights:
+        if stream_weight_chunks:
+            self.operations[-1]["weight_residency"] = "one input/output-group chunk streamed per reduction step"
+        elif stream_weights:
             self.operations[-1]["weight_residency"] = "one output group streamed per spatial tile"
         if stream_parameters:
             self.operations[-1]["parameter_residency"] = (
@@ -638,6 +761,208 @@ class _Builder:
             {
                 "bias_i32": layer.bias_i32.astype(int).tolist(),
                 "name": layer.spec.name,
+                "weight_i8_sha256": _sha256(layer.weights_i8.tobytes()),
+            }
+        )
+
+    def schedule_conv_raw(
+        self,
+        source: _TensorRef,
+        destination: _TensorRef,
+        layer: _PreparedRawConv,
+    ) -> None:
+        """Schedule convolution and export its biased accumulator as INT32 HWC8."""
+
+        if (source.height, source.width, source.channels) != (
+            layer.spec.input_h,
+            layer.spec.input_w,
+            layer.spec.input_channels,
+        ):
+            raise CompileError(f"{layer.spec.name} source shape does not match its declaration")
+        if not _same_scale(source.scale, layer.spec.input_scale):
+            raise CompileError(f"{layer.spec.name} input scale does not match its source")
+        packed = np.ascontiguousarray(oihw_to_khwci8(layer.weights_i8))
+        weight_parts = []
+        for output_group in range(layer.output_groups):
+            for input_group in range(layer.input_groups):
+                start_channel = input_group * LANES
+                weight_parts.append(
+                    np.ascontiguousarray(
+                        packed[:, :, start_channel : start_channel + LANES, output_group, :]
+                    ).tobytes()
+                )
+        weights = b"".join(weight_parts)
+        zeros = np.zeros(LANES, dtype=np.int64)
+        parameters = b"".join(
+            _parameter_records(
+                layer.bias_i32[group * LANES : (group + 1) * LANES], zeros, zeros
+            )
+            for group in range(layer.output_groups)
+        )
+        weight_offset = self.add_constant(
+            f"{layer.spec.name}.weights", "KHWCI8_CHUNKED_INT8", weights
+        )
+        parameter_offset = self.add_constant(
+            f"{layer.spec.name}.parameters", "RAW_EPILOGUE_RECORDS", parameters
+        )
+        start = len(self.commands)
+        before_opcodes = self.opcodes.copy()
+        before_dma = self.dma.copy()
+        stream_weights = len(weights) > 16_384
+        group_weight_bytes = layer.input_groups * (
+            layer.spec.kernel * layer.spec.kernel * LANES * LANES
+        )
+        stream_weight_chunks = group_weight_bytes > 16_384
+        stream_parameters = len(parameters) > 3_072
+        if not stream_weights:
+            self.load_constant(weight_offset, len(weights), MemorySpace.WEIGHT, 0)
+        if not stream_parameters:
+            self.load_constant(parameter_offset, len(parameters), MemorySpace.PARAM, 0)
+        tile_h, tile_w = _conv_tile_shape(
+            layer.output_h,
+            layer.output_w,
+            layer.input_groups,
+            layer.spec.kernel,
+            layer.spec.stride,
+        )
+        patch_h = (tile_h - 1) * layer.spec.stride + layer.spec.kernel
+        patch_w = (tile_w - 1) * layer.spec.stride + layer.spec.kernel
+        chunk_bytes = patch_h * patch_w * LANES
+        weight_chunk_bytes = layer.spec.kernel * layer.spec.kernel * LANES * LANES
+        boundary_tiles = 0
+        for output_y in range(0, layer.output_h, tile_h):
+            input_start_y = output_y * layer.spec.stride - layer.spec.padding
+            valid_y0 = max(0, input_start_y)
+            valid_y1 = min(source.height, input_start_y + patch_h)
+            valid_h = valid_y1 - valid_y0
+            destination_y = valid_y0 - input_start_y
+            for output_x in range(0, layer.output_w, tile_w):
+                input_start_x = output_x * layer.spec.stride - layer.spec.padding
+                valid_x0 = max(0, input_start_x)
+                valid_x1 = min(source.width, input_start_x + patch_w)
+                valid_w = valid_x1 - valid_x0
+                destination_x = valid_x0 - input_start_x
+                if valid_h != patch_h or valid_w != patch_w:
+                    self.emit(
+                        Opcode.FILL8,
+                        [MemorySpace.INPUT, 0, layer.input_groups * chunk_bytes, 0],
+                    )
+                    boundary_tiles += 1
+                for input_group in range(layer.input_groups):
+                    self._load_patch_group(
+                        source,
+                        input_group,
+                        valid_y0,
+                        valid_x0,
+                        valid_h,
+                        valid_w,
+                        input_group * chunk_bytes,
+                        destination_y,
+                        destination_x,
+                        patch_w,
+                    )
+                for output_group in range(layer.output_groups):
+                    if stream_parameters:
+                        self.load_constant(
+                            parameter_offset + output_group * 128,
+                            128,
+                            MemorySpace.PARAM,
+                            0,
+                        )
+                    if stream_weights and not stream_weight_chunks:
+                        self.load_constant(
+                            weight_offset + output_group * group_weight_bytes,
+                            group_weight_bytes,
+                            MemorySpace.WEIGHT,
+                            0,
+                        )
+                    for input_group in range(layer.input_groups):
+                        if stream_weight_chunks:
+                            self.load_constant(
+                                weight_offset
+                                + output_group * group_weight_bytes
+                                + input_group * weight_chunk_bytes,
+                                weight_chunk_bytes,
+                                MemorySpace.WEIGHT,
+                                0,
+                            )
+                        flags = (FIRST_FLAG if input_group == 0 else 0) | (
+                            LAST_FLAG if input_group == layer.input_groups - 1 else 0
+                        )
+                        self.emit(
+                            Opcode.CONV_I8,
+                            [
+                                input_group * chunk_bytes,
+                                (
+                                    0
+                                    if stream_weight_chunks
+                                    else input_group
+                                    if stream_weights
+                                    else output_group * layer.input_groups + input_group
+                                )
+                                * weight_chunk_bytes,
+                                0,
+                                tile_h,
+                                tile_w,
+                                LANES,
+                                LANES,
+                                input_group * LANES,
+                                layer.spec.input_channels,
+                                layer.spec.kernel,
+                                layer.spec.stride,
+                            ],
+                            flags=flags,
+                        )
+                    self.emit(
+                        Opcode.EPILOGUE,
+                        [
+                            0,
+                            0,
+                            0 if stream_parameters else output_group * 128,
+                            0,
+                            0,
+                        ],
+                    )
+                    self._store_group_i32(
+                        destination, output_group, output_y, output_x, tile_h, tile_w
+                    )
+        opcode_delta = self.opcodes - before_opcodes
+        dma_delta = self.dma - before_dma
+        output_scales = np.asarray(layer.spec.weight_scales, dtype=np.float32) * np.float32(
+            layer.spec.input_scale
+        )
+        self.operations.append(
+            {
+                "boundary_fill_commands": boundary_tiles,
+                "command_count": len(self.commands) - start,
+                "dma_bytes": {key: dma_delta[key] for key in ("constants", "input", "output")}
+                | {"total": sum(dma_delta[key] for key in ("constants", "input", "output"))},
+                "input_channel_chunks": layer.input_groups,
+                "kind": "conv_raw_int32",
+                "macs": layer.output_h * layer.output_w * layer.output_channels * layer.spec.kernel * layer.spec.kernel * layer.spec.input_channels,
+                "name": layer.spec.name,
+                "opcode_counts": {
+                    Opcode(key).name: value for key, value in sorted(opcode_delta.items())
+                },
+                "output_group_tiles": (layer.output_h // tile_h)
+                * (layer.output_w // tile_w)
+                * layer.output_groups,
+                "output_scales_binary32_per_channel": output_scales.astype(float).tolist(),
+            }
+        )
+        if (tile_h, tile_w) != (TILE_H, TILE_W):
+            self.operations[-1]["tile_shape"] = [tile_h, tile_w]
+        if stream_weight_chunks:
+            self.operations[-1]["weight_residency"] = "one input/output-group chunk streamed per reduction step"
+        elif stream_weights:
+            self.operations[-1]["weight_residency"] = "one output group streamed per spatial tile"
+        if stream_parameters:
+            self.operations[-1]["parameter_residency"] = "one raw output-group record streamed per spatial tile"
+        self.debug.setdefault("layers", []).append(
+            {
+                "bias_i32": layer.bias_i32.astype(int).tolist(),
+                "name": layer.spec.name,
+                "output_scales_binary32_per_channel": output_scales.astype(float).tolist(),
                 "weight_i8_sha256": _sha256(layer.weights_i8.tobytes()),
             }
         )
@@ -989,6 +1314,86 @@ class _Builder:
         elif stream_parameters:
             self.operations[-1]["parameter_residency"] = "one concat source at a time"
 
+    def schedule_concat_i32(
+        self,
+        sources: Sequence[_TensorRef],
+        destination: _TensorRef,
+        node_name: str,
+    ) -> None:
+        """Concatenate raw INT32 HWC8 tensors without changing channel scales."""
+
+        if not sources or any(
+            (item.height, item.width) != (destination.height, destination.width)
+            for item in sources
+        ):
+            raise CompileError("INT32 concat sources must share the destination spatial shape")
+        if sum(item.channels for item in sources) != destination.channels:
+            raise CompileError("INT32 concat channels do not match the destination")
+        start = len(self.commands)
+        before_opcodes = self.opcodes.copy()
+        before_dma = self.dma.copy()
+        lane_bytes = LANES * 4
+        destination_group = 0
+        for source in sources:
+            for y in range(source.height):
+                for group in range(source.physical_groups):
+                    source_addend = source.addend + (
+                        y * source.width * source.physical_groups + group
+                    ) * lane_bytes
+                    load_index = self.emit(
+                        Opcode.DMA_COPY2D,
+                        [
+                            MemorySpace.EXT,
+                            0,
+                            MemorySpace.INPUT,
+                            0,
+                            lane_bytes,
+                            source.width,
+                            source.physical_groups * lane_bytes,
+                            lane_bytes,
+                            0,
+                        ],
+                    )
+                    self.relocate(load_index, 1, "output", source_addend)
+                    destination_addend = destination.addend + (
+                        y * destination.width * destination.physical_groups
+                        + destination_group
+                        + group
+                    ) * lane_bytes
+                    store_index = self.emit(
+                        Opcode.DMA_COPY2D,
+                        [
+                            MemorySpace.INPUT,
+                            0,
+                            MemorySpace.EXT,
+                            0,
+                            lane_bytes,
+                            destination.width,
+                            lane_bytes,
+                            destination.physical_groups * lane_bytes,
+                            0,
+                        ],
+                    )
+                    self.relocate(store_index, 3, "output", destination_addend)
+            destination_group += source.physical_groups
+            self.dma["input"] += source.height * source.width * source.channels * 4
+            self.dma["output"] += source.height * source.width * source.channels * 4
+        opcode_delta = self.opcodes - before_opcodes
+        dma_delta = self.dma - before_dma
+        self.operations.append(
+            {
+                "command_count": len(self.commands) - start,
+                "dma_bytes": {key: dma_delta[key] for key in ("constants", "input", "output")}
+                | {"total": sum(dma_delta[key] for key in ("constants", "input", "output"))},
+                "kind": "channel_concat_int32",
+                "name": node_name,
+                "opcode_counts": {
+                    Opcode(key).name: value for key, value in sorted(opcode_delta.items())
+                },
+                "sources": [item.name for item in sources],
+            }
+        )
+
     def finish(self, source_nodes: Sequence[str]) -> bytes:
         self.emit(Opcode.END)
         command_bytes = b"".join(command.to_bytes() for command in self.commands)
@@ -1179,6 +1584,62 @@ def _conv_from_nodes(
         record["accumulator_to_grid"]["shifts"],
         lut,
         (conv.name, sigmoid.name, mul.name),
+        kernel,
+        stride,
+        padding,
+    )
+
+
+def _raw_conv_from_node(
+    *,
+    model: object,
+    initializers: dict[str, np.ndarray],
+    scales: dict[str, list[float]],
+    node_index: int,
+    prefix: str,
+    input_h: int,
+    input_w: int,
+    input_channels: int,
+    input_scale: float,
+) -> RawConvSpec:
+    import onnx
+
+    conv = model.graph.node[node_index]
+    if conv.op_type != "Conv":
+        raise CompileError(f"node {node_index} must be a raw Conv")
+    attrs = {item.name: onnx.helper.get_attribute_value(item) for item in conv.attribute}
+    kernel = int(attrs.get("kernel_shape", [0, 0])[0])
+    stride = int(attrs.get("strides", [0, 0])[0])
+    padding = int(attrs.get("pads", [0, 0, 0, 0])[0])
+    expected = {
+        "dilations": [1, 1],
+        "group": 1,
+        "kernel_shape": [kernel, kernel],
+        "pads": [padding, padding, padding, padding],
+        "strides": [stride, stride],
+    }
+    if attrs != expected or (kernel, stride, padding) not in {
+        (1, 1, 0),
+        (3, 1, 1),
+        (3, 2, 1),
+    }:
+        raise CompileError(f"unsupported raw Conv attributes for {conv.name}: {attrs!r}")
+    try:
+        weights = initializers[conv.input[1]]
+        bias = initializers[conv.input[2]]
+        weight_scales = scales[f"{prefix}.weight_scale"]
+    except KeyError as exc:
+        raise CompileError(f"calibration lacks {prefix} data") from exc
+    return RawConvSpec(
+        prefix,
+        input_h,
+        input_w,
+        input_channels,
+        weights,
+        bias,
+        input_scale,
+        weight_scales,
+        conv.name,
         kernel,
         stride,
         padding,
@@ -2602,3 +3063,155 @@ def load_pinned_through_second_bottom_up_neck(
         stage=stage,
     )
     return (*prefix_specs, first_bottom_up, second_bottom_up, model_hash)
+
+
+def load_pinned_through_detection_head(
+    model_path: str | Path, calibration_path: str | Path, lut_path: str | Path
+) -> tuple:
+    """Validate and extract pinned accelerator nodes 0..217 through its INT32 boundary."""
+
+    try:
+        import onnx
+        from onnx import numpy_helper
+    except ImportError as exc:  # pragma: no cover - integration-only dependency.
+        raise CompileError("ONNX is required to compile the pinned model") from exc
+    from .graph import DetectionHeadBranchSpec, DetectionHeadSpec
+
+    prior = load_pinned_through_second_bottom_up_neck(
+        model_path, calibration_path, lut_path
+    )
+    *prefix_specs, second_bottom_up, model_hash = prior
+    model = onnx.load(model_path)
+    if len(model.graph.node) < 218:
+        raise CompileError("graph does not contain the complete learned detection head")
+    branch_types = [
+        "Conv", "Sigmoid", "Mul", "Conv", "Sigmoid", "Mul", "Conv",
+        "Conv", "Sigmoid", "Mul", "Conv", "Sigmoid", "Mul", "Conv", "Concat",
+    ]
+    if [node.op_type for node in model.graph.node[173:218]] != branch_types * 3:
+        raise CompileError("nodes 173..217 do not match the pinned learned detection head")
+
+    calibration = json.loads(Path(calibration_path).read_text(encoding="utf-8"))
+    scales = {item["name"]: item["values"] for item in calibration["scales"]}
+    records = {
+        int(item["conv_node_index"]): item for item in calibration["silu"]["records"]
+    }
+    initializers = {
+        item.name: numpy_helper.to_array(item) for item in model.graph.initializer
+    }
+    lut_blob = Path(lut_path).read_bytes()
+    source_specs = (
+        ("model.15", 40, 40, 64, prefix_specs[-2].stage.cv2.output_scale, 173),
+        ("model.18", 20, 20, 128, prefix_specs[-1].stage.cv2.output_scale, 188),
+        ("model.21", 10, 10, 256, second_bottom_up.stage.cv2.output_scale, 203),
+    )
+    branches = []
+    for scale_index, (source_name, height, width, channels, source_scale, start) in enumerate(
+        source_specs
+    ):
+        regression0 = _conv_from_nodes(
+            model=model,
+            initializers=initializers,
+            scales=scales,
+            records=records,
+            lut_blob=lut_blob,
+            node_index=start,
+            prefix=f"model.22.cv2.{scale_index}.0",
+            input_h=height,
+            input_w=width,
+            input_channels=channels,
+            input_scale=source_scale,
+        )
+        regression1 = _conv_from_nodes(
+            model=model,
+            initializers=initializers,
+            scales=scales,
+            records=records,
+            lut_blob=lut_blob,
+            node_index=start + 3,
+            prefix=f"model.22.cv2.{scale_index}.1",
+            input_h=height,
+            input_w=width,
+            input_channels=64,
+            input_scale=regression0.output_scale,
+        )
+        regression2 = _raw_conv_from_node(
+            model=model,
+            initializers=initializers,
+            scales=scales,
+            node_index=start + 6,
+            prefix=f"model.22.cv2.{scale_index}.2",
+            input_h=height,
+            input_w=width,
+            input_channels=64,
+            input_scale=regression1.output_scale,
+        )
+        classification0 = _conv_from_nodes(
+            model=model,
+            initializers=initializers,
+            scales=scales,
+            records=records,
+            lut_blob=lut_blob,
+            node_index=start + 7,
+            prefix=f"model.22.cv3.{scale_index}.0",
+            input_h=height,
+            input_w=width,
+            input_channels=channels,
+            input_scale=source_scale,
+        )
+        classification1 = _conv_from_nodes(
+            model=model,
+            initializers=initializers,
+            scales=scales,
+            records=records,
+            lut_blob=lut_blob,
+            node_index=start + 10,
+            prefix=f"model.22.cv3.{scale_index}.1",
+            input_h=height,
+            input_w=width,
+            input_channels=80,
+            input_scale=classification0.output_scale,
+        )
+        classification2 = _raw_conv_from_node(
+            model=model,
+            initializers=initializers,
+            scales=scales,
+            node_index=start + 13,
+            prefix=f"model.22.cv3.{scale_index}.2",
+            input_h=height,
+            input_w=width,
+            input_channels=80,
+            input_scale=classification1.output_scale,
+        )
+        concat = model.graph.node[start + 14]
+        expected_source = model.graph.node[(136, 154, 172)[scale_index]].output[0]
+        connections = (
+            (start, expected_source),
+            (start + 3, model.graph.node[start + 2].output[0]),
+            (start + 6, model.graph.node[start + 5].output[0]),
+            (start + 7, expected_source),
+            (start + 10, model.graph.node[start + 9].output[0]),
+            (start + 13, model.graph.node[start + 12].output[0]),
+        )
+        for node_index, expected_input in connections:
+            if list(model.graph.node[node_index].input[:1]) != [expected_input]:
+                raise CompileError(f"node {node_index} has an unexpected detection-head input")
+        if list(concat.input) != [
+            model.graph.node[start + 6].output[0],
+            model.graph.node[start + 13].output[0],
+        ]:
+            raise CompileError("detection-head concat input order must be box then class")
+        if {
+            item.name: onnx.helper.get_attribute_value(item) for item in concat.attribute
+        } != {"axis": 1}:
+            raise CompileError("detection-head concat must use the NCHW channel axis")
+        branches.append(
+            DetectionHeadBranchSpec(
+                source=source_name,
+                regression=(regression0, regression1, regression2),
+                classification=(classification0, classification1, classification2),
+                concat_name=f"model.22.boundary{scale_index}",
+                concat_node=concat.name,
+            )
+        )
+    return (*prefix_specs, second_bottom_up, DetectionHeadSpec(tuple(branches)), model_hash)

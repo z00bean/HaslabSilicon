@@ -13,10 +13,12 @@ import numpy as np
 from .c2f import (
     C2fBlockSpec,
     C2fConvSpec,
+    RawConvSpec,
     _Builder,
     _TensorRef,
     _extract_hxb,
     _prepare,
+    _prepare_raw,
 )
 from .pipeline import ConvSiluLayerSpec, compile_conv_silu_pipeline
 from .vertical_slice import CompileError, _align
@@ -34,10 +36,12 @@ class GraphTensor:
     scale: float
     alias_of: str | None = None
     channel_group_offset: int = 0
+    dtype: Literal["int8", "int32"] = "int8"
+    channel_scales: tuple[float, ...] = ()
 
     @property
     def bytes(self) -> int:
-        return self.height * self.width * self.channels
+        return self.height * self.width * self.channels * (4 if self.dtype == "int32" else 1)
 
 
 @dataclass(frozen=True)
@@ -45,6 +49,13 @@ class ConvSiluOp:
     source: str
     destination: str
     layer: C2fConvSpec
+
+
+@dataclass(frozen=True)
+class ConvRawOp:
+    source: str
+    destination: str
+    layer: RawConvSpec
 
 
 @dataclass(frozen=True)
@@ -57,6 +68,13 @@ class AddOp:
 
 @dataclass(frozen=True)
 class ConcatOp:
+    sources: tuple[str, ...]
+    destination: str
+    node_name: str
+
+
+@dataclass(frozen=True)
+class ConcatI32Op:
     sources: tuple[str, ...]
     destination: str
     node_name: str
@@ -76,7 +94,7 @@ class Upsample2Op:
     node_name: str
 
 
-GraphOp = ConvSiluOp | AddOp | ConcatOp | MaxPoolOp | Upsample2Op
+GraphOp = ConvSiluOp | ConvRawOp | AddOp | ConcatOp | ConcatI32Op | MaxPoolOp | Upsample2Op
 
 
 @dataclass(frozen=True)
@@ -139,12 +157,43 @@ class BottomUpNeckStageSpec:
     stage: C2fStageSpec
 
 
+@dataclass(frozen=True)
+class DetectionHeadBranchSpec:
+    source: str
+    regression: tuple[C2fConvSpec, C2fConvSpec, RawConvSpec]
+    classification: tuple[C2fConvSpec, C2fConvSpec, RawConvSpec]
+    concat_name: str
+    concat_node: str
+
+
+@dataclass(frozen=True)
+class DetectionHeadSpec:
+    branches: tuple[DetectionHeadBranchSpec, ...]
+
+
 def _material(name: str, layer: C2fConvSpec) -> GraphTensor:
     weights = np.asarray(layer.weights)
     output_channels = int(weights.shape[0])
     output_h = (layer.input_h + 2 * layer.padding - layer.kernel) // layer.stride + 1
     output_w = (layer.input_w + 2 * layer.padding - layer.kernel) // layer.stride + 1
     return GraphTensor(name, output_h, output_w, output_channels, layer.output_scale)
+
+
+def _material_raw(name: str, layer: RawConvSpec) -> GraphTensor:
+    weights = np.asarray(layer.weights)
+    output_channels = int(weights.shape[0])
+    output_h = (layer.input_h + 2 * layer.padding - layer.kernel) // layer.stride + 1
+    output_w = (layer.input_w + 2 * layer.padding - layer.kernel) // layer.stride + 1
+    scales = np.asarray(layer.weight_scales, dtype=np.float32) * np.float32(layer.input_scale)
+    return GraphTensor(
+        name,
+        output_h,
+        output_w,
+        output_channels,
+        1.0,
+        dtype="int32",
+        channel_scales=tuple(float(value) for value in scales),
+    )
 
 
 def first_stage(block: C2fBlockSpec) -> C2fStageSpec:
@@ -481,6 +530,57 @@ def extend_with_bottom_up_neck_stage(
     return GraphIR(tuple(tensors), tuple(operations), tuple(source_nodes), (output,))
 
 
+def extend_with_detection_head(graph: GraphIR, head: DetectionHeadSpec) -> GraphIR:
+    """Append the three learned class/box branches through the raw INT32 boundary."""
+
+    if len(head.branches) != 3:
+        raise CompileError("the pinned detection head requires exactly three scale branches")
+    tensor_map = {tensor.name: tensor for tensor in graph.tensors}
+    tensors = list(graph.tensors)
+    operations = list(graph.operations)
+    source_nodes = list(graph.source_nodes)
+    outputs: list[str] = []
+    for branch in head.branches:
+        if branch.source not in tensor_map:
+            raise CompileError(f"detection-head source is unavailable: {branch.source}")
+        source = branch.source
+        raw_outputs: list[str] = []
+        for path in (branch.regression, branch.classification):
+            first, second, raw = path
+            tensors.append(_material(first.name, first))
+            operations.append(ConvSiluOp(source, first.name, first))
+            tensors.append(_material(second.name, second))
+            operations.append(ConvSiluOp(first.name, second.name, second))
+            tensors.append(_material_raw(raw.name, raw))
+            operations.append(ConvRawOp(second.name, raw.name, raw))
+            tensor_map[first.name] = tensors[-3]
+            tensor_map[second.name] = tensors[-2]
+            tensor_map[raw.name] = tensors[-1]
+            raw_outputs.append(raw.name)
+            source_nodes.extend(first.node_names)
+            source_nodes.extend(second.node_names)
+            source_nodes.append(raw.node_name)
+        left = tensor_map[raw_outputs[0]]
+        right = tensor_map[raw_outputs[1]]
+        if (left.height, left.width) != (right.height, right.width):
+            raise CompileError("detection-head class and box shapes disagree")
+        boundary = GraphTensor(
+            branch.concat_name,
+            left.height,
+            left.width,
+            left.channels + right.channels,
+            1.0,
+            dtype="int32",
+            channel_scales=left.channel_scales + right.channel_scales,
+        )
+        tensors.append(boundary)
+        tensor_map[boundary.name] = boundary
+        operations.append(ConcatI32Op(tuple(raw_outputs), boundary.name, branch.concat_node))
+        source_nodes.append(branch.concat_node)
+        outputs.append(boundary.name)
+    return GraphIR(tuple(tensors), tuple(operations), tuple(source_nodes), tuple(outputs))
+
+
 def _stage_source_nodes(stage: C2fStageSpec) -> list[str]:
     nodes = list(stage.cv1.node_names) + list(stage.split_nodes)
     for pair, add_node in zip(stage.bottlenecks, stage.add_nodes):
@@ -494,7 +594,7 @@ def _stage_source_nodes(stage: C2fStageSpec) -> list[str]:
 
 
 def _operation_sources(operation: GraphOp) -> tuple[str, ...]:
-    if isinstance(operation, (ConvSiluOp, MaxPoolOp, Upsample2Op)):
+    if isinstance(operation, (ConvSiluOp, ConvRawOp, MaxPoolOp, Upsample2Op)):
         return (operation.source,)
     if isinstance(operation, AddOp):
         return (operation.left, operation.right)
@@ -512,8 +612,17 @@ def _validate_graph(graph: GraphIR, base_names: set[str]) -> dict[str, GraphTens
             raise CompileError(f"duplicate graph tensor: {tensor.name}")
         if min(tensor.height, tensor.width, tensor.channels) <= 0 or tensor.channels % 8:
             raise CompileError(f"{tensor.name} has an invalid HWC8 shape")
-        if not np.isfinite(tensor.scale) or tensor.scale <= 0:
-            raise CompileError(f"{tensor.name} has an invalid scale")
+        if tensor.dtype == "int8":
+            if not np.isfinite(tensor.scale) or tensor.scale <= 0 or tensor.channel_scales:
+                raise CompileError(f"{tensor.name} has invalid INT8 scale metadata")
+        elif tensor.dtype == "int32":
+            scales = np.asarray(tensor.channel_scales, dtype=np.float32)
+            if tensor.alias_of is not None:
+                raise CompileError(f"{tensor.name} cannot alias an INT32 tensor")
+            if scales.shape != (tensor.channels,) or np.any(~np.isfinite(scales)) or np.any(scales <= 0):
+                raise CompileError(f"{tensor.name} has invalid INT32 per-channel scales")
+        else:
+            raise CompileError(f"{tensor.name} has an unsupported dtype")
         if tensor.alias_of is not None and tensor.alias_of not in tensors:
             raise CompileError(f"{tensor.name} aliases an unavailable tensor")
         tensors[tensor.name] = tensor
@@ -682,13 +791,16 @@ def compile_graph(
         record = {
             "addend": addend,
             "bytes": tensor.bytes,
-            "dtype": "int8",
+            "dtype": tensor.dtype,
             "layout": "HWC8",
             "logical_shape": [1, tensor.channels, tensor.height, tensor.width],
             "name": tensor.name,
             "physical_shape": [tensor.height, tensor.width, groups, 8],
-            "scale_binary32": float(np.float32(tensor.scale)),
         }
+        if tensor.dtype == "int8":
+            record["scale_binary32"] = float(np.float32(tensor.scale))
+        else:
+            record["scales_binary32_per_channel"] = list(tensor.channel_scales)
         material_records[tensor.name] = record
         refs[tensor.name] = _TensorRef(
             tensor.name,
@@ -722,6 +834,10 @@ def compile_graph(
             builder.schedule_conv(
                 refs[operation.source], refs[operation.destination], _prepare(operation.layer)
             )
+        elif isinstance(operation, ConvRawOp):
+            builder.schedule_conv_raw(
+                refs[operation.source], refs[operation.destination], _prepare_raw(operation.layer)
+            )
         elif isinstance(operation, AddOp):
             builder.schedule_add(
                 refs[operation.left],
@@ -731,6 +847,12 @@ def compile_graph(
             )
         elif isinstance(operation, ConcatOp):
             builder.schedule_concat(
+                tuple(refs[name] for name in operation.sources),
+                refs[operation.destination],
+                operation.node_name,
+            )
+        elif isinstance(operation, ConcatI32Op):
+            builder.schedule_concat_i32(
                 tuple(refs[name] for name in operation.sources),
                 refs[operation.destination],
                 operation.node_name,
@@ -1026,6 +1148,56 @@ def compile_pinned_through_second_bottom_up_neck(
     graph = extend_with_top_down_neck_stage(graph, second_neck)
     graph = extend_with_bottom_up_neck_stage(graph, first_bottom_up)
     graph = extend_with_bottom_up_neck_stage(graph, second_bottom_up)
+    return compile_graph(
+        stem_layers=stem,
+        graph=graph,
+        source_model_sha256=model_hash,
+        allocation_mode=allocation_mode,
+    )
+
+
+def compile_pinned_through_detection_head(
+    model_path: str,
+    calibration_path: str,
+    lut_path: str,
+    *,
+    allocation_mode: AllocationMode,
+) -> bytes:
+    """Compile pinned accelerator nodes 0..217 through the INT32 host boundary."""
+
+    from .c2f import load_pinned_through_detection_head
+
+    (
+        stem,
+        first,
+        downsample2,
+        second,
+        downsample3,
+        third,
+        downsample4,
+        fourth,
+        sppf,
+        first_neck,
+        second_neck,
+        first_bottom_up,
+        second_bottom_up,
+        head,
+        model_hash,
+    ) = load_pinned_through_detection_head(model_path, calibration_path, lut_path)
+    graph = build_backbone_graph(
+        first=first_stage(first),
+        extensions=(
+            C2fExtension(downsample=downsample2, stage=second),
+            C2fExtension(downsample=downsample3, stage=third),
+            C2fExtension(downsample=downsample4, stage=fourth),
+        ),
+        sppf=sppf,
+    )
+    graph = extend_with_top_down_neck_stage(graph, first_neck)
+    graph = extend_with_top_down_neck_stage(graph, second_neck)
+    graph = extend_with_bottom_up_neck_stage(graph, first_bottom_up)
+    graph = extend_with_bottom_up_neck_stage(graph, second_bottom_up)
+    graph = extend_with_detection_head(graph, head)
     return compile_graph(
         stem_layers=stem,
         graph=graph,

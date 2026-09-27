@@ -33,6 +33,8 @@ Follow-up, 2026-09-27: [M6's first bottom-up schedule](../../benchmarks/manifest
 
 Follow-up, 2026-09-27: [M6's complete-neck schedule](../../benchmarks/manifests/yolov8n-320-opset13/m6-through-second-bottom-up-neck.json) now executes nodes 0–172. It lowers stride-two `model.19`, retains `model.9` from operation 38 through operation 61, and executes non-residual `model.21`. Diagnostic mode matches 5,721,600 values across 85 boundaries; release mode uses a 691,200-byte peak and matches all 25,600 final values. Learned-head lowering, transport timing, and independent M3/M4 review remain open.
 
+Follow-up, 2026-09-27: [M6's learned-head schedule](../../benchmarks/manifests/yolov8n-320-opset13/m6-through-detection-head.json) now executes the complete accelerator partition at nodes 0–217. Six mode-0 epilogues preserve raw INT32 logits, three exact concats preserve box-before-class order and per-channel scales, and the widest 3×3 layer streams individual weight chunks within 16 KiB. Diagnostic mode matches 6,931,200 values across 106 boundaries; release mode uses a 2,355,200-byte peak and matches all 302,400 final values. The 412,092-command, roughly 75 MB uncompressed package strengthens the transport and compaction gate. Host-tail execution, multi-input/COCO evaluation, transport timing, and independent M3/M4 review remain open.
+
 ## Scope and review results
 
 | Area | Reviewed behavior | Outcome / evidence |
@@ -73,9 +75,9 @@ Validation on 2026-09-20: `make test` passed 43 numerical-model tests and 42 sim
 | Detection-tail boundary and preprocessing/output conventions | M5 graph inventory and reproducible baseline | Complete for the pinned workload |
 | INT8 accuracy budget and calibration | M5 evaluation; one-percentage-point mAP50–95 budget | Calibrated proxy passes; exact command-level comparison remains in M6 |
 | Scale approximation and reproducible coefficient/LUT bytes | M5/M6 coefficient-generation policy and accuracy/error report | Candidate bytes and approximation errors recorded; M6 must execute them exactly |
-| Residual/concat scales, split boundaries, chunk/halo layouts | M5 every-layer audit, then M6 lowering tests | The complete backbone and neck pass with explicit merge coefficients, residual and non-residual C2f, zero-allocation split views, MaxPool halos, exact upsampling, streamed wide parameters, and auditable skip lifetimes; learned-head forms remain pending |
+| Residual/concat scales, split boundaries, chunk/halo layouts | M5 every-layer audit, then M6 lowering tests | The complete accelerator graph passes with explicit merge coefficients, residual and non-residual C2f, zero-allocation split views, MaxPool halos, exact upsampling, streamed wide parameters and weight chunks, raw INT32 head epilogues, per-channel scales, and auditable lifetimes |
 | Package schema, limits, relocations, parser behavior | M6 schema freeze before stable compiler/runtime release | Experimental `.hxb` writer and strict simulator loader exist; required keys, limits, host-tail metadata, and malformed whole-graph cases remain pending |
-| Commands per frame, host refill, patch copies, spill traffic | M5/M6 schedule estimates; M9 measurements | Nodes 0–172 already require 340,926 commands / 43,638,528 command bytes per inference. Whole-model traffic, command reuse/fetch decision, and transport timing remain pending; do not freeze the transport-facing ABI on functional FIFO evidence alone |
+| Commands per frame, host refill, patch copies, spill traffic | M5/M6 schedule estimates; M9 measurements | Nodes 0–217 require 412,092 commands / 52,747,776 command bytes and roughly 75 MB uncompressed packages per inference. Command/relocation compaction, command reuse/fetch decision, and transport timing remain pending; do not freeze the transport-facing ABI on functional FIFO evidence alone |
 | Board, aperture, bus ordering, cache maintenance, reset quiescence | M9 transport adapter and fault-injection evidence before integrated RTL freeze | Pending |
 | Physical SRAM mapping and synchronous read timing | M7 prototypes/M9 target probes | Pending |
 | Native FP8 | M11 separate numeric contract and arithmetic feasibility | Deferred; does not block v0 |
@@ -85,6 +87,6 @@ Small isolated RTL experiments may follow reviewed independent vectors, but full
 
 ## Next action and closure criteria
 
-The M4 fixture schema and first independently derived corpus now exist against **ABI 0.1 / contract revision 0.2**, and the M5 workload package is pinned. M6 now executes nodes 0–172 differentially through the complete backbone and neck with diagnostic and release allocations. The next implementation action is accelerator nodes 173–217 through the three learned detection-head branches and declared INT32 boundary.
+The M4 fixture schema and first independently derived corpus now exist against **ABI 0.1 / contract revision 0.2**, and the M5 workload package is pinned. M6 now executes nodes 0–217 differentially through the complete accelerator partition and three declared INT32 boundaries with diagnostic and release allocations. The next implementation action is the explicit host tail at nodes 218–260, followed by multi-input and COCO command-path evaluation.
 
 Before marking M3 complete, independently review the command tables and transitions, run the fixtures against another implementation or derivation, resolve discrepancies with a decision record, resolve the command-delivery mechanism using the complete M6 schedule, and explicitly allocate the frozen ABI. M6 candidate work may proceed, but a stable compiler/package release and interface RTL commitment depend on those gates.

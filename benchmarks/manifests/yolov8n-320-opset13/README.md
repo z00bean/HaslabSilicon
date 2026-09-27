@@ -1,6 +1,6 @@
 # YOLOv8n 320×320 workload candidate
 
-This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes nodes 0–172 through the complete backbone and neck. Diagnostic execution matches 5,721,600 values across 85 materialized or aliased boundaries, and a lifetime-reuse package matches the final 25,600-value `model.21` tensor. The learned heads, host tail, RTL, and hardware remain unimplemented.
+This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes the complete accelerator partition, nodes 0–217, including all three learned detection-head branches. Diagnostic execution matches 6,931,200 values across 106 materialized or aliased boundaries, and a lifetime-reuse package exactly matches all 302,400 values in the three raw INT32 HWC8 host-boundary tensors. The declared host tail, full command-path COCO evaluation, RTL, and hardware remain unimplemented.
 
 ## Third-party artifact and license
 
@@ -416,4 +416,29 @@ The compiler validates and executes nodes 0–172, completing the pinned backbon
 
 The checked-in [`m6-through-second-bottom-up-neck.json`](m6-through-second-bottom-up-neck.json) records both package hashes, the retained `model.9` lifetime, exact intermediate comparisons, FLOAT-reference errors, and FIFO behavior.
 
-The next implementation step is accelerator nodes 173–217: lower the three learned detection-head branches and emit the declared INT32 HWC8 boundary tensors with exact per-channel scales.
+## Reproduce the learned detection head
+
+```sh
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/compile_yolov8n_detection_head.py
+```
+
+The compiler validates and executes nodes 0–217. At each 40×40, 20×20, and 10×10 scale it runs two fused Conv-SiLU layers for box regression, a raw 1×1 box convolution, two fused Conv-SiLU layers for classification, and a raw 1×1 class convolution. EPILOGUE mode 0 preserves biased INT32 accumulators. The boundary concatenates 64 DFL box channels before 80 class channels and records one binary32 dequantization scale per logical channel.
+
+| Nodes 0–217 measurement | Diagnostic | Release |
+|---|---:|---:|
+| Package bytes | 75,688,384 | 75,409,728 |
+| Peak output allocation | 8,131,200 | 2,355,200 |
+| Commands | 412,092 | 412,092 |
+| Command bytes | 52,747,776 | 52,747,776 |
+| DMA bytes | 44,598,232 | 44,598,232 |
+| INT8 MACs | 1,092,864,000 | 1,092,864,000 |
+| Exact values compared | 6,931,200 | 302,400 final values |
+| Integer mismatches | 0 | 0 |
+| FIFO `BUSY`/refill events | 412,084 | 412,084 |
+
+The 256-input-channel 3×3 branch requires 18 KiB of weights for one output group, so the scheduler streams one 8×8 weight chunk per reduction step within the 16 KiB weight SRAM. The package exceeds the earlier provisional 64 MiB loader cap because commands and relocations remain uncompressed; the pre-freeze cap is now 128 MiB, and compaction is an explicit follow-up rather than a hidden format change.
+
+The checked-in [`m6-through-detection-head.json`](m6-through-detection-head.json) records both package hashes, exact comparisons, FLOAT-reference errors, per-operation residency, allocation lifetimes, and FIFO behavior.
+
+The next implementation step is the explicit host tail at nodes 218–260: dequantize the three INT32 tensors, execute Distribution Focal Loss decoding, anchors and strides, box conversion, class sigmoid, coordinate mapping, filtering, and non-maximum suppression, then compare final detections with the pinned reference.

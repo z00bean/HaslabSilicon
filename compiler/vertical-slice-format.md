@@ -39,7 +39,7 @@ The manifest declares three external buffers: `input`, `constants`, and `output`
 
 ## Runtime validation
 
-The current loader bounds the complete package at 64 MiB, accepts container version 0.1, rejects unknown or duplicate sections, validates all section hashes and zero alignment padding, rejects duplicate JSON keys and nonfinite JSON numbers, and requires the exact vertical-slice manifest and ABI 0.1.
+The current loader bounds the complete package at 128 MiB. The original 64 MiB implementation limit was raised before ABI freeze because the uncompressed command and relocation records for the complete learned YOLOv8n head exceed it. The loader accepts container version 0.1, rejects unknown or duplicate sections, validates all section hashes and zero alignment padding, rejects duplicate JSON keys and nonfinite JSON numbers, and requires the exact vertical-slice manifest and ABI 0.1. Command and relocation compaction remains a measured optimization target rather than an undocumented format change.
 
 The runtime API is synchronous. Submission tokens contain a session, reset generation, and final sequence. Reset invalidates earlier tokens. Simulator arithmetic faults are returned as structured failed completions.
 

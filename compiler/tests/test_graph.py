@@ -12,10 +12,13 @@ from haslab_compiler import (
     C2fConvSpec,
     C2fStageSpec,
     ConcatOp,
+    ConcatI32Op,
+    ConvRawOp,
     ConvSiluOp,
     ConvSiluLayerSpec,
     GraphIR,
     GraphTensor,
+    RawConvSpec,
     MaxPoolOp,
     Upsample2Op,
     build_two_c2f_graph,
@@ -26,6 +29,8 @@ from haslab_compiler import (
 from haslab_ref import (
     build_silu_lut,
     maxpool5_i8,
+    conv2d_i8,
+    hwc8_to_nchw,
     nchw_to_hwc8,
     upsample2_nearest_i8,
 )
@@ -88,6 +93,26 @@ def conv(
         kernel=kernel,
         stride=stride,
         padding=(kernel - 1) // 2,
+    )
+
+
+def raw_conv(name: str, spatial: int, inputs: int, outputs: int) -> RawConvSpec:
+    weights = (
+        np.arange(outputs * inputs, dtype=np.int32).reshape(outputs, inputs, 1, 1) % 3 - 1
+    ).astype(np.float32)
+    return RawConvSpec(
+        name=name,
+        input_h=spatial,
+        input_w=spatial,
+        input_channels=inputs,
+        weights=weights,
+        bias=np.arange(outputs, dtype=np.float32) - outputs / 2,
+        input_scale=1.0,
+        weight_scales=np.ones(outputs, dtype=np.float32),
+        node_name=f"{name}.conv",
+        kernel=1,
+        stride=1,
+        padding=0,
     )
 
 
@@ -463,6 +488,88 @@ class GraphScheduleTests(unittest.TestCase):
             dtype=np.int8,
         ).reshape(upsample_record["physical_shape"])
         np.testing.assert_array_equal(actual, upsample2_nearest_i8(model1))
+
+    def test_raw_int32_head_boundary_executes_without_requantization(self) -> None:
+        regression = raw_conv("head.regression", 16, 32, 64)
+        classification = raw_conv("head.classification", 16, 32, 80)
+        scales = tuple([1.0] * 144)
+        graph = GraphIR(
+            tensors=(
+                GraphTensor(
+                    regression.name, 16, 16, 64, 1.0,
+                    dtype="int32", channel_scales=tuple([1.0] * 64),
+                ),
+                GraphTensor(
+                    classification.name, 16, 16, 80, 1.0,
+                    dtype="int32", channel_scales=tuple([1.0] * 80),
+                ),
+                GraphTensor(
+                    "head.boundary", 16, 16, 144, 1.0,
+                    dtype="int32", channel_scales=scales,
+                ),
+            ),
+            operations=(
+                ConvRawOp("model.1", regression.name, regression),
+                ConvRawOp("model.1", classification.name, classification),
+                ConcatI32Op(
+                    (regression.name, classification.name),
+                    "head.boundary",
+                    "head.concat",
+                ),
+            ),
+            source_nodes=(regression.node_name, classification.node_name, "head.concat"),
+            final_outputs=("head.boundary",),
+        )
+        raw = compile_graph(
+            stem_layers=self.stem,
+            graph=graph,
+            source_model_sha256="88" * 32,
+            allocation_mode="diagnostic",
+        )
+        package = load_hxb(raw)
+        records = {item["name"]: item for item in package.manifest["output"]["tensors"]}
+        boundary_record = records["head.boundary"]
+        self.assertEqual(boundary_record["dtype"], "int32")
+        self.assertEqual(len(boundary_record["scales_binary32_per_channel"]), 144)
+
+        source = (
+            np.arange(1 * 3 * 64 * 64, dtype=np.int32).reshape(1, 3, 64, 64) % 17 - 8
+        ).astype(np.int8)
+        runtime = SimulatorRuntime()
+        runtime.load_model(raw)
+        runtime.bind_input(np.ascontiguousarray(nchw_to_hwc8(source)).tobytes())
+        completion = runtime.wait(runtime.submit())
+        self.assertIs(completion.status, RuntimeStatus.SUCCESS)
+        assert completion.output is not None
+        model1_record = records["model.1"]
+        model1 = np.frombuffer(
+            completion.output[
+                model1_record["addend"] : model1_record["addend"] + model1_record["bytes"]
+            ],
+            dtype=np.int8,
+        ).reshape(model1_record["physical_shape"])
+        logical = hwc8_to_nchw(model1, 32)
+        expected_parts = []
+        for layer in (regression, classification):
+            expected_parts.append(
+                nchw_to_hwc8(
+                    conv2d_i8(
+                        logical,
+                        np.asarray(layer.weights, dtype=np.int8),
+                        np.rint(np.asarray(layer.bias)).astype(np.int32),
+                        stride=1,
+                        padding=0,
+                    )
+                )
+            )
+        expected = np.concatenate(expected_parts, axis=2)
+        actual = np.frombuffer(
+            completion.output[
+                boundary_record["addend"] : boundary_record["addend"] + boundary_record["bytes"]
+            ],
+            dtype="<i4",
+        ).reshape(boundary_record["physical_shape"])
+        np.testing.assert_array_equal(actual, expected)
 
 
 if __name__ == "__main__":

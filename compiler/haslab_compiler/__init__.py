@@ -13,6 +13,7 @@ from .c2f import (
     load_pinned_through_backbone,
     load_pinned_through_first_neck,
     load_pinned_through_first_bottom_up_neck,
+    load_pinned_through_second_bottom_up_neck,
     load_pinned_through_second_neck,
 )
 from .first_layer import compile_conv_silu_first_layer, compile_pinned_first_layer
@@ -39,6 +40,7 @@ from .graph import (
     compile_pinned_through_backbone,
     compile_pinned_through_first_neck,
     compile_pinned_through_first_bottom_up_neck,
+    compile_pinned_through_second_bottom_up_neck,
     compile_pinned_through_second_neck,
     extend_with_first_neck_stage,
     extend_with_bottom_up_neck_stage,
@@ -97,6 +99,7 @@ __all__ = [
     "compile_pinned_through_backbone",
     "compile_pinned_through_first_neck",
     "compile_pinned_through_first_bottom_up_neck",
+    "compile_pinned_through_second_bottom_up_neck",
     "compile_pinned_through_second_neck",
     "extend_with_first_neck_stage",
     "extend_with_bottom_up_neck_stage",
@@ -109,5 +112,6 @@ __all__ = [
     "load_pinned_through_backbone",
     "load_pinned_through_first_neck",
     "load_pinned_through_first_bottom_up_neck",
+    "load_pinned_through_second_bottom_up_neck",
     "load_pinned_through_second_neck",
 ]

@@ -47,6 +47,9 @@ class TestYolov8nManifest(unittest.TestCase):
         cls.m6_first_bottom_up_neck = json.loads(
             (WORKLOAD / "m6-through-first-bottom-up-neck.json").read_text()
         )
+        cls.m6_second_bottom_up_neck = json.loads(
+            (WORKLOAD / "m6-through-second-bottom-up-neck.json").read_text()
+        )
 
     def test_artifact_identity_is_consistent(self):
         self.assertEqual(
@@ -461,6 +464,49 @@ class TestYolov8nManifest(unittest.TestCase):
         fifo = result["packages"]["release"]["fifo"]
         self.assertEqual(fifo["accepted_commands"], 314439)
         self.assertEqual(fifo["busy_responses"], 314431)
+        self.assertEqual(fifo["final_drain_commands"], 8)
+
+    def test_m6_complete_neck_retains_model9_and_executes_exactly(self):
+        result = self.m6_second_bottom_up_neck
+        record = self.manifest["m6_through_second_bottom_up_neck"]
+        self.assertEqual(result["scope"]["node_indices"], [0, 172])
+        self.assertEqual(
+            result["packages"]["diagnostic"]["sha256"],
+            record["diagnostic_package_sha256"],
+        )
+        self.assertEqual(
+            result["packages"]["release"]["sha256"],
+            record["release_package_sha256"],
+        )
+        allocation = result["packages"]["release"]["allocation"]
+        self.assertEqual(allocation["diagnostic_peak_output_bytes"], 5107200)
+        self.assertEqual(allocation["release_peak_output_bytes"], 691200)
+        self.assertEqual(allocation["reuse_savings_bytes"], 4416000)
+        self.assertEqual(sum(result["schedule"]["opcode_counts"].values()), 340926)
+        self.assertEqual(result["schedule"]["dma_bytes"]["total"], 28700376)
+        self.assertEqual(result["schedule"]["macs"], 640204800)
+        operations = result["schedule"]["graph_operations"]
+        concat = next(item for item in operations if item["name"] == "/model.20/Concat")
+        self.assertEqual(
+            [item["source"] for item in concat["fixed_point"]],
+            ["model.19", "model.9"],
+        )
+        self.assertFalse(
+            any(item["name"] == "/model.21/m.0/Add" for item in operations)
+        )
+        lifetimes = {
+            item["name"]: item
+            for item in result["allocation_plan"]["release_lifetimes"]
+        }
+        self.assertEqual(lifetimes["model.9"]["first_operation"], 38)
+        self.assertEqual(lifetimes["model.9"]["last_operation"], 61)
+        self.assertEqual(result["exact_integer_totals"]["compared_values"], 5721600)
+        self.assertEqual(result["exact_integer_totals"]["mismatch_count"], 0)
+        self.assertTrue(result["release_final_comparison"]["pass"])
+        self.assertEqual(result["release_final_comparison"]["compared_values"], 25600)
+        fifo = result["packages"]["release"]["fifo"]
+        self.assertEqual(fifo["accepted_commands"], 340926)
+        self.assertEqual(fifo["busy_responses"], 340918)
         self.assertEqual(fifo["final_drain_commands"], 8)
 
 

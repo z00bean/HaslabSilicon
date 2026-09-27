@@ -2427,3 +2427,178 @@ def load_pinned_through_first_bottom_up_neck(
         stage=stage,
     )
     return (*prefix_specs, second_neck, bottom_up, model_hash)
+
+
+def load_pinned_through_second_bottom_up_neck(
+    model_path: str | Path, calibration_path: str | Path, lut_path: str | Path
+) -> tuple:
+    """Validate and extract pinned nodes 0..172 through the complete neck."""
+
+    try:
+        import onnx
+        from onnx import numpy_helper
+    except ImportError as exc:  # pragma: no cover - integration-only dependency.
+        raise CompileError("ONNX is required to compile the pinned model") from exc
+    from .graph import BottomUpNeckStageSpec, C2fStageSpec
+
+    prior = load_pinned_through_first_bottom_up_neck(
+        model_path, calibration_path, lut_path
+    )
+    *prefix_specs, first_bottom_up, model_hash = prior
+    model = onnx.load(model_path)
+    if len(model.graph.node) < 173:
+        raise CompileError("graph does not contain the complete second bottom-up neck C2f")
+    expected_types = [
+        "Conv", "Sigmoid", "Mul", "Concat", "Conv", "Sigmoid", "Mul",
+        "Split", "Conv", "Sigmoid", "Mul", "Conv", "Sigmoid", "Mul",
+        "Concat", "Conv", "Sigmoid", "Mul",
+    ]
+    if [node.op_type for node in model.graph.node[155:173]] != expected_types:
+        raise CompileError("nodes 155..172 do not match the pinned second bottom-up neck")
+
+    calibration = json.loads(Path(calibration_path).read_text(encoding="utf-8"))
+    scales = {item["name"]: item["values"] for item in calibration["scales"]}
+    records = {
+        int(item["conv_node_index"]): item for item in calibration["silu"]["records"]
+    }
+    initializers = {
+        item.name: numpy_helper.to_array(item) for item in model.graph.initializer
+    }
+    lut_blob = Path(lut_path).read_bytes()
+
+    downsample = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=155,
+        prefix="model.19",
+        input_h=20,
+        input_w=20,
+        input_channels=128,
+        input_scale=first_bottom_up.stage.cv2.output_scale,
+    )
+    neck_concat = model.graph.node[158]
+    if list(neck_concat.input) != [
+        model.graph.node[157].output[0],
+        model.graph.node[102].output[0],
+    ]:
+        raise CompileError("second bottom-up concat does not use the model.9 skip tensor")
+    if {
+        item.name: onnx.helper.get_attribute_value(item) for item in neck_concat.attribute
+    } != {"axis": 1}:
+        raise CompileError("second bottom-up concat must use the NCHW channel axis")
+    neck_concat_scale = float(scales["/model.20/Concat_output_0_scale"][0])
+
+    cv1 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=159,
+        prefix="model.21.cv1",
+        input_h=10,
+        input_w=10,
+        input_channels=384,
+        input_scale=neck_concat_scale,
+    )
+    bottleneck_cv1 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=163,
+        prefix="model.21.m.0.cv1",
+        input_h=10,
+        input_w=10,
+        input_channels=128,
+        input_scale=cv1.output_scale,
+    )
+    bottleneck_cv2 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=166,
+        prefix="model.21.m.0.cv2",
+        input_h=10,
+        input_w=10,
+        input_channels=128,
+        input_scale=bottleneck_cv1.output_scale,
+    )
+    c2f_concat_scale = float(scales["/model.21/Concat_output_0_scale"][0])
+    cv2 = _conv_from_nodes(
+        model=model,
+        initializers=initializers,
+        scales=scales,
+        records=records,
+        lut_blob=lut_blob,
+        node_index=170,
+        prefix="model.21.cv2",
+        input_h=10,
+        input_w=10,
+        input_channels=384,
+        input_scale=c2f_concat_scale,
+    )
+
+    split = model.graph.node[162]
+    producer_by_output = {
+        output: node for node in model.graph.node for output in node.output
+    }
+    split_constant = producer_by_output.get(split.input[1])
+    if split_constant is None or split_constant.op_type != "Constant":
+        raise CompileError("second bottom-up C2f split size is not a Constant")
+    split_value = onnx.helper.get_attribute_value(split_constant.attribute[0])
+    if np.asarray(numpy_helper.to_array(split_value)).tolist() != [128, 128]:
+        raise CompileError("second bottom-up C2f split must be the static 128/128 partition")
+    if list(split.input) != [model.graph.node[161].output[0], split_constant.output[0]]:
+        raise CompileError("second bottom-up C2f split inputs do not match")
+    if {
+        item.name: onnx.helper.get_attribute_value(item) for item in split.attribute
+    } != {"axis": 1}:
+        raise CompileError("second bottom-up C2f split must use the NCHW channel axis")
+    connections = [
+        (155, model.graph.node[154].output[0]),
+        (159, neck_concat.output[0]),
+        (163, split.output[1]),
+        (166, model.graph.node[165].output[0]),
+        (170, model.graph.node[169].output[0]),
+    ]
+    for index, expected_input in connections:
+        if list(model.graph.node[index].input[:1]) != [expected_input]:
+            raise CompileError(f"node {index} has an unexpected graph input")
+    c2f_concat = model.graph.node[169]
+    if list(c2f_concat.input) != [
+        split.output[0],
+        split.output[1],
+        model.graph.node[168].output[0],
+    ]:
+        raise CompileError("second bottom-up C2f concat inputs do not match")
+    if {
+        item.name: onnx.helper.get_attribute_value(item) for item in c2f_concat.attribute
+    } != {"axis": 1}:
+        raise CompileError("second bottom-up C2f concat must use the NCHW channel axis")
+
+    stage = C2fStageSpec(
+        cv1=cv1,
+        bottlenecks=((bottleneck_cv1, bottleneck_cv2),),
+        cv2=cv2,
+        residual_scales=(None,),
+        concat_scale=c2f_concat_scale,
+        split_nodes=(split.name,),
+        add_nodes=(None,),
+        concat_node=c2f_concat.name,
+    )
+    second_bottom_up = BottomUpNeckStageSpec(
+        downsample=downsample,
+        skip_source="model.9",
+        concat_name="model.20.concat",
+        concat_node=neck_concat.name,
+        concat_scale=neck_concat_scale,
+        stage=stage,
+    )
+    return (*prefix_specs, first_bottom_up, second_bottom_up, model_hash)

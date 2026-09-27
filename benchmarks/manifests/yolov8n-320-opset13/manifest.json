@@ -443,10 +443,27 @@
     "mismatches": 0,
     "scope": "nodes 0-154 through the first bottom-up neck C2f block"
   },
+  "m6_through_second_bottom_up_neck": {
+    "status": "nodes_0_through_172_complete_neck_diagnostic_and_release_pass",
+    "result": "m6-through-second-bottom-up-neck.json",
+    "package_schema": "haslab.graph-schedule.v1",
+    "diagnostic_package_sha256": "7502d2fae1c58cc9da2c3a191bd7345621c610b07a78175577b030717cf9a052",
+    "release_package_sha256": "e51253ffb82a02005b6cc655fb7dee68a70bc0e50a1d84d6bda3c37eed5f3c71",
+    "diagnostic_peak_output_bytes": 5107200,
+    "release_peak_output_bytes": 691200,
+    "reuse_savings_bytes": 4416000,
+    "commands": 340926,
+    "dma_bytes": 28700376,
+    "int8_macs": 640204800,
+    "diagnostic_exact_values_compared": 5721600,
+    "release_final_values_compared": 25600,
+    "mismatches": 0,
+    "scope": "nodes 0-172 through the complete backbone and neck"
+  },
   "open_gates": [
-    "Lower the second bottom-up neck stage through nodes 155-172: model.19 stride-two convolution, model.20 concat with the retained model.9 output, and model.21 non-residual C2f. Preserve model.9 through its skip use in the release allocation.",
-    "Extend the passing graph scheduler through the remaining calibrated accelerator graph and INT32 learned-head boundary; repeat layerwise comparisons.",
-    "Generate an optimized whole-graph command/DMA report and resolve the package-size, weight/parameter-streaming, and command-dispatch pressure exposed by the 314,439-command nodes 0-154 package.",
+    "Lower accelerator nodes 173-217 through the three learned detection-head branches and emit the declared INT32 HWC8 boundary tensors with exact per-channel scales.",
+    "Execute the declared host tail through nodes 218-260 and compare decoded boxes, scores, class order, DFL behavior, coordinate mapping, and NMS against the pinned reference.",
+    "Generate an optimized whole-graph command/DMA report and resolve the package-size, weight/parameter-streaming, and command-dispatch pressure exposed by the 340,926-command nodes 0-172 package.",
     "Measure whether a real transport can sustain the generated command rate; the functional runtime records refill counts but has no cycle or bus timing."
   ]
 }

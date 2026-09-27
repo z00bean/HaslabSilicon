@@ -982,3 +982,53 @@ def compile_pinned_through_first_bottom_up_neck(
         source_model_sha256=model_hash,
         allocation_mode=allocation_mode,
     )
+
+
+def compile_pinned_through_second_bottom_up_neck(
+    model_path: str,
+    calibration_path: str,
+    lut_path: str,
+    *,
+    allocation_mode: AllocationMode,
+) -> bytes:
+    """Compile pinned nodes 0..172 through the complete YOLOv8n neck."""
+
+    from .c2f import load_pinned_through_second_bottom_up_neck
+
+    (
+        stem,
+        first,
+        downsample2,
+        second,
+        downsample3,
+        third,
+        downsample4,
+        fourth,
+        sppf,
+        first_neck,
+        second_neck,
+        first_bottom_up,
+        second_bottom_up,
+        model_hash,
+    ) = load_pinned_through_second_bottom_up_neck(
+        model_path, calibration_path, lut_path
+    )
+    graph = build_backbone_graph(
+        first=first_stage(first),
+        extensions=(
+            C2fExtension(downsample=downsample2, stage=second),
+            C2fExtension(downsample=downsample3, stage=third),
+            C2fExtension(downsample=downsample4, stage=fourth),
+        ),
+        sppf=sppf,
+    )
+    graph = extend_with_top_down_neck_stage(graph, first_neck)
+    graph = extend_with_top_down_neck_stage(graph, second_neck)
+    graph = extend_with_bottom_up_neck_stage(graph, first_bottom_up)
+    graph = extend_with_bottom_up_neck_stage(graph, second_bottom_up)
+    return compile_graph(
+        stem_layers=stem,
+        graph=graph,
+        source_model_sha256=model_hash,
+        allocation_mode=allocation_mode,
+    )

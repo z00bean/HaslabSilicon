@@ -1,6 +1,6 @@
 # YOLOv8n 320×320 workload candidate
 
-This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes nodes 0–154 through the complete backbone, both top-down neck stages, and the first bottom-up neck C2f. Diagnostic execution matches 5,529,600 values across 76 materialized or aliased boundaries, and a lifetime-reuse package matches the final 51,200-value `model.18` tensor. The second bottom-up neck, learned heads, host tail, RTL, and hardware remain unimplemented.
+This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes nodes 0–172 through the complete backbone and neck. Diagnostic execution matches 5,721,600 values across 85 materialized or aliased boundaries, and a lifetime-reuse package matches the final 25,600-value `model.21` tensor. The learned heads, host tail, RTL, and hardware remain unimplemented.
 
 ## Third-party artifact and license
 
@@ -392,4 +392,28 @@ The compiler validates and executes nodes 0–154. The reusable bottom-up extens
 
 The checked-in [`m6-through-first-bottom-up-neck.json`](m6-through-first-bottom-up-neck.json) records both package hashes, the retained `model.12` lifetime, exact intermediate comparisons, FLOAT-reference errors, and FIFO behavior.
 
-The next implementation step is nodes 155–172: stride-two `model.19`, `model.20` concat with the retained `model.9` output, and the non-residual `model.21` C2f block.
+## Reproduce the second bottom-up neck stage
+
+```sh
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/compile_yolov8n_second_bottom_up_neck.py
+```
+
+The compiler validates and executes nodes 0–172, completing the pinned backbone and neck. The second bottom-up extension lowers stride-two `model.19`, concatenates its `10×10×128` output with the retained `10×10×256` `model.9` tensor, and executes the non-residual `model.21` C2f block. Release liveness retains `model.9` from operation 38 through operation 61, increasing the measured peak by 25,600 bytes to 691,200 bytes.
+
+| Nodes 0–172 measurement | Diagnostic | Release |
+|---|---:|---:|
+| Package bytes | 62,233,792 | 61,998,464 |
+| Peak output allocation | 5,107,200 | 691,200 |
+| Declared external bytes | 8,359,040 | 3,943,040 |
+| Commands | 340,926 | 340,926 |
+| Command bytes | 43,638,528 | 43,638,528 |
+| DMA bytes | 28,700,376 | 28,700,376 |
+| INT8 MACs | 640,204,800 | 640,204,800 |
+| Exact values compared | 5,721,600 | 25,600 final values |
+| Integer mismatches | 0 | 0 |
+| FIFO `BUSY`/refill events | 340,918 | 340,918 |
+
+The checked-in [`m6-through-second-bottom-up-neck.json`](m6-through-second-bottom-up-neck.json) records both package hashes, the retained `model.9` lifetime, exact intermediate comparisons, FLOAT-reference errors, and FIFO behavior.
+
+The next implementation step is accelerator nodes 173–217: lower the three learned detection-head branches and emit the declared INT32 HWC8 boundary tensors with exact per-channel scales.

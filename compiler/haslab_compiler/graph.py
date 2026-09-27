@@ -129,6 +129,16 @@ class FirstNeckStageSpec:
 TopDownNeckStageSpec = FirstNeckStageSpec
 
 
+@dataclass(frozen=True)
+class BottomUpNeckStageSpec:
+    downsample: C2fConvSpec
+    skip_source: str
+    concat_name: str
+    concat_node: str
+    concat_scale: float
+    stage: C2fStageSpec
+
+
 def _material(name: str, layer: C2fConvSpec) -> GraphTensor:
     weights = np.asarray(layer.weights)
     output_channels = int(weights.shape[0])
@@ -413,6 +423,62 @@ def extend_with_first_neck_stage(
     """Append pinned nodes 103..119 through the first top-down neck C2f."""
 
     return extend_with_top_down_neck_stage(graph, neck)
+
+
+def extend_with_bottom_up_neck_stage(
+    graph: GraphIR, neck: BottomUpNeckStageSpec
+) -> GraphIR:
+    """Append one stride-two convolution, skip concat, and C2f stage."""
+
+    if len(graph.final_outputs) != 1:
+        raise CompileError("bottom-up neck stage requires one preceding graph output")
+    tensor_map = {tensor.name: tensor for tensor in graph.tensors}
+    source_name = graph.final_outputs[0]
+    if source_name not in tensor_map or neck.skip_source not in tensor_map:
+        raise CompileError("bottom-up neck stage source or skip tensor is unavailable")
+    source = tensor_map[source_name]
+    if (
+        neck.downsample.input_h,
+        neck.downsample.input_w,
+        neck.downsample.input_channels,
+    ) != (source.height, source.width, source.channels):
+        raise CompileError("bottom-up neck downsample input does not match graph output")
+    tensors = list(graph.tensors)
+    operations = list(graph.operations)
+    downsample_name = neck.downsample.name
+    downsample = _material(downsample_name, neck.downsample)
+    skip = tensor_map[neck.skip_source]
+    if (downsample.height, downsample.width) != (skip.height, skip.width):
+        raise CompileError("bottom-up neck downsample shape does not match its skip tensor")
+    tensors.append(downsample)
+    operations.append(ConvSiluOp(source_name, downsample_name, neck.downsample))
+    tensors.append(
+        GraphTensor(
+            neck.concat_name,
+            skip.height,
+            skip.width,
+            downsample.channels + skip.channels,
+            neck.concat_scale,
+        )
+    )
+    operations.append(
+        ConcatOp(
+            (downsample_name, neck.skip_source),
+            neck.concat_name,
+            neck.concat_node,
+        )
+    )
+    if not neck.stage.cv1.name.endswith(".cv1"):
+        raise CompileError("bottom-up neck C2f stage name must end in .cv1")
+    prefix = neck.stage.cv1.name.removesuffix(".cv1")
+    output = _append_c2f_stage(
+        tensors, operations, neck.stage, neck.concat_name, prefix
+    )
+    source_nodes = list(graph.source_nodes)
+    source_nodes.extend(neck.downsample.node_names)
+    source_nodes.append(neck.concat_node)
+    source_nodes.extend(_stage_source_nodes(neck.stage))
+    return GraphIR(tuple(tensors), tuple(operations), tuple(source_nodes), (output,))
 
 
 def _stage_source_nodes(stage: C2fStageSpec) -> list[str]:
@@ -862,6 +928,54 @@ def compile_pinned_through_second_neck(
     )
     graph = extend_with_top_down_neck_stage(graph, first_neck)
     graph = extend_with_top_down_neck_stage(graph, second_neck)
+    return compile_graph(
+        stem_layers=stem,
+        graph=graph,
+        source_model_sha256=model_hash,
+        allocation_mode=allocation_mode,
+    )
+
+
+def compile_pinned_through_first_bottom_up_neck(
+    model_path: str,
+    calibration_path: str,
+    lut_path: str,
+    *,
+    allocation_mode: AllocationMode,
+) -> bytes:
+    """Compile pinned nodes 0..154 through the first bottom-up neck C2f."""
+
+    from .c2f import load_pinned_through_first_bottom_up_neck
+
+    (
+        stem,
+        first,
+        downsample2,
+        second,
+        downsample3,
+        third,
+        downsample4,
+        fourth,
+        sppf,
+        first_neck,
+        second_neck,
+        bottom_up_neck,
+        model_hash,
+    ) = load_pinned_through_first_bottom_up_neck(
+        model_path, calibration_path, lut_path
+    )
+    graph = build_backbone_graph(
+        first=first_stage(first),
+        extensions=(
+            C2fExtension(downsample=downsample2, stage=second),
+            C2fExtension(downsample=downsample3, stage=third),
+            C2fExtension(downsample=downsample4, stage=fourth),
+        ),
+        sppf=sppf,
+    )
+    graph = extend_with_top_down_neck_stage(graph, first_neck)
+    graph = extend_with_top_down_neck_stage(graph, second_neck)
+    graph = extend_with_bottom_up_neck_stage(graph, bottom_up_neck)
     return compile_graph(
         stem_layers=stem,
         graph=graph,

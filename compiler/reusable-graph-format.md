@@ -1,6 +1,6 @@
 # Reusable graph schedule
 
-The M6 reusable scheduler lowers pinned YOLOv8n nodes 0–136 into the experimental `haslab.graph-schedule.v1` package profile. It covers the complete backbone and both top-down neck stages: the two-layer stem, six C2f blocks, three stride-two convolutions, SPPF, two nearest-neighbor upsampling operations, and two backbone skip concats. The implementation and schema remain experimental.
+The M6 reusable scheduler lowers pinned YOLOv8n nodes 0–154 into the experimental `haslab.graph-schedule.v1` package profile. It covers the complete backbone, both top-down neck stages, and the first bottom-up neck stage: the two-layer stem, seven C2f blocks, four stride-two convolutions, SPPF, two nearest-neighbor upsampling operations, and three skip concats. The implementation and schema remain experimental.
 
 ## Graph representation
 
@@ -14,7 +14,7 @@ Diagnostic mode gives every material tensor a distinct 64-byte-aligned range and
 
 Release mode computes each material tensor's producing operation and last consuming operation, including alias uses. Its deterministic first-fit allocator permits two ranges to overlap only when their inclusive operation lifetimes are disjoint. Only declared final outputs are exposed. The full lifetime plan remains in the manifest so reuse can be audited.
 
-For nodes 0–136, diagnostic output storage is 4,608,000 bytes. Release storage is 665,600 bytes, saving 3,942,400 bytes. The release lifetime plan retains `model.6` from operation 25 through its concat use at operation 40 and `model.4` from operation 15 through operation 47. The longer `model.4` lifetime raises the prior 614,400-byte release peak by 51,200 bytes. Diagnostic and release compilation are separately byte deterministic.
+For nodes 0–154, diagnostic output storage is 4,940,800 bytes. Release storage is 665,600 bytes, saving 4,275,200 bytes. The release lifetime plan retains `model.6` through operation 40, `model.4` through operation 47, and `model.12` from operation 45 through its bottom-up concat use at operation 54. The new lifetime fits within the existing 665,600-byte peak. Diagnostic and release compilation are separately byte deterministic.
 
 ## Scheduling behavior
 
@@ -26,28 +26,31 @@ Residual addition and concat store explicit fixed-point rescaling parameters. Co
 
 `Upsample2Op` lowers the pinned asymmetric, nearest, floor-mode ONNX Resize to exact `UPSAMPLE2_I8`. Each 5×5 input tile becomes a 10×10 output tile, and the operation retains its input scale. The generic top-down neck extension concatenates the result with a named earlier tensor and appends a non-residual C2f block. It is used for both `model.6 → model.12` and `model.4 → model.15` skip paths.
 
+The generic bottom-up neck extension applies a stride-two convolution to the current output, concatenates it with a named retained tensor at the resulting spatial shape, and appends a C2f block. Nodes 137–154 use it for `model.15 → model.16`, the retained `model.12` skip, and the non-residual `model.18` stage.
+
 ## Recorded evidence
 
-The tracked [nodes 0–136 report](../benchmarks/manifests/yolov8n-320-opset13/m6-through-second-neck.json) records:
+The tracked [nodes 0–154 report](../benchmarks/manifests/yolov8n-320-opset13/m6-through-first-bottom-up-neck.json) records:
 
 | Measurement | Result |
 |---|---:|
-| Commands | 277,436 |
-| DMA bytes | 22,243,352 |
-| INT8 MACs | 512,409,600 |
+| Commands | 314,439 |
+| Command bytes | 40,248,192 |
+| DMA bytes | 25,662,552 |
+| INT8 MACs | 576,307,200 |
 | `MAXPOOL5_I8` commands | 192 |
 | `UPSAMPLE2_I8` commands | 384 |
-| Diagnostic package bytes | 50,900,736 |
-| Release package bytes | 50,720,384 |
-| Diagnostic peak output bytes | 4,608,000 |
+| Diagnostic package bytes | 57,364,608 |
+| Release package bytes | 57,150,976 |
+| Diagnostic peak output bytes | 4,940,800 |
 | Release peak output bytes | 665,600 |
-| Diagnostic values compared | 5,145,600 |
+| Diagnostic values compared | 5,529,600 |
 | Diagnostic mismatches | 0 |
-| Release final values compared | 102,400 |
+| Release final values compared | 51,200 |
 | Release final mismatches | 0 |
 
-Both packages reached the eight-command FIFO high-water mark. Each accepted all 277,436 commands, observed 277,428 full-FIFO responses and refills, and drained eight commands at the end. These are functional submission counts, not cycle, latency, or transport-throughput measurements.
+Both packages reached the eight-command FIFO high-water mark. Each accepted all 314,439 commands, observed 314,431 full-FIFO responses and refills, and drained eight commands at the end. These are functional submission counts, not cycle, latency, or transport-throughput measurements.
 
 ## Remaining work
 
-The next bounded extension is nodes 137–154: stride-two `model.16`, `model.17` channel concat with the retained `model.12` output, and the non-residual `model.18` C2f block. Whole-model completion also requires the second bottom-up neck branch, INT32 learned-head boundary, and declared host tail. Command compression, transport timing, and hardware resource measurements remain separate work.
+The next bounded extension is nodes 155–172: stride-two `model.19`, `model.20` channel concat with the retained `model.9` output, and the non-residual `model.21` C2f block. Whole-model completion also requires the INT32 learned-head boundary and declared host tail. Command compression, transport timing, and hardware resource measurements remain separate work.

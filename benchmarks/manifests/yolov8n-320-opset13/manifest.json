@@ -426,10 +426,27 @@
     "mismatches": 0,
     "scope": "nodes 0-136 through both top-down neck C2f blocks"
   },
+  "m6_through_first_bottom_up_neck": {
+    "status": "nodes_0_through_154_first_bottom_up_neck_diagnostic_and_release_pass",
+    "result": "m6-through-first-bottom-up-neck.json",
+    "package_schema": "haslab.graph-schedule.v1",
+    "diagnostic_package_sha256": "8aaf570acb130e6187771262f55737b293b7125e210e23303b1de7a84b75e18b",
+    "release_package_sha256": "f590677a12426a632af6b9a833837a1a0218e66365a6b2783863d9dbf8205e4e",
+    "diagnostic_peak_output_bytes": 4940800,
+    "release_peak_output_bytes": 665600,
+    "reuse_savings_bytes": 4275200,
+    "commands": 314439,
+    "dma_bytes": 25662552,
+    "int8_macs": 576307200,
+    "diagnostic_exact_values_compared": 5529600,
+    "release_final_values_compared": 51200,
+    "mismatches": 0,
+    "scope": "nodes 0-154 through the first bottom-up neck C2f block"
+  },
   "open_gates": [
-    "Lower the first bottom-up neck stage through nodes 137-154: model.16 stride-two convolution, model.17 concat with the retained model.12 output, and model.18 non-residual C2f. Preserve model.12 through its skip use in the release allocation.",
+    "Lower the second bottom-up neck stage through nodes 155-172: model.19 stride-two convolution, model.20 concat with the retained model.9 output, and model.21 non-residual C2f. Preserve model.9 through its skip use in the release allocation.",
     "Extend the passing graph scheduler through the remaining calibrated accelerator graph and INT32 learned-head boundary; repeat layerwise comparisons.",
-    "Generate an optimized whole-graph command/DMA report and resolve the package-size, weight/parameter-streaming, and command-dispatch pressure exposed by the 277,436-command nodes 0-136 package.",
+    "Generate an optimized whole-graph command/DMA report and resolve the package-size, weight/parameter-streaming, and command-dispatch pressure exposed by the 314,439-command nodes 0-154 package.",
     "Measure whether a real transport can sustain the generated command rate; the functional runtime records refill counts but has no cycle or bus timing."
   ]
 }

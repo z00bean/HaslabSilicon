@@ -7,6 +7,7 @@ import numpy as np
 
 from haslab_compiler import (
     AddOp,
+    BottomUpNeckStageSpec,
     C2fBlockSpec,
     C2fConvSpec,
     C2fStageSpec,
@@ -19,6 +20,7 @@ from haslab_compiler import (
     Upsample2Op,
     build_two_c2f_graph,
     compile_graph,
+    extend_with_bottom_up_neck_stage,
     first_stage,
 )
 from haslab_ref import (
@@ -207,6 +209,47 @@ class GraphScheduleTests(unittest.TestCase):
         tile_h, tile_w = _conv_tile_shape(20, 20, 8, 3, 2)
         patch_bytes = 8 * ((tile_h - 1) * 2 + 3) * ((tile_w - 1) * 2 + 3) * 8
         self.assertLessEqual(patch_bytes, 16_384)
+
+    def test_bottom_up_extension_downsamples_then_consumes_named_skip(self) -> None:
+        graph = GraphIR(
+            tensors=(
+                GraphTensor("skip", 4, 4, 16, 1.0),
+                GraphTensor("current", 8, 8, 16, 1.0),
+            ),
+            operations=(),
+            source_nodes=(),
+            final_outputs=("current",),
+        )
+        stage = C2fStageSpec(
+            cv1=conv("stage.cv1", 4, 32, 16, 1),
+            bottlenecks=((conv("stage.m.0.cv1", 4, 8, 8, 3), conv("stage.m.0.cv2", 4, 8, 8, 3)),),
+            cv2=conv("stage.cv2", 4, 24, 16, 1),
+            residual_scales=(None,),
+            concat_scale=1.0,
+            split_nodes=("stage.constant", "stage.split"),
+            add_nodes=(None,),
+            concat_node="stage.concat",
+        )
+        extended = extend_with_bottom_up_neck_stage(
+            graph,
+            BottomUpNeckStageSpec(
+                downsample=conv("downsample", 8, 16, 16, 3, stride=2),
+                skip_source="skip",
+                concat_name="neck.concat",
+                concat_node="neck.concat.node",
+                concat_scale=1.0,
+                stage=stage,
+            ),
+        )
+        self.assertEqual(extended.final_outputs, ("stage",))
+        neck_concat = extended.operations[1]
+        self.assertIsInstance(neck_concat, ConcatOp)
+        self.assertEqual(neck_concat.sources, ("downsample", "skip"))
+        concat_tensor = next(item for item in extended.tensors if item.name == "neck.concat")
+        self.assertEqual(
+            (concat_tensor.height, concat_tensor.width, concat_tensor.channels),
+            (4, 4, 32),
+        )
 
     def test_wide_concat_streams_parameters_and_executes(self) -> None:
         branch_names = tuple(f"wide.branch{index}" for index in range(4))

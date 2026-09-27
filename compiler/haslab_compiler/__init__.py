@@ -12,11 +12,13 @@ from .c2f import (
     load_pinned_first_c2f,
     load_pinned_through_backbone,
     load_pinned_through_first_neck,
+    load_pinned_through_first_bottom_up_neck,
     load_pinned_through_second_neck,
 )
 from .first_layer import compile_conv_silu_first_layer, compile_pinned_first_layer
 from .graph import (
     AddOp,
+    BottomUpNeckStageSpec,
     C2fExtension,
     C2fStageSpec,
     ConcatOp,
@@ -36,8 +38,10 @@ from .graph import (
     compile_pinned_through_third_c2f,
     compile_pinned_through_backbone,
     compile_pinned_through_first_neck,
+    compile_pinned_through_first_bottom_up_neck,
     compile_pinned_through_second_neck,
     extend_with_first_neck_stage,
+    extend_with_bottom_up_neck_stage,
     extend_with_top_down_neck_stage,
     extend_with_sppf,
     first_stage,
@@ -58,6 +62,7 @@ from .vertical_slice import (
 __all__ = [
     "CompileError",
     "C2fBlockSpec",
+    "BottomUpNeckStageSpec",
     "C2fConvSpec",
     "C2fExtension",
     "C2fStageSpec",
@@ -91,8 +96,10 @@ __all__ = [
     "compile_pinned_through_third_c2f",
     "compile_pinned_through_backbone",
     "compile_pinned_through_first_neck",
+    "compile_pinned_through_first_bottom_up_neck",
     "compile_pinned_through_second_neck",
     "extend_with_first_neck_stage",
+    "extend_with_bottom_up_neck_stage",
     "extend_with_top_down_neck_stage",
     "extend_with_sppf",
     "extract_input_patch",
@@ -101,5 +108,6 @@ __all__ = [
     "load_pinned_first_c2f",
     "load_pinned_through_backbone",
     "load_pinned_through_first_neck",
+    "load_pinned_through_first_bottom_up_neck",
     "load_pinned_through_second_neck",
 ]

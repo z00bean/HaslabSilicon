@@ -1,6 +1,6 @@
 # YOLOv8n 320×320 workload candidate
 
-This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path now executes the complete accelerator partition, nodes 0–217, including all three learned detection-head branches. Diagnostic execution matches 6,931,200 values across 106 materialized or aliased boundaries, and a lifetime-reuse package exactly matches all 302,400 values in the three raw INT32 HWC8 host-boundary tensors. The declared host tail, full command-path COCO evaluation, RTL, and hardware remain unimplemented.
+This directory pins the first concrete HASLAB workload candidate. The FLOAT export has been reproduced, checked by ONNX, inventoried node by node, partitioned at the learned-head boundary, checked against the proposed v0 local memories, and evaluated twice over all 5,000 COCO 2017 validation images with identical predictions. A deterministic 512-image train2017 subset has also been calibrated to signed symmetric INT8 and an executable software proxy passes the one-percentage-point accuracy budget. The command path executes accelerator nodes 0–217, including all three learned detection-head branches. Diagnostic execution matches 6,931,200 values across 106 materialized or aliased boundaries, and a lifetime-reuse package exactly matches all 302,400 values in the three raw INT32 HWC8 host-boundary tensors. The explicit Python host tail executes nodes 218–260 and matches an isolated ONNX Runtime tail on the saved synthetic command output. Full command-path COCO evaluation, RTL, and hardware remain unimplemented.
 
 ## Third-party artifact and license
 
@@ -441,4 +441,17 @@ The 256-input-channel 3×3 branch requires 18 KiB of weights for one output grou
 
 The checked-in [`m6-through-detection-head.json`](m6-through-detection-head.json) records both package hashes, exact comparisons, FLOAT-reference errors, per-operation residency, allocation lifetimes, and FIFO behavior.
 
-The next implementation step is the explicit host tail at nodes 218–260: dequantize the three INT32 tensors, execute Distribution Focal Loss decoding, anchors and strides, box conversion, class sigmoid, coordinate mapping, filtering, and non-maximum suppression, then compare final detections with the pinned reference.
+## Reproduce the explicit host tail
+
+After generating the ignored release package and output above, run in the same pinned export environment:
+
+```sh
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/verify_yolov8n_host_tail.py
+```
+
+The host implementation in [`runtime/haslab_runtime/yolov8n_tail.py`](../../../runtime/haslab_runtime/yolov8n_tail.py) reads all three INT32 HWC8 output records and applies the stored binary32 scale for each channel. It reshapes candidates in stride 8/16/32 row-major order, performs four-way 16-bin DFL softmax and expectation, builds grid anchors, converts side distances to center/size boxes, multiplies by stride, and applies sigmoid to all 80 class logits. These steps correspond to ONNX nodes 218–260; they run in NumPy without calling ONNX Runtime. The separately declared postprocessing reverses the 320×320 letterbox, chooses each candidate's best class, applies a strict confidence threshold, and performs deterministic class-aware greedy NMS. Operational defaults are confidence 0.25, IoU 0.7, and 300 maximum detections. The COCO evaluation profile uses confidence 0.001 and must be validated as a separate end-to-end run.
+
+The verification tool copies only nodes 218–260 into an independent ONNX Runtime subgraph and feeds it the **same dequantized HASLAB boundary tensors**. The tracked [`m6-host-tail.json`](m6-host-tail.json) records comparisons at DFL, anchor, box, stride, class-score, and final output stages. All 176,400 final values agree within `atol=0.0001, rtol=0.00001`; maximum absolute error is `0.000091553`. A 480×640 letterbox example yields one detection at the 0.25 operational threshold and 35 at the 0.001 COCO evaluation threshold, each with the same class order as postprocessing the ONNX-tail output. Edge-case unit tests cover HWC8 unpacking, scale validation, uniform and extreme DFL/class logits, mapping, same-class suppression, cross-class retention, confidence equality, and tie behavior. The postprocessing comparison uses the same selection routine on two independently decoded tensors; matching the upstream Ultralytics validation pipeline on real images remains part of the COCO gate. This is one synthetic-input host-tail validation, not a COCO mAP measurement.
+
+The next M6 step is multi-input command-path differential testing, including zero/extreme and seeded inputs plus pinned real calibration images. Then evaluate commands **and** this host tail over all COCO val2017 images before making a HASLAB-path accuracy claim.

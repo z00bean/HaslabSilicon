@@ -13,6 +13,13 @@ from .simulator import (
     SubmissionStats,
     SubmissionToken,
 )
+from .yolov8n_tail import (
+    Letterbox,
+    decode_host_tail,
+    map_boxes_to_original,
+    select_detections,
+    unpack_boundaries,
+)
 
 __all__ = [
     "Completion",
@@ -24,5 +31,10 @@ __all__ = [
     "SimulatorRuntime",
     "SubmissionStats",
     "SubmissionToken",
+    "Letterbox",
+    "decode_host_tail",
+    "map_boxes_to_original",
+    "select_detections",
+    "unpack_boundaries",
     "load_hxb",
 ]

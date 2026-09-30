@@ -1,0 +1,147 @@
+{
+  "boundary_shapes": [
+    [
+      1,
+      144,
+      40,
+      40
+    ],
+    [
+      1,
+      144,
+      20,
+      20
+    ],
+    [
+      1,
+      144,
+      10,
+      10
+    ]
+  ],
+  "decoded_comparison": {
+    "allclose_atol_0.0001_rtol_0.00001": true,
+    "maximum_absolute_error": 9.1552734375e-05,
+    "mean_absolute_error": 2.7064836337878545e-07,
+    "values": 176400
+  },
+  "decoded_shape": [
+    1,
+    84,
+    2100
+  ],
+  "environment": {
+    "numpy": "2.5.3",
+    "onnx": "1.19.0",
+    "onnxruntime": "1.22.1"
+  },
+  "evaluation_postprocessing": {
+    "comparison": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 0.0001220703125,
+      "mean_absolute_error": 6.325301780764546e-06,
+      "values": 210
+    },
+    "confidence": 0.001,
+    "detection_count": 35,
+    "iou": 0.7,
+    "letterbox_original_shape": [
+      480,
+      640
+    ],
+    "max_detections": 300,
+    "same_class_order": true
+  },
+  "limitation": "No COCO command-path accuracy, multi-input inference, or hardware result is implied.",
+  "operational_postprocessing": {
+    "comparison": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 0.0001220703125,
+      "mean_absolute_error": 2.0350019137064617e-05,
+      "values": 6
+    },
+    "confidence": 0.25,
+    "detection_count": 1,
+    "iou": 0.7,
+    "letterbox_original_shape": [
+      480,
+      640
+    ],
+    "max_detections": 300,
+    "same_class_order": true
+  },
+  "release_output_sha256": "c657dabf822e577829a6c26f29aea3084f3ce35584b8788d21134d4eeb7d8473",
+  "release_package_sha256": "b1345f4cefa1066ca591c2eb5e1688f5c3fdf236271bfe9df5457f4e19895ca3",
+  "schema_version": 1,
+  "scope": "one pinned synthetic accelerator output; host nodes 218..260 and deterministic 480x640 postprocessing",
+  "source_model_sha256": "5b232bf21720cac4264463896ace02b919d8bec3f3fd1e4b9d36695493fa1718",
+  "stage_comparisons": {
+    "anchors": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 0.0,
+      "mean_absolute_error": 0.0,
+      "values": 4200
+    },
+    "boxes": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 9.1552734375e-05,
+      "mean_absolute_error": 5.086660385131836e-06,
+      "values": 8400
+    },
+    "classes": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 0.0,
+      "mean_absolute_error": 0.0,
+      "values": 168000
+    },
+    "concat": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 0.0,
+      "mean_absolute_error": 0.0,
+      "values": 302400
+    },
+    "dfl_distances": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 3.814697265625e-06,
+      "mean_absolute_error": 3.714824006670997e-07,
+      "values": 8400
+    },
+    "dfl_softmax": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 1.1920928955078125e-07,
+      "mean_absolute_error": 2.7206499184745646e-09,
+      "values": 134400
+    },
+    "regression": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 0.0,
+      "mean_absolute_error": 0.0,
+      "values": 134400
+    },
+    "scores": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 1.3794811692946496e-07,
+      "mean_absolute_error": 2.984776229113294e-08,
+      "values": 168000
+    },
+    "strides": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 0.0,
+      "mean_absolute_error": 0.0,
+      "values": 2100
+    },
+    "xy1": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 3.814697265625e-06,
+      "mean_absolute_error": 3.6761874244326637e-07,
+      "values": 4200
+    },
+    "xy2": {
+      "allclose_atol_0.0001_rtol_0.00001": true,
+      "maximum_absolute_error": 3.814697265625e-06,
+      "mean_absolute_error": 3.7582147689092725e-07,
+      "values": 4200
+    }
+  },
+  "status": "complete"
+}

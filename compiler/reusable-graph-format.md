@@ -53,4 +53,4 @@ Both packages reached the eight-command FIFO high-water mark. Each accepted all 
 
 ## Remaining work
 
-The next bounded extension is the declared host tail at nodes 218–260: DFL decode, anchors and strides, distance-to-box conversion, class sigmoid, coordinate mapping, filtering, and NMS. It must consume the three INT32 HWC8 tensors with their per-channel scales and compare final decoded outputs against the pinned reference. Command/relocation compaction, transport timing, and hardware resource measurements remain separate pre-RTL work.
+The declared host tail at nodes 218–260 now consumes the three INT32 HWC8 tensors with their per-channel scales and compares decoded outputs against an isolated pinned ONNX Runtime tail. The [host-tail report](../benchmarks/manifests/yolov8n-320-opset13/m6-host-tail.json) covers one saved synthetic command output; multi-input and COCO command-path tests remain open. Command/relocation compaction, transport timing, and hardware resource measurements remain separate pre-RTL work.

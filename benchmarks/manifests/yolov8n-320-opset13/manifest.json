@@ -505,9 +505,9 @@
     "scope": "nodes 0-172 through the complete backbone and neck"
   },
   "open_gates": [
-    "Lower accelerator nodes 173-217 through the three learned detection-head branches and emit the declared INT32 HWC8 boundary tensors with exact per-channel scales.",
-    "Execute the declared host tail through nodes 218-260 and compare decoded boxes, scores, class order, DFL behavior, coordinate mapping, and NMS against the pinned reference.",
-    "Generate an optimized whole-graph command/DMA report and resolve the package-size, weight/parameter-streaming, and command-dispatch pressure exposed by the 340,926-command nodes 0-172 package.",
+    "Expand command-path differential testing from one synthetic input to zero/extreme, seeded random, and pinned real calibration images; verify the host tail and mapped detections for these cases.",
+    "Evaluate the full command path plus explicit host tail over COCO val2017 and compare mAP50-95 with the recorded FLOAT and calibrated INT8 proxy baselines.",
+    "Resolve package size, command compaction, and dispatch pressure exposed by the 412,092-command complete accelerator schedule.",
     "Measure whether a real transport can sustain the generated command rate; the functional runtime records refill counts but has no cycle or bus timing."
   ],
   "m6_through_detection_head": {
@@ -526,5 +526,16 @@
     "release_final_values_compared": 302400,
     "mismatches": 0,
     "scope": "nodes 0-217 through the complete accelerator partition and three INT32 HWC8 host-boundary tensors"
+  },
+  "m6_host_tail": {
+    "status": "pinned_nodes_218_through_260_synthetic_input_differential_pass",
+    "result": "m6-host-tail.json",
+    "decoded_shape": [1, 84, 2100],
+    "decoded_values_compared": 176400,
+    "maximum_absolute_error": 0.000091552734375,
+    "reference": "isolated pinned ONNX Runtime nodes 218-260 on the same dequantized INT32 boundary tensors",
+    "operational_detections": 1,
+    "evaluation_profile_detections": 35,
+    "scope": "one saved synthetic accelerator output; no COCO accuracy claim"
   }
 }

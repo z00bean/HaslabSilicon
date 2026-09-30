@@ -53,6 +53,7 @@ class TestYolov8nManifest(unittest.TestCase):
         cls.m6_detection_head = json.loads(
             (WORKLOAD / "m6-through-detection-head.json").read_text()
         )
+        cls.m6_host_tail = json.loads((WORKLOAD / "m6-host-tail.json").read_text())
 
     def test_artifact_identity_is_consistent(self):
         self.assertEqual(
@@ -545,6 +546,23 @@ class TestYolov8nManifest(unittest.TestCase):
             [item["compared_values"] for item in result["release_final_comparisons"]],
             [230400, 57600, 14400],
         )
+
+    def test_m6_host_tail_is_bound_to_the_exact_release_output(self):
+        result = self.m6_host_tail
+        record = self.manifest["m6_host_tail"]
+        release = self.m6_detection_head["packages"]["release"]
+        self.assertEqual(record["result"], "m6-host-tail.json")
+        self.assertEqual(record["decoded_values_compared"], result["decoded_comparison"]["values"])
+        self.assertEqual(record["maximum_absolute_error"], result["decoded_comparison"]["maximum_absolute_error"])
+        self.assertEqual(result["source_model_sha256"], self.manifest["export"]["onnx_sha256"])
+        self.assertEqual(result["release_package_sha256"], release["sha256"])
+        self.assertEqual(result["release_output_sha256"], release["output_sha256"])
+        self.assertEqual(result["decoded_shape"], [1, 84, 2100])
+        self.assertEqual(result["decoded_comparison"]["values"], 176400)
+        self.assertTrue(result["decoded_comparison"]["allclose_atol_0.0001_rtol_0.00001"])
+        self.assertTrue(result["operational_postprocessing"]["same_class_order"])
+        self.assertEqual(result["evaluation_postprocessing"]["detection_count"], 35)
+        self.assertTrue(result["evaluation_postprocessing"]["same_class_order"])
 
 
 if __name__ == "__main__":

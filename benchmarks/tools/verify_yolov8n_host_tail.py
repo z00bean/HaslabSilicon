@@ -74,8 +74,8 @@ def compare(left: np.ndarray, right: np.ndarray) -> dict[str, object]:
     if left.shape != right.shape or left.dtype != right.dtype:
         raise AssertionError(f"shape/dtype mismatch: {left.shape}/{left.dtype}, {right.shape}/{right.dtype}")
     delta = np.abs(left.astype(np.float64) - right.astype(np.float64))
-    return {"values": int(delta.size), "maximum_absolute_error": float(delta.max()),
-            "mean_absolute_error": float(delta.mean()),
+    return {"values": int(delta.size), "maximum_absolute_error": float(delta.max()) if delta.size else 0.0,
+            "mean_absolute_error": float(delta.mean()) if delta.size else 0.0,
             "allclose_atol_0.0001_rtol_0.00001": bool(np.allclose(left, right, atol=1e-4, rtol=1e-5))}
 
 

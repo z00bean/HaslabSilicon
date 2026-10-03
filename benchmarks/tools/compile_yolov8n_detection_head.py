@@ -143,6 +143,267 @@ def apply_pool(values: np.ndarray) -> np.ndarray:
     return maxpool5_i8(padded)
 
 
+def calculate_golden(
+    full_i8: np.ndarray, stem: object, first: object, downsample2: object,
+    second: object, downsample3: object, third: object, downsample4: object,
+    fourth: object, sppf: object, first_neck: object, second_neck: object,
+    first_bottom_up: object, second_bottom_up: object, head: object,
+    operations: list[dict[str, object]],
+    *, conv_silu=integer_conv_silu, conv_raw=integer_conv_raw,
+) -> dict[str, np.ndarray]:
+    """Independent integer reference for every materialized/aliased boundary."""
+    golden: dict[str, np.ndarray] = {}
+    golden["model.0"], logical = conv_silu(full_i8, stem[0])
+    golden["model.1"], logical = conv_silu(logical, stem[1])
+    golden["model.2.cv1"], _ = conv_silu(logical, first.cv1)
+    golden["model.2.split0"] = golden["model.2.cv1"][:, :, :2, :]
+    golden["model.2.split1"] = golden["model.2.cv1"][:, :, 2:, :]
+    golden["model.2.m.0.cv1"], logical = conv_silu(
+        hwc8_to_nchw(golden["model.2.split1"], 16), first.bottleneck_cv1
+    )
+    golden["model.2.m.0.cv2"], _ = conv_silu(logical, first.bottleneck_cv2)
+    golden["model.2.m.0.add"] = apply_add(
+        golden["model.2.split1"], golden["model.2.m.0.cv2"], operations[3]
+    )
+    golden["model.2.concat"] = apply_concat(
+        [
+            golden["model.2.split0"],
+            golden["model.2.split1"],
+            golden["model.2.m.0.add"],
+        ],
+        operations[4],
+    )
+    golden["model.2"], logical = conv_silu(
+        hwc8_to_nchw(golden["model.2.concat"], 48), first.cv2
+    )
+    golden["model.3"], logical = conv_silu(logical, downsample2)
+    golden["model.4.cv1"], _ = conv_silu(logical, second.cv1)
+    golden["model.4.split0"] = golden["model.4.cv1"][:, :, :4, :]
+    golden["model.4.split1"] = golden["model.4.cv1"][:, :, 4:, :]
+    branch = golden["model.4.split1"]
+    for index, (conv1, conv2) in enumerate(second.bottlenecks):
+        name1 = f"model.4.m.{index}.cv1"
+        name2 = f"model.4.m.{index}.cv2"
+        add_name = f"model.4.m.{index}.add"
+        golden[name1], logical = conv_silu(hwc8_to_nchw(branch, 32), conv1)
+        golden[name2], _ = conv_silu(logical, conv2)
+        golden[add_name] = apply_add(branch, golden[name2], operations[10 + index * 3])
+        branch = golden[add_name]
+    golden["model.4.concat"] = apply_concat(
+        [
+            golden["model.4.split0"],
+            golden["model.4.split1"],
+            golden["model.4.m.0.add"],
+            golden["model.4.m.1.add"],
+        ],
+        operations[14],
+    )
+    golden["model.4"], _ = conv_silu(
+        hwc8_to_nchw(golden["model.4.concat"], 128), second.cv2
+    )
+    golden["model.5"], logical = conv_silu(
+        hwc8_to_nchw(golden["model.4"], 64), downsample3
+    )
+    golden["model.6.cv1"], _ = conv_silu(logical, third.cv1)
+    golden["model.6.split0"] = golden["model.6.cv1"][:, :, :8, :]
+    golden["model.6.split1"] = golden["model.6.cv1"][:, :, 8:, :]
+    branch = golden["model.6.split1"]
+    for index, (conv1, conv2) in enumerate(third.bottlenecks):
+        name1 = f"model.6.m.{index}.cv1"
+        name2 = f"model.6.m.{index}.cv2"
+        add_name = f"model.6.m.{index}.add"
+        golden[name1], logical = conv_silu(hwc8_to_nchw(branch, 64), conv1)
+        golden[name2], _ = conv_silu(logical, conv2)
+        golden[add_name] = apply_add(branch, golden[name2], operations[20 + index * 3])
+        branch = golden[add_name]
+    golden["model.6.concat"] = apply_concat(
+        [
+            golden["model.6.split0"],
+            golden["model.6.split1"],
+            golden["model.6.m.0.add"],
+            golden["model.6.m.1.add"],
+        ],
+        operations[24],
+    )
+    golden["model.6"], _ = conv_silu(
+        hwc8_to_nchw(golden["model.6.concat"], 256), third.cv2
+    )
+    golden["model.7"], logical = conv_silu(
+        hwc8_to_nchw(golden["model.6"], 128), downsample4
+    )
+    golden["model.8.cv1"], _ = conv_silu(logical, fourth.cv1)
+    golden["model.8.split0"] = golden["model.8.cv1"][:, :, :16, :]
+    golden["model.8.split1"] = golden["model.8.cv1"][:, :, 16:, :]
+    golden["model.8.m.0.cv1"], logical = conv_silu(
+        hwc8_to_nchw(golden["model.8.split1"], 128), fourth.bottlenecks[0][0]
+    )
+    golden["model.8.m.0.cv2"], _ = conv_silu(
+        logical, fourth.bottlenecks[0][1]
+    )
+    golden["model.8.m.0.add"] = apply_add(
+        golden["model.8.split1"], golden["model.8.m.0.cv2"], operations[30]
+    )
+    golden["model.8.concat"] = apply_concat(
+        [
+            golden["model.8.split0"],
+            golden["model.8.split1"],
+            golden["model.8.m.0.add"],
+        ],
+        operations[31],
+    )
+    golden["model.8"], logical = conv_silu(
+        hwc8_to_nchw(golden["model.8.concat"], 384), fourth.cv2
+    )
+    golden["model.9.cv1"], _ = conv_silu(logical, sppf.cv1)
+    golden["model.9.pool0"] = apply_pool(golden["model.9.cv1"])
+    golden["model.9.pool1"] = apply_pool(golden["model.9.pool0"])
+    golden["model.9.pool2"] = apply_pool(golden["model.9.pool1"])
+    golden["model.9.concat"] = apply_concat(
+        [
+            golden["model.9.cv1"],
+            golden["model.9.pool0"],
+            golden["model.9.pool1"],
+            golden["model.9.pool2"],
+        ],
+        operations[37],
+    )
+    golden["model.9"], _ = conv_silu(
+        hwc8_to_nchw(golden["model.9.concat"], 512), sppf.cv2
+    )
+    golden["model.10"] = upsample2_nearest_i8(golden["model.9"])
+    golden["model.11.concat"] = apply_concat(
+        [golden["model.10"], golden["model.6"]], operations[40]
+    )
+    golden["model.12.cv1"], _ = conv_silu(
+        hwc8_to_nchw(golden["model.11.concat"], 384), first_neck.stage.cv1
+    )
+    golden["model.12.split0"] = golden["model.12.cv1"][:, :, :8, :]
+    golden["model.12.split1"] = golden["model.12.cv1"][:, :, 8:, :]
+    golden["model.12.m.0.cv1"], logical = conv_silu(
+        hwc8_to_nchw(golden["model.12.split1"], 64),
+        first_neck.stage.bottlenecks[0][0],
+    )
+    golden["model.12.m.0.cv2"], _ = conv_silu(
+        logical, first_neck.stage.bottlenecks[0][1]
+    )
+    golden["model.12.concat"] = apply_concat(
+        [
+            golden["model.12.split0"],
+            golden["model.12.split1"],
+            golden["model.12.m.0.cv2"],
+        ],
+        operations[44],
+    )
+    golden["model.12"], _ = conv_silu(
+        hwc8_to_nchw(golden["model.12.concat"], 192), first_neck.stage.cv2
+    )
+    golden["model.13"] = upsample2_nearest_i8(golden["model.12"])
+    golden["model.14.concat"] = apply_concat(
+        [golden["model.13"], golden["model.4"]], operations[47]
+    )
+    golden["model.15.cv1"], _ = conv_silu(
+        hwc8_to_nchw(golden["model.14.concat"], 192), second_neck.stage.cv1
+    )
+    golden["model.15.split0"] = golden["model.15.cv1"][:, :, :4, :]
+    golden["model.15.split1"] = golden["model.15.cv1"][:, :, 4:, :]
+    golden["model.15.m.0.cv1"], logical = conv_silu(
+        hwc8_to_nchw(golden["model.15.split1"], 32),
+        second_neck.stage.bottlenecks[0][0],
+    )
+    golden["model.15.m.0.cv2"], _ = conv_silu(
+        logical, second_neck.stage.bottlenecks[0][1]
+    )
+    golden["model.15.concat"] = apply_concat(
+        [
+            golden["model.15.split0"],
+            golden["model.15.split1"],
+            golden["model.15.m.0.cv2"],
+        ],
+        operations[51],
+    )
+    golden["model.15"], _ = conv_silu(
+        hwc8_to_nchw(golden["model.15.concat"], 96), second_neck.stage.cv2
+    )
+    golden["model.16"], logical = conv_silu(
+        hwc8_to_nchw(golden["model.15"], 64), first_bottom_up.downsample
+    )
+    golden["model.17.concat"] = apply_concat(
+        [golden["model.16"], golden["model.12"]], operations[54]
+    )
+    golden["model.18.cv1"], _ = conv_silu(
+        hwc8_to_nchw(golden["model.17.concat"], 192), first_bottom_up.stage.cv1
+    )
+    golden["model.18.split0"] = golden["model.18.cv1"][:, :, :8, :]
+    golden["model.18.split1"] = golden["model.18.cv1"][:, :, 8:, :]
+    golden["model.18.m.0.cv1"], logical = conv_silu(
+        hwc8_to_nchw(golden["model.18.split1"], 64),
+        first_bottom_up.stage.bottlenecks[0][0],
+    )
+    golden["model.18.m.0.cv2"], _ = conv_silu(
+        logical, first_bottom_up.stage.bottlenecks[0][1]
+    )
+    golden["model.18.concat"] = apply_concat(
+        [
+            golden["model.18.split0"],
+            golden["model.18.split1"],
+            golden["model.18.m.0.cv2"],
+        ],
+        operations[58],
+    )
+    golden["model.18"], _ = conv_silu(
+        hwc8_to_nchw(golden["model.18.concat"], 192), first_bottom_up.stage.cv2
+    )
+    golden["model.19"], logical = conv_silu(
+        hwc8_to_nchw(golden["model.18"], 128), second_bottom_up.downsample
+    )
+    golden["model.20.concat"] = apply_concat(
+        [golden["model.19"], golden["model.9"]], operations[61]
+    )
+    golden["model.21.cv1"], _ = conv_silu(
+        hwc8_to_nchw(golden["model.20.concat"], 384), second_bottom_up.stage.cv1
+    )
+    golden["model.21.split0"] = golden["model.21.cv1"][:, :, :16, :]
+    golden["model.21.split1"] = golden["model.21.cv1"][:, :, 16:, :]
+    golden["model.21.m.0.cv1"], logical = conv_silu(
+        hwc8_to_nchw(golden["model.21.split1"], 128),
+        second_bottom_up.stage.bottlenecks[0][0],
+    )
+    golden["model.21.m.0.cv2"], _ = conv_silu(
+        logical, second_bottom_up.stage.bottlenecks[0][1]
+    )
+    golden["model.21.concat"] = apply_concat(
+        [
+            golden["model.21.split0"],
+            golden["model.21.split1"],
+            golden["model.21.m.0.cv2"],
+        ],
+        operations[65],
+    )
+    golden["model.21"], _ = conv_silu(
+        hwc8_to_nchw(golden["model.21.concat"], 384), second_bottom_up.stage.cv2
+    )
+
+    for scale_index, branch in enumerate(head.branches):
+        source = golden[branch.source]
+        regression0, regression1, regression2 = branch.regression
+        classification0, classification1, classification2 = branch.classification
+        golden[regression0.name], logical = conv_silu(
+            hwc8_to_nchw(source, regression0.input_channels), regression0
+        )
+        golden[regression1.name], logical = conv_silu(logical, regression1)
+        golden[regression2.name], _ = conv_raw(logical, regression2)
+        golden[classification0.name], logical = conv_silu(
+            hwc8_to_nchw(source, classification0.input_channels), classification0
+        )
+        golden[classification1.name], logical = conv_silu(logical, classification1)
+        golden[classification2.name], _ = conv_raw(logical, classification2)
+        golden[branch.concat_name] = np.concatenate(
+            [golden[regression2.name], golden[classification2.name]], axis=2
+        )
+
+    return golden
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model", type=Path, default=DEFAULT_MODEL)
@@ -240,254 +501,11 @@ def main() -> int:
     simulator["model.21.split1"] = simulator["model.21.cv1"][:, :, 16:, :]
     operations = diagnostic_package.manifest["schedule"]["graph_operations"]
 
-    golden: dict[str, np.ndarray] = {}
-    golden["model.0"], logical = integer_conv_silu(full_i8, stem[0])
-    golden["model.1"], logical = integer_conv_silu(logical, stem[1])
-    golden["model.2.cv1"], _ = integer_conv_silu(logical, first.cv1)
-    golden["model.2.split0"] = golden["model.2.cv1"][:, :, :2, :]
-    golden["model.2.split1"] = golden["model.2.cv1"][:, :, 2:, :]
-    golden["model.2.m.0.cv1"], logical = integer_conv_silu(
-        hwc8_to_nchw(golden["model.2.split1"], 16), first.bottleneck_cv1
+    golden = calculate_golden(
+        full_i8, stem, first, downsample2, second, downsample3, third,
+        downsample4, fourth, sppf, first_neck, second_neck, first_bottom_up,
+        second_bottom_up, head, operations,
     )
-    golden["model.2.m.0.cv2"], _ = integer_conv_silu(logical, first.bottleneck_cv2)
-    golden["model.2.m.0.add"] = apply_add(
-        golden["model.2.split1"], golden["model.2.m.0.cv2"], operations[3]
-    )
-    golden["model.2.concat"] = apply_concat(
-        [
-            golden["model.2.split0"],
-            golden["model.2.split1"],
-            golden["model.2.m.0.add"],
-        ],
-        operations[4],
-    )
-    golden["model.2"], logical = integer_conv_silu(
-        hwc8_to_nchw(golden["model.2.concat"], 48), first.cv2
-    )
-    golden["model.3"], logical = integer_conv_silu(logical, downsample2)
-    golden["model.4.cv1"], _ = integer_conv_silu(logical, second.cv1)
-    golden["model.4.split0"] = golden["model.4.cv1"][:, :, :4, :]
-    golden["model.4.split1"] = golden["model.4.cv1"][:, :, 4:, :]
-    branch = golden["model.4.split1"]
-    for index, (conv1, conv2) in enumerate(second.bottlenecks):
-        name1 = f"model.4.m.{index}.cv1"
-        name2 = f"model.4.m.{index}.cv2"
-        add_name = f"model.4.m.{index}.add"
-        golden[name1], logical = integer_conv_silu(hwc8_to_nchw(branch, 32), conv1)
-        golden[name2], _ = integer_conv_silu(logical, conv2)
-        golden[add_name] = apply_add(branch, golden[name2], operations[10 + index * 3])
-        branch = golden[add_name]
-    golden["model.4.concat"] = apply_concat(
-        [
-            golden["model.4.split0"],
-            golden["model.4.split1"],
-            golden["model.4.m.0.add"],
-            golden["model.4.m.1.add"],
-        ],
-        operations[14],
-    )
-    golden["model.4"], _ = integer_conv_silu(
-        hwc8_to_nchw(golden["model.4.concat"], 128), second.cv2
-    )
-    golden["model.5"], logical = integer_conv_silu(
-        hwc8_to_nchw(golden["model.4"], 64), downsample3
-    )
-    golden["model.6.cv1"], _ = integer_conv_silu(logical, third.cv1)
-    golden["model.6.split0"] = golden["model.6.cv1"][:, :, :8, :]
-    golden["model.6.split1"] = golden["model.6.cv1"][:, :, 8:, :]
-    branch = golden["model.6.split1"]
-    for index, (conv1, conv2) in enumerate(third.bottlenecks):
-        name1 = f"model.6.m.{index}.cv1"
-        name2 = f"model.6.m.{index}.cv2"
-        add_name = f"model.6.m.{index}.add"
-        golden[name1], logical = integer_conv_silu(hwc8_to_nchw(branch, 64), conv1)
-        golden[name2], _ = integer_conv_silu(logical, conv2)
-        golden[add_name] = apply_add(branch, golden[name2], operations[20 + index * 3])
-        branch = golden[add_name]
-    golden["model.6.concat"] = apply_concat(
-        [
-            golden["model.6.split0"],
-            golden["model.6.split1"],
-            golden["model.6.m.0.add"],
-            golden["model.6.m.1.add"],
-        ],
-        operations[24],
-    )
-    golden["model.6"], _ = integer_conv_silu(
-        hwc8_to_nchw(golden["model.6.concat"], 256), third.cv2
-    )
-    golden["model.7"], logical = integer_conv_silu(
-        hwc8_to_nchw(golden["model.6"], 128), downsample4
-    )
-    golden["model.8.cv1"], _ = integer_conv_silu(logical, fourth.cv1)
-    golden["model.8.split0"] = golden["model.8.cv1"][:, :, :16, :]
-    golden["model.8.split1"] = golden["model.8.cv1"][:, :, 16:, :]
-    golden["model.8.m.0.cv1"], logical = integer_conv_silu(
-        hwc8_to_nchw(golden["model.8.split1"], 128), fourth.bottlenecks[0][0]
-    )
-    golden["model.8.m.0.cv2"], _ = integer_conv_silu(
-        logical, fourth.bottlenecks[0][1]
-    )
-    golden["model.8.m.0.add"] = apply_add(
-        golden["model.8.split1"], golden["model.8.m.0.cv2"], operations[30]
-    )
-    golden["model.8.concat"] = apply_concat(
-        [
-            golden["model.8.split0"],
-            golden["model.8.split1"],
-            golden["model.8.m.0.add"],
-        ],
-        operations[31],
-    )
-    golden["model.8"], logical = integer_conv_silu(
-        hwc8_to_nchw(golden["model.8.concat"], 384), fourth.cv2
-    )
-    golden["model.9.cv1"], _ = integer_conv_silu(logical, sppf.cv1)
-    golden["model.9.pool0"] = apply_pool(golden["model.9.cv1"])
-    golden["model.9.pool1"] = apply_pool(golden["model.9.pool0"])
-    golden["model.9.pool2"] = apply_pool(golden["model.9.pool1"])
-    golden["model.9.concat"] = apply_concat(
-        [
-            golden["model.9.cv1"],
-            golden["model.9.pool0"],
-            golden["model.9.pool1"],
-            golden["model.9.pool2"],
-        ],
-        operations[37],
-    )
-    golden["model.9"], _ = integer_conv_silu(
-        hwc8_to_nchw(golden["model.9.concat"], 512), sppf.cv2
-    )
-    golden["model.10"] = upsample2_nearest_i8(golden["model.9"])
-    golden["model.11.concat"] = apply_concat(
-        [golden["model.10"], golden["model.6"]], operations[40]
-    )
-    golden["model.12.cv1"], _ = integer_conv_silu(
-        hwc8_to_nchw(golden["model.11.concat"], 384), first_neck.stage.cv1
-    )
-    golden["model.12.split0"] = golden["model.12.cv1"][:, :, :8, :]
-    golden["model.12.split1"] = golden["model.12.cv1"][:, :, 8:, :]
-    golden["model.12.m.0.cv1"], logical = integer_conv_silu(
-        hwc8_to_nchw(golden["model.12.split1"], 64),
-        first_neck.stage.bottlenecks[0][0],
-    )
-    golden["model.12.m.0.cv2"], _ = integer_conv_silu(
-        logical, first_neck.stage.bottlenecks[0][1]
-    )
-    golden["model.12.concat"] = apply_concat(
-        [
-            golden["model.12.split0"],
-            golden["model.12.split1"],
-            golden["model.12.m.0.cv2"],
-        ],
-        operations[44],
-    )
-    golden["model.12"], _ = integer_conv_silu(
-        hwc8_to_nchw(golden["model.12.concat"], 192), first_neck.stage.cv2
-    )
-    golden["model.13"] = upsample2_nearest_i8(golden["model.12"])
-    golden["model.14.concat"] = apply_concat(
-        [golden["model.13"], golden["model.4"]], operations[47]
-    )
-    golden["model.15.cv1"], _ = integer_conv_silu(
-        hwc8_to_nchw(golden["model.14.concat"], 192), second_neck.stage.cv1
-    )
-    golden["model.15.split0"] = golden["model.15.cv1"][:, :, :4, :]
-    golden["model.15.split1"] = golden["model.15.cv1"][:, :, 4:, :]
-    golden["model.15.m.0.cv1"], logical = integer_conv_silu(
-        hwc8_to_nchw(golden["model.15.split1"], 32),
-        second_neck.stage.bottlenecks[0][0],
-    )
-    golden["model.15.m.0.cv2"], _ = integer_conv_silu(
-        logical, second_neck.stage.bottlenecks[0][1]
-    )
-    golden["model.15.concat"] = apply_concat(
-        [
-            golden["model.15.split0"],
-            golden["model.15.split1"],
-            golden["model.15.m.0.cv2"],
-        ],
-        operations[51],
-    )
-    golden["model.15"], _ = integer_conv_silu(
-        hwc8_to_nchw(golden["model.15.concat"], 96), second_neck.stage.cv2
-    )
-    golden["model.16"], logical = integer_conv_silu(
-        hwc8_to_nchw(golden["model.15"], 64), first_bottom_up.downsample
-    )
-    golden["model.17.concat"] = apply_concat(
-        [golden["model.16"], golden["model.12"]], operations[54]
-    )
-    golden["model.18.cv1"], _ = integer_conv_silu(
-        hwc8_to_nchw(golden["model.17.concat"], 192), first_bottom_up.stage.cv1
-    )
-    golden["model.18.split0"] = golden["model.18.cv1"][:, :, :8, :]
-    golden["model.18.split1"] = golden["model.18.cv1"][:, :, 8:, :]
-    golden["model.18.m.0.cv1"], logical = integer_conv_silu(
-        hwc8_to_nchw(golden["model.18.split1"], 64),
-        first_bottom_up.stage.bottlenecks[0][0],
-    )
-    golden["model.18.m.0.cv2"], _ = integer_conv_silu(
-        logical, first_bottom_up.stage.bottlenecks[0][1]
-    )
-    golden["model.18.concat"] = apply_concat(
-        [
-            golden["model.18.split0"],
-            golden["model.18.split1"],
-            golden["model.18.m.0.cv2"],
-        ],
-        operations[58],
-    )
-    golden["model.18"], _ = integer_conv_silu(
-        hwc8_to_nchw(golden["model.18.concat"], 192), first_bottom_up.stage.cv2
-    )
-    golden["model.19"], logical = integer_conv_silu(
-        hwc8_to_nchw(golden["model.18"], 128), second_bottom_up.downsample
-    )
-    golden["model.20.concat"] = apply_concat(
-        [golden["model.19"], golden["model.9"]], operations[61]
-    )
-    golden["model.21.cv1"], _ = integer_conv_silu(
-        hwc8_to_nchw(golden["model.20.concat"], 384), second_bottom_up.stage.cv1
-    )
-    golden["model.21.split0"] = golden["model.21.cv1"][:, :, :16, :]
-    golden["model.21.split1"] = golden["model.21.cv1"][:, :, 16:, :]
-    golden["model.21.m.0.cv1"], logical = integer_conv_silu(
-        hwc8_to_nchw(golden["model.21.split1"], 128),
-        second_bottom_up.stage.bottlenecks[0][0],
-    )
-    golden["model.21.m.0.cv2"], _ = integer_conv_silu(
-        logical, second_bottom_up.stage.bottlenecks[0][1]
-    )
-    golden["model.21.concat"] = apply_concat(
-        [
-            golden["model.21.split0"],
-            golden["model.21.split1"],
-            golden["model.21.m.0.cv2"],
-        ],
-        operations[65],
-    )
-    golden["model.21"], _ = integer_conv_silu(
-        hwc8_to_nchw(golden["model.21.concat"], 384), second_bottom_up.stage.cv2
-    )
-
-    for scale_index, branch in enumerate(head.branches):
-        source = golden[branch.source]
-        regression0, regression1, regression2 = branch.regression
-        classification0, classification1, classification2 = branch.classification
-        golden[regression0.name], logical = integer_conv_silu(
-            hwc8_to_nchw(source, regression0.input_channels), regression0
-        )
-        golden[regression1.name], logical = integer_conv_silu(logical, regression1)
-        golden[regression2.name], _ = integer_conv_raw(logical, regression2)
-        golden[classification0.name], logical = integer_conv_silu(
-            hwc8_to_nchw(source, classification0.input_channels), classification0
-        )
-        golden[classification1.name], logical = integer_conv_silu(logical, classification1)
-        golden[classification2.name], _ = integer_conv_raw(logical, classification2)
-        golden[branch.concat_name] = np.concatenate(
-            [golden[regression2.name], golden[classification2.name]], axis=2
-        )
 
     ordered_names = [
         "model.0", "model.1", "model.2.cv1", "model.2.split0", "model.2.split1",

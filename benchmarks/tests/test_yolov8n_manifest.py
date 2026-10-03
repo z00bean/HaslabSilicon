@@ -54,6 +54,10 @@ class TestYolov8nManifest(unittest.TestCase):
             (WORKLOAD / "m6-through-detection-head.json").read_text()
         )
         cls.m6_host_tail = json.loads((WORKLOAD / "m6-host-tail.json").read_text())
+        cls.m6_multi_input = json.loads((WORKLOAD / "m6-multi-input.json").read_text())
+        cls.m6_multi_input_release = json.loads(
+            (WORKLOAD / "m6-multi-input-release.json").read_text()
+        )
 
     def test_artifact_identity_is_consistent(self):
         self.assertEqual(
@@ -563,6 +567,37 @@ class TestYolov8nManifest(unittest.TestCase):
         self.assertTrue(result["operational_postprocessing"]["same_class_order"])
         self.assertEqual(result["evaluation_postprocessing"]["detection_count"], 35)
         self.assertTrue(result["evaluation_postprocessing"]["same_class_order"])
+
+    def test_m6_multi_input_reports_pin_all_command_and_host_boundaries(self):
+        diagnostic = self.m6_multi_input
+        release = self.m6_multi_input_release
+        record = self.manifest["m6_multi_input"]
+        self.assertEqual(diagnostic["status"], "complete")
+        self.assertEqual(diagnostic["source_model_sha256"], self.manifest["export"]["onnx_sha256"])
+        self.assertEqual(
+            diagnostic["package_sha256"],
+            self.m6_detection_head["packages"]["diagnostic"]["sha256"],
+        )
+        self.assertEqual(set(diagnostic["cases"]),
+                         {"zero", "max", "min", "seeded", "calibration-0", "calibration-1"})
+        self.assertEqual(diagnostic["totals"]["exact_materialized_values_compared"],
+                         record["diagnostic_exact_values_compared"])
+        self.assertEqual(diagnostic["totals"]["decoded_values_compared"],
+                         record["diagnostic_decoded_values_compared"])
+        for case in diagnostic["cases"].values():
+            self.assertEqual(case["materialized_boundaries"], 90)
+            self.assertEqual(case["exact_values_compared"], 6316800)
+            self.assertTrue(case["host_decoded_comparison"]["allclose_atol_0.0001_rtol_0.00001"])
+            self.assertTrue(case["operational_postprocessing"]["same_class_order"])
+            self.assertTrue(case["evaluation_postprocessing"]["same_class_order"])
+        self.assertEqual(release["package_sha256"],
+                         self.m6_detection_head["packages"]["release"]["sha256"])
+        self.assertEqual(release["cases"]["calibration-0"]["exact_values_compared"], 302400)
+        self.assertTrue(release["diagnostic_release_equivalence"]["all_three_boundary_bytes_identical"])
+        diagnostic_hashes = {item["name"]: item["output_sha256"]
+                             for item in diagnostic["cases"]["calibration-0"]["boundary_comparisons"]}
+        for name, digest in release["diagnostic_release_equivalence"]["tensor_sha256"].items():
+            self.assertEqual(digest, diagnostic_hashes[name])
 
 
 if __name__ == "__main__":

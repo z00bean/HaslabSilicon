@@ -49,4 +49,4 @@ The pinned integration compares all 614,400 retained INT8 values with the indepe
 
 ## Remaining work
 
-The subsequent C2f increments and reusable lifetime scheduling are documented in the [reusable graph format note](reusable-graph-format.md). The pinned accelerator graph and explicit Python host tail are now implemented for one synthetic input; multi-input differential checks and COCO command-path accuracy remain open.
+The subsequent C2f increments and reusable lifetime scheduling are documented in the [reusable graph format note](reusable-graph-format.md). The pinned accelerator graph and explicit Python host tail now pass six additional diagnostic inputs, including two real calibration images, plus a real-image release replay. COCO command-path accuracy remains open.

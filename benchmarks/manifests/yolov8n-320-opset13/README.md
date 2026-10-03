@@ -454,4 +454,31 @@ The host implementation in [`runtime/haslab_runtime/yolov8n_tail.py`](../../../r
 
 The verification tool copies only nodes 218–260 into an independent ONNX Runtime subgraph and feeds it the **same dequantized HASLAB boundary tensors**. The tracked [`m6-host-tail.json`](m6-host-tail.json) records comparisons at DFL, anchor, box, stride, class-score, and final output stages. All 176,400 final values agree within `atol=0.0001, rtol=0.00001`; maximum absolute error is `0.000091553`. A 480×640 letterbox example yields one detection at the 0.25 operational threshold and 35 at the 0.001 COCO evaluation threshold, each with the same class order as postprocessing the ONNX-tail output. Edge-case unit tests cover HWC8 unpacking, scale validation, uniform and extreme DFL/class logits, mapping, same-class suppression, cross-class retention, confidence equality, and tie behavior. The postprocessing comparison uses the same selection routine on two independently decoded tensors; matching the upstream Ultralytics validation pipeline on real images remains part of the COCO gate. This is one synthetic-input host-tail validation, not a COCO mAP measurement.
 
-The next M6 step is multi-input command-path differential testing, including zero/extreme and seeded inputs plus pinned real calibration images. Then evaluate commands **and** this host tail over all COCO val2017 images before making a HASLAB-path accuracy claim.
+## Reproduce the multi-input command-path check
+
+With the pinned ONNX model, calibration package, ignored diagnostic and release `.hxb` packages, and selected train2017 calibration images present, run:
+
+```sh
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/verify_yolov8n_multi_input.py
+
+PYTHONPATH=reference:simulation:compiler:runtime \
+python benchmarks/tools/verify_yolov8n_multi_input.py \
+  --allocation-mode release --cases calibration-0 \
+  --report benchmarks/manifests/yolov8n-320-opset13/m6-multi-input-release.json
+```
+
+The checker binds each input to the **same pinned command package**, compares all 90 stored diagnostic tensors bit for bit against an independent vectorized integer oracle, and compares DFL, boxes, scores, and the full `[1,84,2100]` host output against an isolated ONNX Runtime tail fed the same INT32 boundaries. It then compares coordinate-mapped and NMS-filtered detections at both the 0.25 operational and 0.001 COCO evaluation thresholds. The vectorized oracle is separately checked against scalar `haslab_ref` arithmetic and against all 90 tensors from the previously saved synthetic run. Its FLOAT64 dot products are exact integer carriers because a conservative bound keeps every partial sum inside signed INT32.
+
+| Input | Exact stored values | 0.25 detections | 0.001 detections |
+|---|---:|---:|---:|
+| INT8 zero | 6,316,800 | 0 | 1 |
+| INT8 +127 | 6,316,800 | 0 | 0 |
+| INT8 −128 | 6,316,800 | 2 | 3 |
+| Seeded full-range INT8 | 6,316,800 | 0 | 3 |
+| Pinned calibration image 0 | 6,316,800 | 7 | 300 cap |
+| Pinned calibration image 1 | 6,316,800 | 3 | 39 |
+
+The six diagnostic runs compare **37,900,800 exact stored values** across 540 boundaries and **1,058,400 decoded FLOAT32 values** against the isolated ONNX tail. All stage comparisons pass `atol=0.0001, rtol=0.00001`; the largest absolute decoded difference is `0.000122071` at a coordinate where the relative allowance applies. The separate release run of calibration image 0 compares all 302,400 INT32 boundary values exactly and produces byte-identical final tensors to diagnostic mode. See the [diagnostic report](m6-multi-input.json) and [release report](m6-multi-input-release.json) for per-boundary hashes, image/input provenance, host comparisons, and FIFO counts.
+
+The checks do not validate Ultralytics NMS against real-image ground truth or measure COCO mAP. They compare two independently decoded outputs using the same explicit HASLAB postprocessor; COCO evaluation remains a separate gate. These Python functional runs took several minutes per image under concurrent test conditions. The next implementation step is a faster execution path that passes the existing command conformance corpus and these exact multi-input fixtures before a 5,000-image command-path evaluation is attempted.

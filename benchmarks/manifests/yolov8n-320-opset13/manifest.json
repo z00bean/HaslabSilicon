@@ -505,7 +505,7 @@
     "scope": "nodes 0-172 through the complete backbone and neck"
   },
   "open_gates": [
-    "Expand command-path differential testing from one synthetic input to zero/extreme, seeded random, and pinned real calibration images; verify the host tail and mapped detections for these cases.",
+    "Build a faster execution path with the same command/numerical semantics and validate it against the functional simulator before attempting all 5,000 COCO images.",
     "Evaluate the full command path plus explicit host tail over COCO val2017 and compare mAP50-95 with the recorded FLOAT and calibrated INT8 proxy baselines.",
     "Resolve package size, command compaction, and dispatch pressure exposed by the 412,092-command complete accelerator schedule.",
     "Measure whether a real transport can sustain the generated command rate; the functional runtime records refill counts but has no cycle or bus timing."
@@ -537,5 +537,18 @@
     "operational_detections": 1,
     "evaluation_profile_detections": 35,
     "scope": "one saved synthetic accelerator output; no COCO accuracy claim"
+  },
+  "m6_multi_input": {
+    "status": "six_diagnostic_inputs_and_one_real_release_replay_pass",
+    "diagnostic_result": "m6-multi-input.json",
+    "release_result": "m6-multi-input-release.json",
+    "diagnostic_cases": 6,
+    "real_calibration_images": 2,
+    "materialized_boundaries_per_case": 90,
+    "diagnostic_exact_values_compared": 37900800,
+    "diagnostic_decoded_values_compared": 1058400,
+    "release_real_image_exact_values_compared": 302400,
+    "release_final_boundaries_byte_identical_to_diagnostic": true,
+    "scope": "zero, full-range extrema, seeded random, and two pinned real images; no COCO mAP claim"
   }
 }

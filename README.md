@@ -26,6 +26,14 @@ The repository currently contains an architecture specification, an executable P
 
 The command path has also passed six additional inputs: zero, both INT8 extrema, seeded full-range values, and two pinned COCO train2017 calibration images. Across those runs, **37,900,800 stored accelerator values** match an independent integer oracle, and **1,058,400 decoded values** pass comparison with the isolated ONNX host tail. A release-allocation replay of one real image matches all 302,400 final INT32 values and produces byte-identical boundary tensors to diagnostic mode. This is multi-input functional evidence; it does not establish COCO detection accuracy. At several minutes per image in the Python simulator, a faster equivalence-checked execution path is needed before a 5,000-image command-path evaluation is practical.
 
+![Command-path software evidence and the remaining detector-accuracy gate](docs/images/command-path-evidence.svg)
+
+The first graphic summarizes [multi-input command-path evidence](benchmarks/manifests/yolov8n-320-opset13/m6-multi-input.json). “Exact” applies to stored integer accelerator values; the decoded host-tail comparison uses the stated tolerance. The pending COCO-wide command-path accuracy result must not be inferred from either comparison.
+
+![Per-inference command, DMA, and INT8 arithmetic accounting](docs/images/workload-transport.svg)
+
+These are deterministic counts from the [complete detection-head schedule](benchmarks/manifests/yolov8n-320-opset13/m6-through-detection-head.json), not measured latency, throughput, bandwidth, or power. Decimal MB is used in the graphic. The command stream is a practical transport and package-size issue to resolve before the ABI freeze and first interface RTL.
+
 | Component | Status | What that means |
 |---|---|---|
 | Architecture and v0 contract | Freeze candidate | Document revision 0.2 reviewed against the software models; independent review and command-delivery resolution remain open |

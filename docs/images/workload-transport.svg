@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">HASLAB per-inference command and DMA accounting</title>
+  <desc id="desc">For one pinned YOLOv8n 320 by 320 inference, the functional schedule has 412,092 fixed commands, 52,747,776 command bytes, 44,598,232 scheduled DMA bytes, and 1,092,864,000 INT8 multiply-accumulates. These are workload accounting figures, not measured hardware throughput.</desc>
+  <rect width="1600" height="900" fill="#00c9eb"/>
+  <text x="60" y="84" font-family="Menlo, monospace" font-size="26" fill="#141414">HASLAB / WORKLOAD ACCOUNTING / SOFTWARE SCHEDULE</text>
+  <text x="60" y="172" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="900" fill="#141414">THE TRANSPORT GATE.</text>
+  <text x="62" y="227" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#141414">One pinned YOLOv8n 320 × 320 inference · candidate 128-byte command ABI</text>
+  <rect x="50" y="270" width="1500" height="492" fill="#141414"/>
+  <rect x="57" y="277" width="736" height="230" fill="#f8f7f1"/>
+  <rect x="807" y="277" width="736" height="230" fill="#d8ff43"/>
+  <rect x="57" y="521" width="736" height="234" fill="#ff7040"/>
+  <rect x="807" y="521" width="736" height="234" fill="#f8f7f1"/>
+  <text x="88" y="333" font-family="Menlo, monospace" font-size="25">COMMAND RECORDS</text>
+  <text x="88" y="440" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="900">412,092</text>
+  <text x="839" y="333" font-family="Menlo, monospace" font-size="25">COMMAND BYTES</text>
+  <text x="839" y="440" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="900">52.75 MB</text>
+  <text x="88" y="577" font-family="Menlo, monospace" font-size="25">SCHEDULED DMA BYTES</text>
+  <text x="88" y="689" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="900">44.60 MB</text>
+  <text x="839" y="577" font-family="Menlo, monospace" font-size="25">INT8 MULTIPLY-ACCUMULATES</text>
+  <text x="839" y="689" font-family="Arial, Helvetica, sans-serif" font-size="82" font-weight="900">1.093 B</text>
+  <text x="61" y="813" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="700" fill="#141414">These are counts, not speed measurements.</text>
+  <text x="61" y="854" font-family="Arial, Helvetica, sans-serif" font-size="23" fill="#141414">Command delivery and package compaction must be resolved before ABI freeze and interface RTL.</text>
+</svg>

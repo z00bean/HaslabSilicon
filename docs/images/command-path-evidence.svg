@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">HASLAB command-path evidence and remaining gate</title>
+  <desc id="desc">The YOLOv8n accelerator partition covers nodes 0 through 217. Six diagnostic inputs match 37,900,800 stored integer values exactly. The declared host tail agrees on 1,058,400 decoded values within tolerance. COCO-wide command-path accuracy and hardware measurements remain pending.</desc>
+  <rect width="1600" height="900" fill="#f8f7f1"/>
+  <path d="M0 0h1600v26H0z" fill="#141414"/>
+  <text x="66" y="93" font-family="Menlo, monospace" font-size="26" fill="#141414">HASLAB / VERIFICATION / SOFTWARE</text>
+  <text x="66" y="180" font-family="Arial, Helvetica, sans-serif" font-size="68" font-weight="900" fill="#141414">FROM COMMANDS TO DETECTIONS.</text>
+  <text x="68" y="237" font-family="Arial, Helvetica, sans-serif" font-size="29" fill="#141414">Pinned YOLOv8n · 320 × 320 · accelerator nodes 0–217 + explicit host tail</text>
+  <rect x="55" y="280" width="1490" height="438" fill="#141414"/>
+  <rect x="62" y="287" width="482" height="424" fill="#00c9eb"/>
+  <rect x="544" y="287" width="496" height="424" fill="#d8ff43"/>
+  <rect x="1040" y="287" width="498" height="424" fill="#ff7040"/>
+  <path d="M544 287v424M1040 287v424" stroke="#141414" stroke-width="6"/>
+  <text x="90" y="347" font-family="Menlo, monospace" font-size="24">01 / ACCELERATOR</text>
+  <text x="90" y="452" font-family="Arial, Helvetica, sans-serif" font-size="57" font-weight="900">37,900,800</text>
+  <text x="90" y="501" font-family="Arial, Helvetica, sans-serif" font-size="29" font-weight="700">stored values exact</text>
+  <text x="90" y="581" font-family="Arial, Helvetica, sans-serif" font-size="25">6 diverse diagnostic inputs</text>
+  <text x="90" y="618" font-family="Arial, Helvetica, sans-serif" font-size="25">540 boundary comparisons</text>
+  <text x="90" y="662" font-family="Menlo, monospace" font-size="20">INTEGER ORACLE / 0 MISMATCHES</text>
+  <text x="574" y="347" font-family="Menlo, monospace" font-size="24">02 / HOST TAIL</text>
+  <text x="574" y="452" font-family="Arial, Helvetica, sans-serif" font-size="57" font-weight="900">1,058,400</text>
+  <text x="574" y="501" font-family="Arial, Helvetica, sans-serif" font-size="29" font-weight="700">decoded values compared</text>
+  <text x="574" y="581" font-family="Arial, Helvetica, sans-serif" font-size="25">Pinned ONNX nodes 218–260</text>
+  <text x="574" y="618" font-family="Arial, Helvetica, sans-serif" font-size="25">Agreement within tolerance</text>
+  <text x="574" y="662" font-family="Menlo, monospace" font-size="20">ATOL 1e-4 / RTOL 1e-5</text>
+  <text x="1070" y="347" font-family="Menlo, monospace" font-size="24">03 / STILL OPEN</text>
+  <text x="1070" y="451" font-family="Arial, Helvetica, sans-serif" font-size="61" font-weight="900">COCO-wide</text>
+  <text x="1070" y="501" font-family="Arial, Helvetica, sans-serif" font-size="29" font-weight="700">command-path accuracy</text>
+  <text x="1070" y="581" font-family="Arial, Helvetica, sans-serif" font-size="25">FPGA and ASIC execution</text>
+  <text x="1070" y="618" font-family="Arial, Helvetica, sans-serif" font-size="25">Hardware latency and power</text>
+  <text x="1070" y="662" font-family="Menlo, monospace" font-size="20">NO HARDWARE RESULT YET</text>
+  <text x="66" y="779" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="700" fill="#141414">Evidence boundary:</text>
+  <text x="340" y="779" font-family="Arial, Helvetica, sans-serif" font-size="27" fill="#141414">exact software execution does not establish detector mAP or device speed.</text>
+  <text x="66" y="835" font-family="Menlo, monospace" font-size="20" fill="#141414">SOURCE: benchmarks/manifests/yolov8n-320-opset13/m6-multi-input.json</text>
+</svg>
